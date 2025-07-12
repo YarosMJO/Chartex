@@ -1,0 +1,208 @@
+<div class="dashboard-container">
+  <!-- Заголовок -->
+  <mat-toolbar class="dashboard-header">
+    <div class="header-content">
+      <h1>📊 Chartex Dashboard</h1>
+      <div class="user-info" *ngIf="currentUser">
+        <span>Вітаємо, {{ currentUser.displayName || currentUser.email }}!</span>
+        <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item>
+            <mat-icon>settings</mat-icon>
+            <span>Налаштування</span>
+          </button>
+          <button mat-menu-item>
+            <mat-icon>logout</mat-icon>
+            <span>Вийти</span>
+          </button>
+        </mat-menu>
+      </div>
+      <button *ngIf="!currentUser" (click)="loginWithGoogle()" class="login-btn">
+        Увійти через Google
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <!-- Фільтри -->
+  <div class="filters-section">
+    <mat-card>
+      <mat-card-content>
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Період</mat-label>
+            <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+              <mat-option value="7d">7 днів</mat-option>
+              <mat-option value="30d">30 днів</mat-option>
+              <mat-option value="90d">90 днів</mat-option>
+              <mat-option value="1y">1 рік</mat-option>
+              <mat-option value="all">Весь час</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Пристрій</mat-label>
+            <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
+              <mat-option value="all">Всі пристрої</mat-option>
+              <mat-option *ngFor="let device of devices" [value]="device.deviceId">
+                {{ device.deviceName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Помилка -->
+  <div *ngIf="error" class="error-message">
+    <mat-card>
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Завантаження -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Завантаження даних...</p>
+  </div>
+
+  <!-- Основний контент -->
+  <div *ngIf="!loading && !error && userStats" class="dashboard-content">
+    <!-- Статистика -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">visibility</mat-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(userStats.stats.totalVisits) }}</div>
+              <div class="stat-label">Відвідувань</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">language</mat-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(userStats.stats.uniqueDomains) }}</div>
+              <div class="stat-label">Унікальних сайтів</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">schedule</mat-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatDuration(userStats.stats.totalDuration) }}</div>
+              <div class="stat-label">Загальний час</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon">devices</mat-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ devices.length }}</div>
+              <div class="stat-label">Пристроїв</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Графіки -->
+    <div class="charts-grid">
+      <!-- Графік активності -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Активність за {{ getPeriodLabel(selectedPeriod) }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="[{ name: 'Відвідування', data: activityChartData }]"
+            [chart]="{ type: 'area', height: 300 }"
+            [xaxis]="{ type: 'category' }"
+            [colors]="['#667eea']"
+            [fill]="{ type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] } }"
+            [stroke]="{ curve: 'smooth' }"
+            [dataLabels]="{ enabled: false }"
+            [grid]="{ borderColor: '#e7e7e7', row: { colors: ['#f3f3f3', 'transparent'], opacity: 0.5 } }">
+          </apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Топ доменів -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Топ сайтів</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="top-domains-list">
+            <div *ngFor="let domain of topDomainsData; let i = index" class="domain-item">
+              <div class="domain-rank">{{ i + 1 }}</div>
+              <div class="domain-info">
+                <div class="domain-name" [title]="domain.name">
+                  {{ domain.title }}
+                </div>
+                <div class="domain-url" *ngIf="domain.name !== domain.title">
+                  {{ domain.name }}
+                </div>
+                <div class="domain-stats">
+                  {{ domain.visits }} відвідувань • {{ formatDuration(domain.duration) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Статистика пристроїв -->
+    <mat-card class="devices-card">
+      <mat-card-header>
+        <mat-card-title>Статистика пристроїв</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="devices-grid">
+          <div *ngFor="let device of devices" class="device-item">
+            <div class="device-header">
+              <mat-icon class="device-icon">
+                {{ device.deviceType === 'mobile' ? 'smartphone' : 'computer' }}
+              </mat-icon>
+              <div class="device-info">
+                <div class="device-name">{{ device.deviceName }}</div>
+                <div class="device-type">{{ device.browser }} • {{ device.os }}</div>
+              </div>
+            </div>
+            <div class="device-stats">
+              <div class="device-stat">
+                <span class="stat-label">Відвідувань:</span>
+                <span class="stat-value">{{ formatNumber(device.stats?.totalVisits || 0) }}</span>
+              </div>
+              <div class="device-stat">
+                <span class="stat-label">Час:</span>
+                <span class="stat-value">{{ formatDuration(device.stats?.totalDuration || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div> 

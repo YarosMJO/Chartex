@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Chartex Browser Analytics",
+  "version": "1.0.0",
+  "description": "Веб-аналітика та візуалізація історії браузерної активності користувача.",
+  "permissions": [
+    "history",
+    "storage",
+    "identity",
+    "identity.email",
+    "windows",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' http://localhost:5000 https://identitytoolkit.googleapis.com"
+  },
+  "oauth2": {
+    "client_id": "264979508048-soi5cpcu8j46dos38tq6hr314cguqeh5.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "dashboard/dashboard.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "firebase-app-compat.js",
+        "firebase-config.js",
+        "config.js",
+        "test-config.html",
+        "dashboard/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+} 

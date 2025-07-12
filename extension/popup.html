@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Chartex</title>
+  <style>
+    body { 
+      width: 350px; 
+      padding: 15px; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h2 {
+      margin: 0 0 5px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .header p {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .status {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-indicator.active {
+      background: #4CAF50;
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+    
+    .status-indicator.inactive {
+      background: #f44336;
+    }
+    
+    .status-text {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .stat-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+    
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button.primary {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+    }
+    
+    button.primary:hover {
+      background: linear-gradient(45deg, #45a049, #4CAF50);
+    }
+    
+    button.danger {
+      background: linear-gradient(45deg, #f44336, #d32f2f);
+    }
+    
+    button.danger:hover {
+      background: linear-gradient(45deg, #d32f2f, #f44336);
+    }
+    
+    .auth-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .auth-status {
+      font-size: 12px;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .error {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid rgba(244, 67, 54, 0.5);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    
+    .error-message {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid rgba(244, 67, 54, 0.5);
+      color: #ffcdd2;
+    }
+    
+    .success-message {
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid rgba(76, 175, 80, 0.5);
+      color: #c8e6c9;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>📊 Chartex</h2>
+    <p>Веб-аналітика браузерної активності</p>
+  </div>
+  
+  <div id="error" class="error" style="display: none;"></div>
+  
+  <div class="status">
+    <span id="statusIndicator" class="status-indicator inactive"></span>
+    <span id="statusText" class="status-text">Завантаження...</span>
+  </div>
+  
+  <div class="stats">
+    <div class="stat-item">
+      <div id="deviceCount" class="stat-value">-</div>
+      <div class="stat-label">Пристрої</div>
+    </div>
+    <div class="stat-item">
+      <div id="historyCount" class="stat-value">-</div>
+      <div class="stat-label">Записи</div>
+    </div>
+    <div class="stat-item">
+      <div id="sessionCount" class="stat-value">-</div>
+      <div class="stat-label">Сесії</div>
+    </div>
+    <div class="stat-item">
+      <div id="lastSync" class="stat-value">-</div>
+      <div class="stat-label">Остання синхронізація</div>
+    </div>
+  </div>
+  
+  <div class="buttons">
+    <button id="startBtn" class="primary">▶️ Почати збір даних</button>
+    <button id="stopBtn" class="danger">⏹️ Зупинити збір</button>
+    <button id="openDashboard">📊 Відкрити Analytics</button>
+    <button id="testData" style="background: rgba(255, 255, 255, 0.1);">🧪 Тест даних</button>
+  </div>
+  
+  <div class="auth-section">
+    <div class="auth-status">
+      <span id="authStatus">Статус авторизації: Не авторизовано</span>
+    </div>
+    <button id="loginBtn">🔐 Увійти через Google</button>
+  </div>
+  
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html> 

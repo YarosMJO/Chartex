@@ -1,0 +1,54 @@
+
+
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  position: static !important;
+  overflow: visible !important;
+  height: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+/* Глобальні стилі для Chartex */
+.chartex-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.chartex-card {
+  margin-bottom: 20px;
+}
+
+.chartex-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.chartex-chart-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .chartex-container {
+    padding: 10px;
+  }
+  
+  .chartex-stats-grid {
+    grid-template-columns: 1fr;
+  }
+} 

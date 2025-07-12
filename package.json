@@ -1,0 +1,16 @@
+{
+  "name": "chartex",
+  "version": "1.0.0",
+  "description": "Chartex - веб-аналітика та візуалізація історії браузерної активності",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  }
+}
