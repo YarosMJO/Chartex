@@ -66,7 +66,8 @@ export class DashboardComponent implements OnInit {
           const encryptionKey = await this.authService.getEncryptionKey();
           console.log('Отримано ключ шифрування:', { 
             hasKey: !!encryptionKey, 
-            keyLength: encryptionKey?.length 
+            keyLength: encryptionKey?.length,
+            keyPreview: encryptionKey?.substring(0, 10) + '...'
           });
           
           if (encryptionKey) {
@@ -93,6 +94,7 @@ export class DashboardComponent implements OnInit {
 
       if (!this.currentUser) {
         this.error = 'Користувач не авторизований';
+        this.loading = false;
         return;
       }
 
@@ -104,7 +106,7 @@ export class DashboardComponent implements OnInit {
 
     } catch (error) {
       console.error('Помилка ініціалізації dashboard:', error);
-      this.error = 'Помилка завантаження даних';
+      this.error = 'Помилка завантаження даних: ' + (error instanceof Error ? error.message : String(error));
     } finally {
       this.loading = false;
     }
@@ -113,31 +115,42 @@ export class DashboardComponent implements OnInit {
   async loadUserStats() {
     try {
       console.log('Завантаження статистики користувача...');
-      
-      this.userStats = await this.apiService.getUserStatsWithDecryptedData({
-        period: this.selectedPeriod,
-        deviceId: this.selectedDevice === 'all' ? undefined : this.selectedDevice
-      });
-
+      const params: any = {
+        period: this.selectedPeriod
+      };
+      if (this.selectedDevice !== 'all') {
+        params.deviceId = this.selectedDevice;
+      }
+      console.log('Dashboard loadUserStats params:', params);
+      this.userStats = await this.apiService.getUserStatsWithDecryptedData(params);
+      if (!this.userStats || !this.userStats.stats) {
+        this.error = 'Дані статистики не отримано.';
+        this.loading = false;
+        return;
+      }
       console.log('Отримана статистика:', this.userStats);
-      
       this.prepareChartData();
     } catch (error) {
       console.error('Помилка завантаження статистики:', error);
-      this.error = 'Помилка завантаження статистики';
+      this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
+      this.loading = false;
     }
   }
 
   async loadDevices() {
     try {
       console.log('Завантаження пристроїв...');
-      
       this.devices = await this.apiService.getDevices();
-      
+      if (!this.devices) {
+        this.error = 'Дані пристроїв не отримано.';
+        this.loading = false;
+        return;
+      }
       console.log('Отримані пристрої:', this.devices);
     } catch (error) {
       console.error('Помилка завантаження пристроїв:', error);
-      this.error = 'Помилка завантаження пристроїв';
+      this.error = 'Помилка завантаження пристроїв: ' + (error instanceof Error ? error.message : String(error));
+      this.loading = false;
     }
   }
 

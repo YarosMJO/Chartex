@@ -16,13 +16,19 @@ class CryptoUtils {
   static encrypt(data, key) {
     // Просте шифрування для демонстрації
     const dataStr = JSON.stringify(data);
-    const encrypted = btoa(dataStr + '|' + key);
-    return encrypted;
+    // Безпечне кодування для Unicode символів
+    const encoded = this.utf8ToBase64(dataStr + '|' + key);
+    return encoded;
+  }
+  
+  // Аліас для encrypt (для сумісності)
+  static encryptData(data, key) {
+    return this.encrypt(data, key);
   }
   
   static decrypt(encryptedData, key) {
     try {
-      const decrypted = atob(encryptedData);
+      const decrypted = this.base64ToUtf8(encryptedData);
       const parts = decrypted.split('|');
       if (parts[1] === key) {
         return JSON.parse(parts[0]);
@@ -32,6 +38,11 @@ class CryptoUtils {
       console.error('Decryption error:', error);
       return null;
     }
+  }
+  
+  // Аліас для decrypt (для сумісності)
+  static decryptData(encryptedData, key) {
+    return this.decrypt(encryptedData, key);
   }
   
   static hashDomain(url) {
@@ -59,5 +70,38 @@ class CryptoUtils {
   
   static generateSessionId() {
     return this.randomString(16);
+  }
+  
+  // Безпечне кодування Unicode в Base64
+  static utf8ToBase64(str) {
+    try {
+      // Для Service Worker використовуємо TextEncoder
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(str);
+      const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+      return btoa(binaryString);
+    } catch (error) {
+      console.error('UTF8 to Base64 error:', error);
+      // Fallback для старих браузерів
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+  }
+  
+  // Безпечне декодування Base64 в Unicode
+  static base64ToUtf8(base64) {
+    try {
+      // Для Service Worker використовуємо TextDecoder
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const decoder = new TextDecoder();
+      return decoder.decode(bytes);
+    } catch (error) {
+      console.error('Base64 to UTF8 error:', error);
+      // Fallback для старих браузерів
+      return decodeURIComponent(escape(atob(base64)));
+    }
   }
 } 

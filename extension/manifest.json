@@ -35,6 +35,7 @@
         "firebase-config.js",
         "config.js",
         "test-config.html",
+        "crypto-utils.js",
         "dashboard/*"
       ],
       "matches": ["<all_urls>"]

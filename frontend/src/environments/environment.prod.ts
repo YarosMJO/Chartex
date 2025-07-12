@@ -9,5 +9,5 @@ export const environment = {
     appId: "1:264979508048:web:c9501813cf613160a5da55",
     measurementId: "G-PGGLE2T3TD"
   },
-  apiUrl: 'https://your-production-api-url.com/api' // Оновіть на реальний URL production API
+  apiUrl: 'http://localhost:5000/api' // Використовуємо localhost для тестування
 }; 

@@ -59,7 +59,11 @@ export class AuthService {
         console.log('Відповідь від extension:', response);
         
         if (response && response.encryptionKey) {
-          console.log('Ключ шифрування отримано з extension');
+          console.log('Ключ шифрування отримано з extension:', {
+            hasKey: !!response.encryptionKey,
+            keyLength: response.encryptionKey?.length,
+            keyPreview: response.encryptionKey?.substring(0, 10) + '...'
+          });
           return response.encryptionKey;
         }
       } else {

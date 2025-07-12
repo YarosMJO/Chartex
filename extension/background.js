@@ -23,6 +23,13 @@ let isCollecting = false;
 const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
 const API_BASE_URL = chartexConfig.apiUrl;
 
+// Діагностика конфігурації
+console.log('Chartex Config:', {
+  config: chartexConfig,
+  apiUrl: API_BASE_URL,
+  environment: chartexConfig.environment || 'unknown'
+});
+
 // Додаємо функцію для кодування у base64 з підтримкою UTF-8
 function utf8ToBase64(str) {
   return btoa(unescape(encodeURIComponent(str)));
@@ -257,6 +264,20 @@ class HistoryCollector {
   
   async processHistoryItem(historyItem) {
     try {
+      // Фільтрація внутрішніх сторінок браузера
+      function isBrowserInternalUrl(url) {
+        return /^chrome(-extension)?:\/\//.test(url) ||
+               /^edge:\/\//.test(url) ||
+               /^about:/.test(url) ||
+               /^moz-extension:\/\//.test(url) ||
+               /^vivaldi:\/\//.test(url) ||
+               /^brave:\/\//.test(url) ||
+               /^opera:\/\//.test(url);
+      }
+      if (isBrowserInternalUrl(historyItem.url)) {
+        console.log('Пропущено внутрішню сторінку браузера:', historyItem.url);
+        return;
+      }
       // Перевірити, чи є необхідні дані
       if (!deviceId || !encryptionKey || !sessionId) {
         console.warn('Відсутні необхідні дані для обробки запису');
@@ -271,12 +292,29 @@ class HistoryCollector {
         userId: currentUser?.uid || 'anonymous',
         deviceId: deviceId,
         sessionId: sessionId,
-        encryptedData: CryptoUtils.encryptData({
-          url: historyItem.url,
-          title: historyItem.title || '',
-          faviconUrl: historyItem.favicon || '',
-          referrer: historyItem.referrer || ''
-        }, encryptionKey),
+        encryptedData: (() => {
+          const dataToEncrypt = {
+            url: historyItem.url,
+            title: historyItem.title || '',
+            faviconUrl: historyItem.favicon || '',
+            referrer: historyItem.referrer || ''
+          };
+          
+          console.log('Шифрування даних:', {
+            hasEncryptionKey: !!encryptionKey,
+            keyLength: encryptionKey?.length,
+            dataToEncrypt: dataToEncrypt
+          });
+          
+          const encrypted = CryptoUtils.encrypt(dataToEncrypt, encryptionKey);
+          
+          console.log('Результат шифрування:', {
+            success: !!encrypted,
+            encryptedLength: encrypted?.length
+          });
+          
+          return encrypted;
+        })(),
         domainHash: CryptoUtils.hashDomain(historyItem.url),
         visitCount: historyItem.visitCount || 1,
         typedCount: historyItem.typedCount || 0,
@@ -462,7 +500,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
     case 'getEncryptionKey':
       console.log('Запит на отримання ключа шифрування від frontend');
-      console.log('Ключ шифрування:', { hasKey: !!encryptionKey, keyLength: encryptionKey?.length });
+      console.log('Ключ шифрування:', { 
+        hasKey: !!encryptionKey, 
+        keyLength: encryptionKey?.length,
+        keyPreview: encryptionKey?.substring(0, 10) + '...'
+      });
       sendResponse({ encryptionKey: encryptionKey });
       return;
       
@@ -479,7 +521,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'getStatus':
       (async () => {
         const user = firebase.auth().currentUser;
-        console.log('BG: getStatus', { isCollecting: historyCollector.isCollecting });
+        console.log('BG: getStatus', { 
+          isCollecting: historyCollector.isCollecting,
+          deviceId: deviceId,
+          hasDeviceId: !!deviceId
+        });
         let deviceCount = 0;
         let historyCount = 0;
         let sessionCount = 0;
@@ -490,12 +536,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           lastSync = data.lastSync;
           historyCount = data.historyCount || 0;
           sessionCount = sessionId ? 1 : 0;
+          
+          console.log('Storage data:', {
+            storedDeviceId: data.deviceId,
+            hasStoredDeviceId: !!data.deviceId,
+            globalDeviceId: deviceId,
+            hasGlobalDeviceId: !!deviceId
+          });
         } catch (error) {
           console.error('Помилка отримання статистики:', error);
         }
         sendResponse({
           isCollecting: historyCollector.isCollecting,
-          deviceId,
+          deviceId: deviceId || 'undefined',
           hasUser: !!user,
           userEmail: user?.email || null,
           deviceCount,
@@ -545,18 +598,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+// === Стабільна ініціалізація deviceId ===
+async function getOrCreateStableDeviceId() {
+  // 1. Спробувати отримати з local
+  let local = await chrome.storage.local.get(['deviceId']);
+  if (local.deviceId) {
+    // Синхронізувати у sync, якщо там немає
+    let sync = await chrome.storage.sync.get(['deviceId']);
+    if (!sync.deviceId) {
+      await chrome.storage.sync.set({ deviceId: local.deviceId });
+    }
+    return local.deviceId;
+  }
+  // 2. Спробувати отримати з sync
+  let sync = await chrome.storage.sync.get(['deviceId']);
+  if (sync.deviceId) {
+    // Синхронізувати у local
+    await chrome.storage.local.set({ deviceId: sync.deviceId });
+    return sync.deviceId;
+  }
+  // 3. Згенерувати новий, зберегти в обидва сховища
+  const newId = CryptoUtils.generateDeviceId();
+  await chrome.storage.local.set({ deviceId: newId });
+  await chrome.storage.sync.set({ deviceId: newId });
+  return newId;
+}
+
 // Ініціалізація при встановленні extension
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('Розширення Chartex встановлено:', details.reason);
-  
   if (details.reason === 'install') {
     try {
-      // Згенерувати унікальні ідентифікатори
-      deviceId = CryptoUtils.generateDeviceId();
+      // === Стабільна ініціалізація deviceId ===
+      deviceId = await getOrCreateStableDeviceId();
       sessionId = CryptoUtils.generateSessionId();
       encryptionKey = CryptoUtils.generateKey();
-      
-      // Зберегти в локальному сховищі
       await chrome.storage.local.set({
         deviceId,
         encryptionKey,
@@ -564,8 +640,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         isFirstRun: true,
         installDate: Date.now()
       });
-      
-      console.log('Розширення ініціалізовано з новими ідентифікаторами');
+      // Також оновити у sync
+      await chrome.storage.sync.set({ deviceId });
+      console.log('Розширення ініціалізовано з deviceId:', deviceId);
     } catch (error) {
       console.error('Помилка ініціалізації розширення:', error);
     }
@@ -613,32 +690,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // Ініціалізація при запуску
 chrome.runtime.onStartup.addListener(async () => {
   console.log('Розширення Chartex запущено');
-  
   try {
-    // Завантажити збережені дані
-    const data = await chrome.storage.local.get(['deviceId', 'encryptionKey', 'sessionId', 'user']);
-    if (data.deviceId) {
-      deviceId = data.deviceId;
-      encryptionKey = data.encryptionKey;
-      sessionId = data.sessionId || CryptoUtils.generateSessionId();
-      
-      console.log('Дані розширення відновлено');
-    } else {
-      // Якщо дані відсутні, згенерувати нові
-      deviceId = CryptoUtils.generateDeviceId();
-      encryptionKey = CryptoUtils.generateKey();
-      sessionId = CryptoUtils.generateSessionId();
-      
-      await chrome.storage.local.set({
-        deviceId,
-        encryptionKey,
-        sessionId
-      });
-      
-      console.log('Згенеровано нові ідентифікатори');
+    // === Стабільна ініціалізація deviceId ===
+    deviceId = await getOrCreateStableDeviceId();
+    // Завантажити інші дані
+    const data = await chrome.storage.local.get(['encryptionKey', 'sessionId', 'user']);
+    encryptionKey = data.encryptionKey;
+    sessionId = data.sessionId || CryptoUtils.generateSessionId();
+    if (!data.sessionId) {
+      await chrome.storage.local.set({ sessionId });
     }
-    
-    // Перевірити стан авторизації
+    console.log('Дані розширення відновлено, deviceId:', deviceId);
     if (data.user) {
       console.log('Відновлення сесії користувача:', data.user.email);
     }

@@ -115,6 +115,11 @@ export class ApiService {
 
   // Метод для встановлення ключа шифрування
   setEncryptionKey(key: string) {
+    console.log('Встановлення ключа шифрування:', { 
+      hasKey: !!key, 
+      keyLength: key?.length,
+      keyPreview: key?.substring(0, 10) + '...'
+    });
     this.encryptionKey = key;
     localStorage.setItem('chartex_encryption_key', key);
   }
@@ -132,8 +137,8 @@ export class ApiService {
         encryptedDataLength: encryptedData?.length 
       });
       
-      // Просте дешифрування (аналогічно extension/crypto-utils.js)
-      const decrypted = atob(encryptedData);
+      // Використовуємо той самий алгоритм, що й в extension
+      const decrypted = this.base64ToUtf8(encryptedData);
       const parts = decrypted.split('|');
       
       console.log('Дешифровані частини:', { 
@@ -150,6 +155,24 @@ export class ApiService {
     } catch (error) {
       console.error('Помилка дешифрування:', error);
       return undefined;
+    }
+  }
+  
+  // Безпечне декодування Base64 в Unicode (аналогічно extension)
+  private base64ToUtf8(base64: string): string {
+    try {
+      // Для браузера використовуємо TextDecoder
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const decoder = new TextDecoder();
+      return decoder.decode(bytes);
+    } catch (error) {
+      console.error('Base64 to UTF8 error:', error);
+      // Fallback для старих браузерів
+      return decodeURIComponent(escape(atob(base64)));
     }
   }
 
@@ -185,11 +208,31 @@ export class ApiService {
   } = {}): Promise<HistoryStats> {
     const stats = await this.getUserStats(params);
     
+    console.log('Отримана статистика для дешифрування:', {
+      hasStats: !!stats,
+      topDomainsCount: stats.topDomains?.length || 0,
+      hasEncryptionKey: !!this.encryptionKey
+    });
+    
     // Дешифрувати дані для топ доменів
-    const topDomainsWithDecryptedData = stats.topDomains.map(domain => ({
-      ...domain,
-      decryptedData: domain.encryptedData ? this.decryptData(domain.encryptedData) : undefined
-    }));
+    const topDomainsWithDecryptedData = stats.topDomains.map((domain, index) => {
+      console.log(`Дешифрування домену ${index + 1}:`, {
+        hasEncryptedData: !!domain.encryptedData,
+        encryptedDataLength: domain.encryptedData?.length
+      });
+      
+      const decryptedData = domain.encryptedData ? this.decryptData(domain.encryptedData) : undefined;
+      
+      console.log(`Результат дешифрування ${index + 1}:`, {
+        success: !!decryptedData,
+        decryptedUrl: decryptedData?.url
+      });
+      
+      return {
+        ...domain,
+        decryptedData
+      };
+    });
 
     return {
       ...stats,
@@ -393,6 +436,11 @@ export class ApiService {
   } = {}): Promise<HistoryStats> {
     const headers = await this.getHeaders();
     const httpParams = new HttpParams({ fromObject: params as any });
+    
+    console.log('API getUserStats params:', params);
+    console.log('API getUserStats deviceId:', params.deviceId);
+    console.log('API getUserStats hasDeviceId:', !!params.deviceId);
+    console.log('API getUserStats URL:', `${this.API_BASE_URL}/users/stats`);
     
     return this.http.get<HistoryStats>(
       `${this.API_BASE_URL}/users/stats`,

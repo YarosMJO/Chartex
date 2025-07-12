@@ -110,9 +110,9 @@ router.delete('/account', authenticateToken, async (req, res) => {
 router.get('/stats', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.uid;
-    const { period = '30d' } = req.query; // 7d, 30d, 90d, 1y, all
+    const { period = '30d', deviceId } = req.query; // 7d, 30d, 90d, 1y, all
     
-    console.log('Запит статистики користувача:', { userId, period });
+    console.log('Запит статистики користувача:', { userId, period, deviceId });
     
     let dateFilter = {};
     if (period !== 'all') {
@@ -120,10 +120,16 @@ router.get('/stats', authenticateToken, async (req, res) => {
       dateFilter.visitTime = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
     }
     
-    console.log('Фільтр по даті:', dateFilter);
+    // Додаємо фільтр по пристрою, якщо вказано
+    let deviceFilter = {};
+    if (deviceId && deviceId !== 'undefined') {
+      deviceFilter.deviceId = deviceId;
+    }
+    
+    console.log('Фільтри:', { dateFilter, deviceFilter });
     
     const stats = await HistoryItem.aggregate([
-      { $match: { userId, ...dateFilter } },
+      { $match: { userId, ...dateFilter, ...deviceFilter } },
       {
         $group: {
           _id: null,
@@ -148,14 +154,14 @@ router.get('/stats', authenticateToken, async (req, res) => {
     
     // Отримати топ доменів з зашифрованими даними для дешифрування
     const topDomains = await HistoryItem.aggregate([
-      { $match: { userId, ...dateFilter } },
+      { $match: { userId, ...dateFilter, ...deviceFilter } },
       {
         $group: {
           _id: '$domainHash',
           visits: { $sum: 1 },
           totalDuration: { $sum: '$duration' },
           // Зберігаємо зашифровані дані для дешифрування
-          encryptedData: { $first: '$encryptedData' }
+          encryptedData: { $last: '$encryptedData' }
         }
       },
       { $sort: { visits: -1 } },
@@ -163,6 +169,12 @@ router.get('/stats', authenticateToken, async (req, res) => {
     ]);
     
     console.log('Топ доменів:', topDomains.length);
+    console.log('Результат статистики:', {
+      period,
+      deviceId,
+      stats: stats[0] || { totalVisits: 0, uniqueDomains: 0, totalDuration: 0, avgDuration: 0 },
+      topDomainsCount: topDomains.length
+    });
     
     res.json({
       period,

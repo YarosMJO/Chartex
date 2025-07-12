@@ -3,7 +3,7 @@ const config = {
   // API URL для різних середовищ
   api: {
     development: 'http://localhost:5000/api',
-    production: 'https://your-production-api-url.com/api' // Оновіть на реальний URL
+    production: 'http://localhost:5000/api' // Використовуємо localhost для тестування
   },
   
   // Firebase конфігурація
@@ -19,8 +19,8 @@ const config = {
   
   // Налаштування збору даних
   collection: {
-    batchSize: 50,
-    batchTimeout: 5000, // 5 секунд
+    batchSize: 10,
+    batchTimeout: 1000, // 1 секунда
     historyDays: 7 // Кількість днів історії для збору
   },
   
@@ -53,10 +53,10 @@ if (typeof module !== 'undefined' && module.exports) {
     apiUrl: isDevelopment ? config.api.development : config.api.production
   };
 } else {
-  // Для Service Worker
+  // Для Service Worker - використовуємо development для тестування
   self.chartexConfig = {
     ...config,
-    environment: 'development', // Service Worker завжди в development режимі
+    environment: 'development',
     apiUrl: config.api.development
   };
 } 

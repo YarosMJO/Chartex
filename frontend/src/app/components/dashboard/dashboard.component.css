@@ -293,6 +293,13 @@
   color: #333;
 }
 
+.device-id {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
