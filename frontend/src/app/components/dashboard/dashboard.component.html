@@ -7,11 +7,7 @@
         <span>Вітаємо, {{ currentUser.displayName || currentUser.email }}!</span>
         <button mat-icon-button [matMenuTriggerFor]="userMenu">
           <ng-container *ngIf="currentUser?.photoURL; else showIcon">
-            <img [src]="currentUser.photoURL"
-                 alt="Google профіль"
-                 class="user-avatar"
-                 width="32" height="32"
-                 style="border-radius: 50%; object-fit: cover;" />
+            <img [src]="currentUser.photoURL" alt="Google профіль" class="user-avatar" width="32" height="32" />
           </ng-container>
           <ng-template #showIcon>
             <mat-icon>account_circle</mat-icon>
@@ -49,7 +45,6 @@
               <mat-option value="all">Весь час</mat-option>
             </mat-select>
           </mat-form-field>
-
           <mat-form-field appearance="outline">
             <mat-label>Пристрій</mat-label>
             <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
@@ -97,7 +92,6 @@
           </div>
         </mat-card-content>
       </mat-card>
-
       <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
@@ -109,7 +103,6 @@
           </div>
         </mat-card-content>
       </mat-card>
-
       <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
@@ -121,7 +114,6 @@
           </div>
         </mat-card-content>
       </mat-card>
-
       <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
@@ -137,7 +129,6 @@
 
     <!-- Графіки -->
     <div class="charts-grid">
-      <!-- Графік активності -->
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>Активність за {{ getPeriodLabel(selectedPeriod) }}</mat-card-title>
@@ -155,8 +146,6 @@
           </apx-chart>
         </mat-card-content>
       </mat-card>
-
-      <!-- Топ доменів -->
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>Топ сайтів</mat-card-title>

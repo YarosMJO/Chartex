@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -14,7 +14,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
-import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard',
@@ -38,7 +37,7 @@ import { NgZone } from '@angular/core';
   ]
 })
 export class DashboardComponent implements OnInit {
-  currentUser: any | null = null;
+  currentUser: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null = null;
   userStats: HistoryStats | null = null;
   devices: Device[] = [];
   selectedPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
@@ -47,15 +46,15 @@ export class DashboardComponent implements OnInit {
   error: string | null = null;
 
   // Дані для графіків
-  activityChartData: any[] = [];
-  topDomainsData: any[] = [];
-  deviceStatsData: any[] = [];
+  activityChartData: { x: string; y: number }[] = [];
+  topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
+  deviceStatsData: { name: string; visits: number; duration: number }[] = [];
 
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
-    private ngZone: NgZone // Для форсованого оновлення UI
-  ) { }
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
     this.authService.getUser().subscribe(async user => {
@@ -67,9 +66,7 @@ export class DashboardComponent implements OnInit {
           this.ngZone.run(() => {
             if (encryptionKey) {
               this.apiService.setEncryptionKey(encryptionKey);
-              console.log('Ключ шифрування встановлено в API сервіс');
             } else {
-              console.warn('Ключ шифрування не знайдено - дані будуть показані як хеші');
               this.error = 'Ключ шифрування не знайдено - дані будуть показані як хеші';
               this.loading = false;
               return;
@@ -77,7 +74,6 @@ export class DashboardComponent implements OnInit {
           });
         } catch (error) {
           this.ngZone.run(() => {
-            console.error('Помилка отримання ключа шифрування:', error);
             this.error = 'Помилка отримання ключа шифрування';
             this.loading = false;
           });
@@ -92,6 +88,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Ініціалізація дашборду: завантаження статистики та пристроїв
   async initializeDashboard() {
     try {
       this.ngZone.run(() => {
@@ -119,16 +116,15 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Завантаження статистики користувача
   async loadUserStats() {
     try {
-      console.log('Завантаження статистики користувача...');
-      const params: any = {
+      const params: { period: '7d' | '30d' | '90d' | '1y' | 'all'; deviceId?: string } = {
         period: this.selectedPeriod
       };
       if (this.selectedDevice !== 'all') {
         params.deviceId = this.selectedDevice;
       }
-      console.log('Dashboard loadUserStats params:', params);
       const stats = await this.apiService.getUserStatsWithDecryptedData(params);
       this.ngZone.run(() => {
         this.userStats = stats;
@@ -136,20 +132,18 @@ export class DashboardComponent implements OnInit {
           this.error = 'Дані статистики не отримано.';
           return;
         }
-        console.log('Отримана статистика:', this.userStats);
         this.prepareChartData();
       });
     } catch (error) {
       this.ngZone.run(() => {
-        console.error('Помилка завантаження статистики:', error);
         this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
       });
     }
   }
 
+  // Завантаження пристроїв користувача
   async loadDevices() {
     try {
-      console.log('Завантаження пристроїв...');
       const devices = await this.apiService.getDevices();
       this.ngZone.run(() => {
         this.devices = devices;
@@ -157,20 +151,18 @@ export class DashboardComponent implements OnInit {
           this.error = 'Дані пристроїв не отримано.';
           return;
         }
-        console.log('Отримані пристрої:', this.devices);
       });
     } catch (error) {
       this.ngZone.run(() => {
-        console.error('Помилка завантаження пристроїв:', error);
         this.error = 'Помилка завантаження пристроїв: ' + (error instanceof Error ? error.message : String(error));
       });
     }
   }
 
+  // Підготовка даних для графіків
   prepareChartData() {
     if (!this.userStats) return;
-
-    // Функція для отримання домену з URL
+    // Отримати домен з URL
     const getDomainFromUrl = (url: string): string => {
       try {
         const urlObj = new URL(url);
@@ -179,22 +171,19 @@ export class DashboardComponent implements OnInit {
         return url;
       }
     };
-
-    // Підготувати дані для графіка активності з дешифрованими URL
+    // Дані для графіка активності
     this.activityChartData = this.userStats.topDomains.map(domain => ({
       x: domain.decryptedData?.url ? getDomainFromUrl(domain.decryptedData.url) : domain._id,
       y: domain.visits
     }));
-
-    // Підготувати дані для топ доменів з дешифрованими URL
+    // Дані для топ доменів
     this.topDomainsData = this.userStats.topDomains.slice(0, 10).map(domain => ({
-      name: domain.decryptedData?.url || domain._id, // Повний URL
-      title: domain.decryptedData?.title || getDomainFromUrl(domain._id), // Заголовок або домен
+      name: domain.decryptedData?.url || domain._id,
+      title: domain.decryptedData?.title || getDomainFromUrl(domain._id),
       visits: domain.visits,
       duration: domain.totalDuration
     }));
-
-    // Підготувати дані для статистики пристроїв
+    // Дані для статистики пристроїв
     this.deviceStatsData = this.devices.map(device => ({
       name: device.deviceName,
       visits: device.stats?.totalVisits || 0,
@@ -202,41 +191,17 @@ export class DashboardComponent implements OnInit {
     }));
   }
 
+  // Зміна періоду
   async onPeriodChange() {
     await this.loadUserStats();
   }
 
+  // Зміна пристрою
   async onDeviceChange() {
     await this.loadUserStats();
   }
 
-  async loginWithGoogle() {
-    try {
-      console.log('Натиснуто кнопку Google Login');
-      (window as any).chrome.runtime.sendMessage(
-        { action: 'getGoogleIdToken' },
-        (response: any) => {
-          console.log('Відповідь від background:', response);
-          if (response && response.idToken) {
-            this.authService.loginWithGoogleCredential(response.idToken).subscribe({
-              next: (res) => {
-                console.log('Успішний вхід:', res);
-              },
-              error: (err) => {
-                alert('Помилка входу через Google: ' + (err?.message || err));
-              }
-            });
-          } else {
-            alert('Не вдалося отримати токен Google');
-          }
-        }
-      );
-    } catch (error) {
-      console.error('Помилка входу через Google:', error);
-      alert('Помилка входу через Google: ' + error);
-    }
-  }
-
+  // Форматування часу для UI
   formatDuration(seconds: number): string {
     if (seconds < 60) return `${seconds}с`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}хв`;
@@ -245,20 +210,22 @@ export class DashboardComponent implements OnInit {
     return `${hours}год ${minutes}хв`;
   }
 
+  // Форматування чисел для UI
   formatNumber(num: number): string {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
   }
 
+  // Отримати підпис для періоду
   getPeriodLabel(period: string): string {
-    const labels = {
+    const labels: Record<string, string> = {
       '7d': '7 днів',
       '30d': '30 днів',
       '90d': '90 днів',
       '1y': '1 рік',
       'all': 'Весь час'
     };
-    return labels[period as keyof typeof labels] || period;
+    return labels[period] || period;
   }
 } 
