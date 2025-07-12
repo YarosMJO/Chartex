@@ -14,6 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,64 +52,70 @@ export class DashboardComponent implements OnInit {
   deviceStatsData: any[] = [];
 
   constructor(
-    public authService: AuthService, 
-    private apiService: ApiService
-  ) {}
+    public authService: AuthService,
+    private apiService: ApiService,
+    private ngZone: NgZone // Для форсованого оновлення UI
+  ) { }
 
   ngOnInit() {
     this.authService.getUser().subscribe(async user => {
       this.currentUser = user;
       if (this.currentUser) {
         this.error = null;
-        
-        // Отримати ключ шифрування з extension
         try {
           const encryptionKey = await this.authService.getEncryptionKey();
-          console.log('Отримано ключ шифрування:', { 
-            hasKey: !!encryptionKey, 
-            keyLength: encryptionKey?.length,
-            keyPreview: encryptionKey?.substring(0, 10) + '...'
+          this.ngZone.run(() => {
+            if (encryptionKey) {
+              this.apiService.setEncryptionKey(encryptionKey);
+              console.log('Ключ шифрування встановлено в API сервіс');
+            } else {
+              console.warn('Ключ шифрування не знайдено - дані будуть показані як хеші');
+              this.error = 'Ключ шифрування не знайдено - дані будуть показані як хеші';
+              this.loading = false;
+              return;
+            }
           });
-          
-          if (encryptionKey) {
-            this.apiService.setEncryptionKey(encryptionKey);
-            console.log('Ключ шифрування встановлено в API сервіс');
-          } else {
-            console.warn('Ключ шифрування не знайдено - дані будуть показані як хеші');
-          }
         } catch (error) {
-          console.error('Помилка отримання ключа шифрування:', error);
+          this.ngZone.run(() => {
+            console.error('Помилка отримання ключа шифрування:', error);
+            this.error = 'Помилка отримання ключа шифрування';
+            this.loading = false;
+          });
         }
-        
         this.initializeDashboard();
       } else {
-        this.error = 'Користувач не авторизований';
+        this.ngZone.run(() => {
+          this.error = 'Користувач не авторизований';
+          this.loading = false;
+        });
       }
     });
   }
 
   async initializeDashboard() {
     try {
-      this.loading = true;
-      this.error = null;
-
+      this.ngZone.run(() => {
+        this.loading = true;
+        this.error = null;
+      });
       if (!this.currentUser) {
-        this.error = 'Користувач не авторизований';
-        this.loading = false;
+        this.ngZone.run(() => {
+          this.error = 'Користувач не авторизований';
+        });
         return;
       }
-
-      // Завантажити дані паралельно
       await Promise.all([
         this.loadUserStats(),
         this.loadDevices()
       ]);
-
     } catch (error) {
-      console.error('Помилка ініціалізації dashboard:', error);
-      this.error = 'Помилка завантаження даних: ' + (error instanceof Error ? error.message : String(error));
+      this.ngZone.run(() => {
+        this.error = 'Помилка завантаження даних: ' + (error instanceof Error ? error.message : String(error));
+      });
     } finally {
-      this.loading = false;
+      this.ngZone.run(() => {
+        this.loading = false;
+      });
     }
   }
 
@@ -122,35 +129,41 @@ export class DashboardComponent implements OnInit {
         params.deviceId = this.selectedDevice;
       }
       console.log('Dashboard loadUserStats params:', params);
-      this.userStats = await this.apiService.getUserStatsWithDecryptedData(params);
-      if (!this.userStats || !this.userStats.stats) {
-        this.error = 'Дані статистики не отримано.';
-        this.loading = false;
-        return;
-      }
-      console.log('Отримана статистика:', this.userStats);
-      this.prepareChartData();
+      const stats = await this.apiService.getUserStatsWithDecryptedData(params);
+      this.ngZone.run(() => {
+        this.userStats = stats;
+        if (!this.userStats || !this.userStats.stats) {
+          this.error = 'Дані статистики не отримано.';
+          return;
+        }
+        console.log('Отримана статистика:', this.userStats);
+        this.prepareChartData();
+      });
     } catch (error) {
-      console.error('Помилка завантаження статистики:', error);
-      this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
-      this.loading = false;
+      this.ngZone.run(() => {
+        console.error('Помилка завантаження статистики:', error);
+        this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
+      });
     }
   }
 
   async loadDevices() {
     try {
       console.log('Завантаження пристроїв...');
-      this.devices = await this.apiService.getDevices();
-      if (!this.devices) {
-        this.error = 'Дані пристроїв не отримано.';
-        this.loading = false;
-        return;
-      }
-      console.log('Отримані пристрої:', this.devices);
+      const devices = await this.apiService.getDevices();
+      this.ngZone.run(() => {
+        this.devices = devices;
+        if (!this.devices) {
+          this.error = 'Дані пристроїв не отримано.';
+          return;
+        }
+        console.log('Отримані пристрої:', this.devices);
+      });
     } catch (error) {
-      console.error('Помилка завантаження пристроїв:', error);
-      this.error = 'Помилка завантаження пристроїв: ' + (error instanceof Error ? error.message : String(error));
-      this.loading = false;
+      this.ngZone.run(() => {
+        console.error('Помилка завантаження пристроїв:', error);
+        this.error = 'Помилка завантаження пристроїв: ' + (error instanceof Error ? error.message : String(error));
+      });
     }
   }
 
@@ -241,7 +254,7 @@ export class DashboardComponent implements OnInit {
   getPeriodLabel(period: string): string {
     const labels = {
       '7d': '7 днів',
-      '30d': '30 днів', 
+      '30d': '30 днів',
       '90d': '90 днів',
       '1y': '1 рік',
       'all': 'Весь час'
