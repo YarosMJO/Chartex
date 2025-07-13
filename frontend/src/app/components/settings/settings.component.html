@@ -5,7 +5,7 @@
       <button mat-icon-button (click)="goBack()" class="back-button">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <h1>⚙️ Налаштування</h1>
+      <h1>⚙️ {{ 'SETTINGS.TITLE' | translate }}</h1>
       <div class="user-info" *ngIf="currentUser">
         <span>{{ currentUser.displayName || currentUser.email }}</span>
         <button mat-icon-button [matMenuTriggerFor]="userMenu">
@@ -19,12 +19,28 @@
         <mat-menu #userMenu="matMenu">
           <button mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
-            <span>Вийти</span>
+            <span>{{ 'DASHBOARD.LOGOUT' | translate }}</span>
           </button>
         </mat-menu>
       </div>
     </div>
   </mat-toolbar>
+
+  <!-- Індикатор завантаження -->
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner></mat-spinner>
+    <p>{{ 'COMMON.LOADING' | translate }}</p>
+  </div>
+
+  <!-- Індикатор незбережених змін -->
+  <div *ngIf="hasUnsavedChanges" class="unsaved-changes-banner">
+    <mat-icon>warning</mat-icon>
+    <span>{{ 'SETTINGS.UNSAVED_CHANGES' | translate }}</span>
+    <button mat-raised-button color="primary" (click)="saveSettings()">
+      <mat-icon>save</mat-icon>
+      {{ 'COMMON.SAVE' | translate }}
+    </button>
+  </div>
 
   <!-- Основний контент -->
   <div class="settings-content">
@@ -34,18 +50,18 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon>data_usage</mat-icon>
-            Збір даних
+            {{ 'SETTINGS.DATA_COLLECTION' | translate }}
           </mat-card-title>
           <mat-card-subtitle>
-            Налаштування збору та обробки ваших даних для аналітики
+            {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Увімкнути збір даних</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
               <div class="setting-description">
-                Дозволити extension збирати дані про ваші відвідування сайтів
+                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -58,9 +74,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">Збирати історію відвідувань</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
               <div class="setting-description">
-                Зберігати URL та час відвідування сайтів
+                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -74,9 +90,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">Збирати інформацію про пристрій</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
               <div class="setting-description">
-                Зберігати тип пристрою, браузер та операційну систему
+                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -90,9 +106,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">Збирати заголовки сторінок</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
               <div class="setting-description">
-                Зберігати назви сторінок для кращого відображення
+                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -106,9 +122,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">Збирати тривалість відвідувань</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
               <div class="setting-description">
-                Вимірювати час, проведений на кожному сайті
+                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -125,18 +141,18 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon>security</mat-icon>
-            Приватність
+            {{ 'SETTINGS.PRIVACY' | translate }}
           </mat-card-title>
           <mat-card-subtitle>
-            Налаштування безпеки та приватності ваших даних
+            {{ 'SETTINGS.ENABLE_ANALYTICS_DESC' | translate }}
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Шифрувати дані</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_ANALYTICS' | translate }}</div>
               <div class="setting-description">
-                Захищати ваші дані за допомогою шифрування
+                {{ 'SETTINGS.ENABLE_ANALYTICS_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -149,9 +165,9 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Надсилати анонімну статистику</div>
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_ANALYTICS' | translate }}</div>
               <div class="setting-description">
-                Допомогти покращити extension (без особистих даних)
+                {{ 'SETTINGS.ENABLE_ANALYTICS_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -164,9 +180,9 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Показувати інформацію про пристрої</div>
+              <div class="setting-label">{{ 'SETTINGS.SHOW_DEVICES' | translate }}</div>
               <div class="setting-description">
-                Відображати детальну інформацію про пристрої в статистиці
+                {{ 'SETTINGS.SHOW_DEVICES_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -182,25 +198,24 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon>display_settings</mat-icon>
-            Відображення
+            {{ 'SETTINGS.DISPLAY' | translate }}
           </mat-card-title>
           <mat-card-subtitle>
-            Налаштування інтерфейсу та форматування відображення
+            {{ 'SETTINGS.SHOW_DETAILS_DESC' | translate }}
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Мова інтерфейсу</div>
+              <div class="setting-label">{{ 'SETTINGS.LANGUAGE' | translate }}</div>
               <div class="setting-description">
-                Виберіть мову для відображення
+                {{ 'SETTINGS.SHOW_DETAILS_DESC' | translate }}
               </div>
             </div>
             <mat-form-field appearance="outline">
-              <mat-select [(ngModel)]="displaySettings.language" (selectionChange)="onSettingChange()">
+              <mat-select [(ngModel)]="displaySettings.language" (selectionChange)="onLanguageChange()">
                 <mat-option value="uk">Українська</mat-option>
                 <mat-option value="en">English</mat-option>
-                <mat-option value="ru">Русский</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
@@ -209,16 +224,16 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Тема</div>
+              <div class="setting-label">{{ 'SETTINGS.THEME' | translate }}</div>
               <div class="setting-description">
-                Виберіть тему інтерфейсу
+                {{ 'SETTINGS.SHOW_DETAILS_DESC' | translate }}
               </div>
             </div>
             <mat-form-field appearance="outline">
               <mat-select [(ngModel)]="displaySettings.theme" (selectionChange)="onSettingChange()">
-                <mat-option value="light">Світла</mat-option>
-                <mat-option value="dark">Темна</mat-option>
-                <mat-option value="auto">Автоматично</mat-option>
+                <mat-option value="light">{{ 'SETTINGS.LIGHT' | translate }}</mat-option>
+                <mat-option value="dark">{{ 'SETTINGS.DARK' | translate }}</mat-option>
+                <mat-option value="auto">{{ 'SETTINGS.AUTO' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
@@ -227,52 +242,107 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Формат часу</div>
+              <div class="setting-label">{{ 'SETTINGS.SHOW_DURATION' | translate }}</div>
               <div class="setting-description">
-                Виберіть формат відображення часу
+                {{ 'SETTINGS.SHOW_DURATION_DESC' | translate }}
               </div>
             </div>
-            <mat-form-field appearance="outline">
-              <mat-select [(ngModel)]="displaySettings.timeFormat" (selectionChange)="onSettingChange()">
-                <mat-option value="24h">24-годинний</mat-option>
-                <mat-option value="12h">12-годинний</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <mat-slide-toggle 
+              [(ngModel)]="displaySettings.showDuration"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
           </div>
 
           <mat-divider></mat-divider>
 
           <div class="setting-item">
             <div class="setting-info">
-              <div class="setting-label">Формат дати</div>
+              <div class="setting-label">{{ 'SETTINGS.SHOW_CHARTS' | translate }}</div>
               <div class="setting-description">
-                Виберіть формат відображення дати
+                {{ 'SETTINGS.SHOW_CHARTS_DESC' | translate }}
               </div>
             </div>
-            <mat-form-field appearance="outline">
-              <mat-select [(ngModel)]="displaySettings.dateFormat" (selectionChange)="onSettingChange()">
-                <mat-option value="dd.mm.yyyy">ДД.ММ.РРРР</mat-option>
-                <mat-option value="mm/dd/yyyy">ММ/ДД/РРРР</mat-option>
-                <mat-option value="yyyy-mm-dd">РРРР-ММ-ДД</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <mat-slide-toggle 
+              [(ngModel)]="displaySettings.showCharts"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
+
+    <!-- Інформація про extension -->
+    <mat-card class="settings-card" *ngIf="checkExtensionStatus()">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>extension</mat-icon>
+          Chrome Extension
+        </mat-card-title>
+        <mat-card-subtitle>
+          Статус та інформація про extension
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="extension-info" *ngIf="getExtensionInfo() as extInfo">
+          <div class="info-item">
+            <span class="label">Назва:</span>
+            <span class="value">{{ extInfo.name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Версія:</span>
+            <span class="value">{{ extInfo.version }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Опис:</span>
+            <span class="value">{{ extInfo.description }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Статус:</span>
+            <span class="value status-connected">
+              <mat-icon>check_circle</mat-icon>
+              Підключено
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
 
     <!-- Кнопки дій -->
     <div class="actions-section">
       <mat-card class="actions-card">
         <mat-card-content>
           <div class="actions-row">
+            <button mat-raised-button color="accent" (click)="exportSettings()">
+              <mat-icon>file_download</mat-icon>
+              {{ 'SETTINGS.EXPORT_SETTINGS' | translate }}
+            </button>
+            <button mat-raised-button color="accent" (click)="fileInput.click()">
+              <mat-icon>file_upload</mat-icon>
+              {{ 'SETTINGS.IMPORT_SETTINGS' | translate }}
+            </button>
+            <button mat-raised-button color="primary" (click)="testExtensionConnection()">
+              <mat-icon>wifi</mat-icon>
+              {{ 'SETTINGS.TEST_CONNECTION' | translate }}
+            </button>
+            <input 
+              #fileInput 
+              type="file" 
+              accept=".json" 
+              style="display: none;" 
+              (change)="importSettings($event)">
+          </div>
+          <div class="actions-row">
+            <button mat-raised-button color="warn" (click)="clearData()">
+              <mat-icon>delete_forever</mat-icon>
+              {{ 'SETTINGS.CLEAR_DATA' | translate }}
+            </button>
             <button mat-raised-button color="warn" (click)="resetSettings()">
               <mat-icon>restore</mat-icon>
-              Скинути налаштування
+              {{ 'SETTINGS.RESET_SETTINGS' | translate }}
             </button>
             <button mat-raised-button color="primary" (click)="saveSettings()">
               <mat-icon>save</mat-icon>
-              Зберегти зміни
+              {{ 'SETTINGS.SAVE_SETTINGS' | translate }}
             </button>
           </div>
         </mat-card-content>

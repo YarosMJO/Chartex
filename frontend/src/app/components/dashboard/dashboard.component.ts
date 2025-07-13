@@ -11,7 +11,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
@@ -35,7 +37,9 @@ import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '
     MatInputModule,
     MatDividerModule,
     NgApexchartsModule,
-    MatMenuModule
+    MatMenuModule,
+    TranslateModule,
+    MatSnackBarModule,
   ]
 })
 export class DashboardComponent implements OnInit {

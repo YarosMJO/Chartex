@@ -453,4 +453,14 @@ export class ApiService {
       { headers }
     ).toPromise() as Promise<any>;
   }
+
+  // Очищення всіх даних користувача
+  async clearUserData(): Promise<{ success: boolean; deletedCount: number }> {
+    const headers = await this.getHeaders();
+    
+    return this.http.delete<{ success: boolean; deletedCount: number }>(
+      `${this.API_BASE_URL}/users/data`,
+      { headers }
+    ).toPromise() as Promise<{ success: boolean; deletedCount: number }>;
+  }
 } 

@@ -2,9 +2,9 @@
   <!-- Заголовок -->
   <mat-toolbar class="dashboard-header">
     <div class="header-content">
-      <h1>📊 Chartex Dashboard</h1>
+      <h1>{{ 'DASHBOARD.TITLE' | translate }}</h1>
       <div class="user-info" *ngIf="currentUser">
-        <span>Вітаємо, {{ currentUser.displayName || currentUser.email }}!</span>
+        <span>{{ 'DASHBOARD.WELCOME' | translate:{name: currentUser.displayName || currentUser.email} }}</span>
         <button mat-icon-button [matMenuTriggerFor]="userMenu">
           <ng-container *ngIf="currentUser?.photoURL; else showIcon">
             <img [src]="currentUser.photoURL" alt="Google профіль" class="user-avatar" width="32" height="32" />
@@ -16,16 +16,16 @@
         <mat-menu #userMenu="matMenu">
           <button mat-menu-item (click)="openSettings()">
             <mat-icon>settings</mat-icon>
-            <span>Налаштування</span>
+            <span>{{ 'DASHBOARD.SETTINGS' | translate }}</span>
           </button>
           <button mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
-            <span>Вийти</span>
+            <span>{{ 'DASHBOARD.LOGOUT' | translate }}</span>
           </button>
         </mat-menu>
       </div>
       <button *ngIf="!currentUser" (click)="loginWithGoogle()" class="login-btn">
-        Увійти через Google
+        {{ 'DASHBOARD.LOGIN_GOOGLE' | translate }}
       </button>
     </div>
   </mat-toolbar>
@@ -36,19 +36,19 @@
       <mat-card-content>
         <div class="filters-row">
           <mat-form-field appearance="outline">
-            <mat-label>Період</mat-label>
+            <mat-label>{{ 'DASHBOARD.PERIOD' | translate }}</mat-label>
             <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
-              <mat-option value="7d">7 днів</mat-option>
-              <mat-option value="30d">30 днів</mat-option>
-              <mat-option value="90d">90 днів</mat-option>
-              <mat-option value="1y">1 рік</mat-option>
-              <mat-option value="all">Весь час</mat-option>
+              <mat-option value="7d">{{ 'DASHBOARD.PERIODS.7D' | translate }}</mat-option>
+              <mat-option value="30d">{{ 'DASHBOARD.PERIODS.30D' | translate }}</mat-option>
+              <mat-option value="90d">{{ 'DASHBOARD.PERIODS.90D' | translate }}</mat-option>
+              <mat-option value="1y">{{ 'DASHBOARD.PERIODS.1Y' | translate }}</mat-option>
+              <mat-option value="all">{{ 'DASHBOARD.PERIODS.ALL' | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Пристрій</mat-label>
+            <mat-label>{{ 'DASHBOARD.DEVICE' | translate }}</mat-label>
             <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
-              <mat-option value="all">Всі пристрої</mat-option>
+              <mat-option value="all">{{ 'DASHBOARD.ALL_DEVICES' | translate }}</mat-option>
               <mat-option *ngFor="let device of devices" [value]="device.deviceId">
                 {{ device.deviceName }}
               </mat-option>
@@ -74,7 +74,7 @@
   <!-- Завантаження -->
   <div *ngIf="loading" class="loading-container">
     <mat-spinner></mat-spinner>
-    <p>Завантаження даних...</p>
+    <p>{{ 'DASHBOARD.LOADING' | translate }}</p>
   </div>
 
   <!-- Основний контент -->
@@ -87,7 +87,7 @@
             <mat-icon class="stat-icon">visibility</mat-icon>
             <div class="stat-info">
               <div class="stat-value">{{ formatNumber(userStats.stats.totalVisits) }}</div>
-              <div class="stat-label">Відвідувань</div>
+              <div class="stat-label">{{ 'DASHBOARD.STATS.VISITS' | translate }}</div>
             </div>
           </div>
         </mat-card-content>
@@ -98,7 +98,7 @@
             <mat-icon class="stat-icon">language</mat-icon>
             <div class="stat-info">
               <div class="stat-value">{{ formatNumber(userStats.stats.uniqueDomains) }}</div>
-              <div class="stat-label">Унікальних сайтів</div>
+              <div class="stat-label">{{ 'DASHBOARD.STATS.UNIQUE_DOMAINS' | translate }}</div>
             </div>
           </div>
         </mat-card-content>
@@ -109,7 +109,7 @@
             <mat-icon class="stat-icon">schedule</mat-icon>
             <div class="stat-info">
               <div class="stat-value">{{ formatDuration(userStats.stats.totalDuration) }}</div>
-              <div class="stat-label">Загальний час</div>
+              <div class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}</div>
             </div>
           </div>
         </mat-card-content>
@@ -120,7 +120,7 @@
             <mat-icon class="stat-icon">devices</mat-icon>
             <div class="stat-info">
               <div class="stat-value">{{ devices.length }}</div>
-              <div class="stat-label">Пристроїв</div>
+              <div class="stat-label">{{ 'DASHBOARD.STATS.DEVICES' | translate }}</div>
             </div>
           </div>
         </mat-card-content>
@@ -131,7 +131,7 @@
     <div class="charts-grid">
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Активність за {{ getPeriodLabel(selectedPeriod) }}</mat-card-title>
+          <mat-card-title>{{ 'DASHBOARD.CHARTS.ACTIVITY_TITLE' | translate:{period: getPeriodLabel(selectedPeriod)} }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -148,7 +148,7 @@
       </mat-card>
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Топ сайтів</mat-card-title>
+          <mat-card-title>{{ 'DASHBOARD.CHARTS.TOP_SITES' | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div class="top-domains-list">
@@ -162,7 +162,7 @@
                   {{ domain.name }}
                 </div>
                 <div class="domain-stats">
-                  {{ domain.visits }} відвідувань • {{ formatDuration(domain.duration) }}
+                  {{ domain.visits }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }} • {{ formatDuration(domain.duration) }}
                 </div>
               </div>
             </div>
@@ -174,7 +174,7 @@
     <!-- Статистика пристроїв -->
     <mat-card class="devices-card">
       <mat-card-header>
-        <mat-card-title>Статистика пристроїв</mat-card-title>
+        <mat-card-title>{{ 'DASHBOARD.CHARTS.DEVICE_STATS' | translate }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="devices-grid">
@@ -191,11 +191,11 @@
             </div>
             <div class="device-stats">
               <div class="device-stat">
-                <span class="stat-label">Відвідувань:</span>
+                <span class="stat-label">{{ 'DASHBOARD.STATS.VISITS' | translate }}:</span>
                 <span class="stat-value">{{ formatNumber(device.stats?.totalVisits || 0) }}</span>
               </div>
               <div class="device-stat">
-                <span class="stat-label">Час:</span>
+                <span class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}:</span>
                 <span class="stat-value">{{ formatDuration(device.stats?.totalDuration || 0) }}</span>
               </div>
             </div>

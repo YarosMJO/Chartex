@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AppTranslateService } from './translate.service';
 
 export interface DataCollectionSettings {
   enabled: boolean;
@@ -16,10 +17,12 @@ export interface PrivacySettings {
 }
 
 export interface DisplaySettings {
-  language: 'uk' | 'en' | 'ru';
+  language: 'uk' | 'en';
   theme: 'light' | 'dark' | 'auto';
-  timeFormat: '24h' | '12h';
-  dateFormat: 'dd.mm.yyyy' | 'mm/dd/yyyy' | 'yyyy-mm-dd';
+  showDuration: boolean;
+  showDevices: boolean;
+  showCharts: boolean;
+  showDetails: boolean;
 }
 
 export interface AppSettings {
@@ -41,7 +44,7 @@ export class SettingsService {
   private settingsSubject = new BehaviorSubject<AppSettings>(this.getDefaultSettings());
   public settings$ = this.settingsSubject.asObservable();
 
-  constructor() {
+  constructor(private translateService: AppTranslateService) {
     this.loadSettings();
   }
 
@@ -63,8 +66,10 @@ export class SettingsService {
       display: {
         language: 'uk',
         theme: 'light',
-        timeFormat: '24h',
-        dateFormat: 'dd.mm.yyyy'
+        showDuration: true,
+        showDevices: true,
+        showCharts: true,
+        showDetails: true
       }
     };
   }
@@ -83,6 +88,9 @@ export class SettingsService {
       };
 
       this.settingsSubject.next(settings);
+      
+      // Застосувати мову з налаштувань
+      this.translateService.setLanguage(settings.display.language);
     } catch (error) {
       console.error('Помилка завантаження налаштувань:', error);
       this.settingsSubject.next(this.getDefaultSettings());
@@ -103,6 +111,9 @@ export class SettingsService {
       localStorage.setItem(this.STORAGE_KEYS.DISPLAY, JSON.stringify(settings.display));
 
       this.settingsSubject.next(settings);
+
+      // Застосувати мову з налаштувань
+      this.translateService.setLanguage(settings.display.language);
 
       // Відправити налаштування до extension
       this.sendSettingsToExtension(settings);
