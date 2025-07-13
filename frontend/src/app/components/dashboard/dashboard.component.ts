@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
 import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '../../utils/utils';
@@ -54,7 +55,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -199,4 +201,31 @@ export class DashboardComponent implements OnInit {
   formatDuration = formatDuration;
   formatNumber = formatNumber;
   getPeriodLabel = getPeriodLabel;
+
+  // Перехід до налаштувань
+  openSettings() {
+    this.router.navigate(['/settings']);
+  }
+
+  // Вихід з системи
+  logout() {
+    this.authService.logout().subscribe(() => {
+      // Після виходу користувач буде перенаправлений на дашборд
+      // і гвард авторизації автоматично перенаправить на сторінку входу
+      this.currentUser = null;
+      this.userStats = null;
+      this.devices = [];
+      this.error = 'Користувач не авторизований';
+    });
+  }
+
+  // Вхід через Google
+  loginWithGoogle() {
+    // Цей метод буде викликатися з extension
+    if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime) {
+      (window as any).chrome.runtime.sendMessage({ action: 'loginWithGoogle' });
+    } else {
+      this.error = 'Extension не знайдено. Будь ласка, встановіть Chartex extension.';
+    }
+  }
 } 

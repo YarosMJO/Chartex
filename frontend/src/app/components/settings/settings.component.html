@@ -1,0 +1,282 @@
+<div class="settings-container">
+  <!-- Заголовок -->
+  <mat-toolbar class="settings-header">
+    <div class="header-content">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>⚙️ Налаштування</h1>
+      <div class="user-info" *ngIf="currentUser">
+        <span>{{ currentUser.displayName || currentUser.email }}</span>
+        <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <ng-container *ngIf="currentUser?.photoURL; else showIcon">
+            <img [src]="currentUser.photoURL" alt="Google профіль" class="user-avatar" width="32" height="32" />
+          </ng-container>
+          <ng-template #showIcon>
+            <mat-icon>account_circle</mat-icon>
+          </ng-template>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Вийти</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <!-- Основний контент -->
+  <div class="settings-content">
+    <div class="settings-grid">
+      <!-- Налаштування збору даних -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>data_usage</mat-icon>
+            Збір даних
+          </mat-card-title>
+          <mat-card-subtitle>
+            Налаштування збору та обробки ваших даних для аналітики
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Увімкнути збір даних</div>
+              <div class="setting-description">
+                Дозволити extension збирати дані про ваші відвідування сайтів
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.enabled"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+            <div class="setting-info">
+              <div class="setting-label">Збирати історію відвідувань</div>
+              <div class="setting-description">
+                Зберігати URL та час відвідування сайтів
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.collectHistory"
+              [disabled]="!dataCollectionSettings.enabled"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+            <div class="setting-info">
+              <div class="setting-label">Збирати інформацію про пристрій</div>
+              <div class="setting-description">
+                Зберігати тип пристрою, браузер та операційну систему
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.collectDeviceInfo"
+              [disabled]="!dataCollectionSettings.enabled"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+            <div class="setting-info">
+              <div class="setting-label">Збирати заголовки сторінок</div>
+              <div class="setting-description">
+                Зберігати назви сторінок для кращого відображення
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.collectPageTitles"
+              [disabled]="!dataCollectionSettings.enabled"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+            <div class="setting-info">
+              <div class="setting-label">Збирати тривалість відвідувань</div>
+              <div class="setting-description">
+                Вимірювати час, проведений на кожному сайті
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.collectVisitDuration"
+              [disabled]="!dataCollectionSettings.enabled"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Налаштування приватності -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>security</mat-icon>
+            Приватність
+          </mat-card-title>
+          <mat-card-subtitle>
+            Налаштування безпеки та приватності ваших даних
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Шифрувати дані</div>
+              <div class="setting-description">
+                Захищати ваші дані за допомогою шифрування
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="privacySettings.encryptData"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Надсилати анонімну статистику</div>
+              <div class="setting-description">
+                Допомогти покращити extension (без особистих даних)
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="privacySettings.shareAnalytics"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Показувати інформацію про пристрої</div>
+              <div class="setting-description">
+                Відображати детальну інформацію про пристрої в статистиці
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="privacySettings.showDeviceInfo"
+              (change)="onSettingChange()">
+            </mat-slide-toggle>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Налаштування відображення -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>display_settings</mat-icon>
+            Відображення
+          </mat-card-title>
+          <mat-card-subtitle>
+            Налаштування інтерфейсу та форматування відображення
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Мова інтерфейсу</div>
+              <div class="setting-description">
+                Виберіть мову для відображення
+              </div>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="displaySettings.language" (selectionChange)="onSettingChange()">
+                <mat-option value="uk">Українська</mat-option>
+                <mat-option value="en">English</mat-option>
+                <mat-option value="ru">Русский</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Тема</div>
+              <div class="setting-description">
+                Виберіть тему інтерфейсу
+              </div>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="displaySettings.theme" (selectionChange)="onSettingChange()">
+                <mat-option value="light">Світла</mat-option>
+                <mat-option value="dark">Темна</mat-option>
+                <mat-option value="auto">Автоматично</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Формат часу</div>
+              <div class="setting-description">
+                Виберіть формат відображення часу
+              </div>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="displaySettings.timeFormat" (selectionChange)="onSettingChange()">
+                <mat-option value="24h">24-годинний</mat-option>
+                <mat-option value="12h">12-годинний</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Формат дати</div>
+              <div class="setting-description">
+                Виберіть формат відображення дати
+              </div>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="displaySettings.dateFormat" (selectionChange)="onSettingChange()">
+                <mat-option value="dd.mm.yyyy">ДД.ММ.РРРР</mat-option>
+                <mat-option value="mm/dd/yyyy">ММ/ДД/РРРР</mat-option>
+                <mat-option value="yyyy-mm-dd">РРРР-ММ-ДД</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Кнопки дій -->
+    <div class="actions-section">
+      <mat-card class="actions-card">
+        <mat-card-content>
+          <div class="actions-row">
+            <button mat-raised-button color="warn" (click)="resetSettings()">
+              <mat-icon>restore</mat-icon>
+              Скинути налаштування
+            </button>
+            <button mat-raised-button color="primary" (click)="saveSettings()">
+              <mat-icon>save</mat-icon>
+              Зберегти зміни
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div> 

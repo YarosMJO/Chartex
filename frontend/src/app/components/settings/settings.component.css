@@ -1,0 +1,347 @@
+.settings-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.settings-header {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.back-button {
+  margin-right: 16px;
+  color: white;
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  flex: 1;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-info span {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.settings-card mat-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  margin: 0;
+}
+
+.settings-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.settings-card mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 8px 0 0 0;
+  font-size: 0.9rem;
+}
+
+.settings-card mat-card-content {
+  padding: 24px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.setting-item:hover {
+  background-color: #f8f9fa;
+}
+
+.setting-item.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.setting-info {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.setting-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.setting-description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.setting-item mat-slide-toggle {
+  flex-shrink: 0;
+  margin-right: 24px;
+}
+
+.setting-item mat-form-field {
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+/* Grid layout for better organization */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+mat-divider {
+  margin: 8px 0;
+}
+
+.actions-section {
+  margin-top: 20px;
+}
+
+.actions-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.actions-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.actions-row button {
+  min-width: 160px;
+  height: 48px;
+  border-radius: 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.actions-row button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.actions-row button mat-icon {
+  margin-right: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 16px;
+  }
+  
+  .header-content {
+    padding: 0 16px;
+  }
+  
+  .header-content h1 {
+    font-size: 1.2rem;
+  }
+  
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .setting-item mat-form-field {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .actions-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .actions-row button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-container {
+    padding: 12px;
+  }
+  
+  .settings-card mat-card-content {
+    padding: 16px;
+  }
+  
+  .settings-card mat-card-header {
+    padding: 16px;
+  }
+  
+  .settings-card mat-card-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Animation for cards */
+.settings-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for multiple cards */
+.settings-card:nth-child(1) { animation-delay: 0.1s; }
+.settings-card:nth-child(2) { animation-delay: 0.2s; }
+.settings-card:nth-child(3) { animation-delay: 0.3s; }
+.settings-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Hover effects */
+.settings-card, .actions-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-card:hover, .actions-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.setting-item {
+  transition: background-color 0.2s ease;
+}
+
+.setting-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Custom styles for form fields */
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: rgba(102, 126, 234, 0.3);
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #667eea;
+}
+
+::ng-deep .mat-form-field-label {
+  color: #666;
+}
+
+::ng-deep .mat-form-field.mat-focused .mat-form-field-label {
+  color: #667eea;
+}
+
+/* Custom styles for slide toggle */
+::ng-deep .mat-slide-toggle.mat-checked .mat-slide-toggle-bar {
+  background-color: rgba(102, 126, 234, 0.5);
+}
+
+::ng-deep .mat-slide-toggle.mat-checked .mat-slide-toggle-thumb {
+  background-color: #667eea;
+}
+
+/* Custom styles for select */
+::ng-deep .mat-select-value {
+  color: #333;
+}
+
+::ng-deep .mat-select-arrow {
+  color: #667eea;
+}
+
+/* Custom styles for buttons */
+::ng-deep .mat-raised-button.mat-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+::ng-deep .mat-raised-button.mat-warn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Custom styles for dividers */
+::ng-deep .mat-divider {
+  border-color: #e9ecef;
+} 

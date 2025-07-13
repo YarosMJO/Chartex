@@ -14,11 +14,11 @@
           </ng-template>
         </button>
         <mat-menu #userMenu="matMenu">
-          <button mat-menu-item>
+          <button mat-menu-item (click)="openSettings()">
             <mat-icon>settings</mat-icon>
             <span>Налаштування</span>
           </button>
-          <button mat-menu-item>
+          <button mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
             <span>Вийти</span>
           </button>
