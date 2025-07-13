@@ -14,6 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
+import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '../../utils/utils';
 
 @Component({
   selector: 'app-dashboard',
@@ -162,20 +163,13 @@ export class DashboardComponent implements OnInit {
   // Підготовка даних для графіків
   prepareChartData() {
     if (!this.userStats) return;
-    // Отримати домен з URL
-    const getDomainFromUrl = (url: string): string => {
-      try {
-        const urlObj = new URL(url);
-        return urlObj.hostname;
-      } catch {
-        return url;
-      }
-    };
+    
     // Дані для графіка активності
     this.activityChartData = this.userStats.topDomains.map(domain => ({
       x: domain.decryptedData?.url ? getDomainFromUrl(domain.decryptedData.url) : domain._id,
       y: domain.visits
     }));
+    
     // Дані для топ доменів
     this.topDomainsData = this.userStats.topDomains.slice(0, 10).map(domain => ({
       name: domain.decryptedData?.url || domain._id,
@@ -183,6 +177,7 @@ export class DashboardComponent implements OnInit {
       visits: domain.visits,
       duration: domain.totalDuration
     }));
+    
     // Дані для статистики пристроїв
     this.deviceStatsData = this.devices.map(device => ({
       name: device.deviceName,
@@ -201,31 +196,7 @@ export class DashboardComponent implements OnInit {
     await this.loadUserStats();
   }
 
-  // Форматування часу для UI
-  formatDuration(seconds: number): string {
-    if (seconds < 60) return `${seconds}с`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}хв`;
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}год ${minutes}хв`;
-  }
-
-  // Форматування чисел для UI
-  formatNumber(num: number): string {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  }
-
-  // Отримати підпис для періоду
-  getPeriodLabel(period: string): string {
-    const labels: Record<string, string> = {
-      '7d': '7 днів',
-      '30d': '30 днів',
-      '90d': '90 днів',
-      '1y': '1 рік',
-      'all': 'Весь час'
-    };
-    return labels[period] || period;
-  }
+  formatDuration = formatDuration;
+  formatNumber = formatNumber;
+  getPeriodLabel = getPeriodLabel;
 } 

@@ -240,22 +240,10 @@ export class ApiService {
     };
   }
 
-  private async getHeaders(): Promise<HttpHeaders> {
-    // Отримати поточного користувача (асинхронно)
-    const user = await this.authService.getCurrentUser();
-    let headers = new HttpHeaders({
+    private async getHeaders(): Promise<HttpHeaders> {
+    return new HttpHeaders({
       'Content-Type': 'application/json'
     });
-
-    if (user) {
-      // Отримати токен поточного користувача (асинхронно)
-      const token = await this.authService.getCurrentUserToken();
-      if (token) {
-        headers = headers.set('Authorization', `Bearer ${token}`);
-      }
-    }
-
-    return headers;
   }
 
   // Історія

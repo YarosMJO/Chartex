@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -11,9 +11,15 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, RouterOutlet]
 })
 export class AppComponent {
+  private auth = inject(AuthService);
+  
   user$ = this.auth.getUser();
+  user = signal<any>(null);
+  isAuthenticated = computed(() => !!this.user());
 
-  constructor(private auth: AuthService) {}
+  constructor() {
+    this.auth.getUser().subscribe(user => this.user.set(user));
+  }
 
   login() {
     // TODO: Отримати idToken через chrome.identity API у бекграунд-скрипті розширення

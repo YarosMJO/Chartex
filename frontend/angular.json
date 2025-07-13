@@ -17,6 +17,7 @@
             "browser": "src/main.ts",
             "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",
+            "ssr": false,
             "assets": [
               "src/favicon.ico",
               "src/assets"
