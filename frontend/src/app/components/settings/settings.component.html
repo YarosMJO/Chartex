@@ -57,42 +57,11 @@
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="dataCollectionSettings.enabled"
-              (change)="onSettingChange()">
-            </mat-slide-toggle>
-          </div>
-
-          <mat-divider></mat-divider>
-
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
+              <div class="setting-label">{{ 'SETTINGS.COLLECT_DEVICE_INFO' | translate }}</div>
               <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="dataCollectionSettings.collectHistory"
-              [disabled]="!dataCollectionSettings.enabled"
-              (change)="onSettingChange()">
-            </mat-slide-toggle>
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
+                {{ 'SETTINGS.COLLECT_DEVICE_INFO_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -106,9 +75,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
+              <div class="setting-label">{{ 'SETTINGS.COLLECT_PAGE_TITLES' | translate }}</div>
               <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
+                {{ 'SETTINGS.COLLECT_PAGE_TITLES_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -122,9 +91,9 @@
 
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_COLLECTION' | translate }}</div>
+              <div class="setting-label">{{ 'SETTINGS.COLLECT_VISIT_DURATION' | translate }}</div>
               <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_COLLECTION_DESC' | translate }}
+                {{ 'SETTINGS.COLLECT_VISIT_DURATION_DESC' | translate }}
               </div>
             </div>
             <mat-slide-toggle 
@@ -148,21 +117,6 @@
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.ENABLE_ANALYTICS' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.ENABLE_ANALYTICS_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="privacySettings.encryptData"
-              (change)="onSettingChange()">
-            </mat-slide-toggle>
-          </div>
-
-          <mat-divider></mat-divider>
-
           <div class="setting-item">
             <div class="setting-info">
               <div class="setting-label">{{ 'SETTINGS.ENABLE_ANALYTICS' | translate }}</div>
@@ -237,75 +191,9 @@
               </mat-select>
             </mat-form-field>
           </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.SHOW_DURATION' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.SHOW_DURATION_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="displaySettings.showDuration"
-              (change)="onSettingChange()">
-            </mat-slide-toggle>
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.SHOW_CHARTS' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.SHOW_CHARTS_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="displaySettings.showCharts"
-              (change)="onSettingChange()">
-            </mat-slide-toggle>
-          </div>
         </mat-card-content>
       </mat-card>
     </div>
-
-    <!-- Інформація про extension -->
-    <mat-card class="settings-card" *ngIf="checkExtensionStatus()">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>extension</mat-icon>
-          Chrome Extension
-        </mat-card-title>
-        <mat-card-subtitle>
-          Статус та інформація про extension
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="extension-info" *ngIf="getExtensionInfo() as extInfo">
-          <div class="info-item">
-            <span class="label">Назва:</span>
-            <span class="value">{{ extInfo.name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Версія:</span>
-            <span class="value">{{ extInfo.version }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Опис:</span>
-            <span class="value">{{ extInfo.description }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Статус:</span>
-            <span class="value status-connected">
-              <mat-icon>check_circle</mat-icon>
-              Підключено
-            </span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
 
     <!-- Кнопки дій -->
     <div class="actions-section">
@@ -319,10 +207,6 @@
             <button mat-raised-button color="accent" (click)="fileInput.click()">
               <mat-icon>file_upload</mat-icon>
               {{ 'SETTINGS.IMPORT_SETTINGS' | translate }}
-            </button>
-            <button mat-raised-button color="primary" (click)="testExtensionConnection()">
-              <mat-icon>wifi</mat-icon>
-              {{ 'SETTINGS.TEST_CONNECTION' | translate }}
             </button>
             <input 
               #fileInput 

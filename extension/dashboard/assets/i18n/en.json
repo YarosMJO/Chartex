@@ -88,7 +88,15 @@
     "ERROR": "Error",
     "SUCCESS": "Success",
     "WARNING": "Warning",
-    "INFO": "Information"
+    "INFO": "Information",
+    "COLLECT_HISTORY": "Collect browsing history",
+    "COLLECT_HISTORY_DESC": "Save URLs and visit times of websites",
+    "COLLECT_DEVICE_INFO": "Collect device information",
+    "COLLECT_DEVICE_INFO_DESC": "Save device type, browser, and OS",
+    "COLLECT_PAGE_TITLES": "Collect page titles",
+    "COLLECT_PAGE_TITLES_DESC": "Save page titles for better display",
+    "COLLECT_VISIT_DURATION": "Collect visit duration",
+    "COLLECT_VISIT_DURATION_DESC": "Measure time spent on each website"
   },
   "COMMON": {
     "LOADING": "Loading...",

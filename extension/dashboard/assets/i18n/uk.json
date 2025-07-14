@@ -88,7 +88,15 @@
     "ERROR": "Помилка",
     "SUCCESS": "Успішно",
     "WARNING": "Попередження",
-    "INFO": "Інформація"
+    "INFO": "Інформація",
+    "COLLECT_HISTORY": "Збирати історію відвідувань",
+    "COLLECT_HISTORY_DESC": "Зберігати URL та час відвідування сайтів",
+    "COLLECT_DEVICE_INFO": "Збирати інформацію про пристрій",
+    "COLLECT_DEVICE_INFO_DESC": "Зберігати тип пристрою, браузер та ОС",
+    "COLLECT_PAGE_TITLES": "Збирати заголовки сторінок",
+    "COLLECT_PAGE_TITLES_DESC": "Зберігати назви сторінок для кращого відображення",
+    "COLLECT_VISIT_DURATION": "Збирати тривалість відвідувань",
+    "COLLECT_VISIT_DURATION_DESC": "Вимірювати час, проведений на кожному сайті"
   },
   "COMMON": {
     "LOADING": "Завантаження...",
