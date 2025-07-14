@@ -52,6 +52,11 @@ body.theme-dark .user-info span {
   color: #f1f1f1 !important;
 }
 
+body.theme-dark .user-info .mat-mdc-menu-trigger,
+body.theme-dark .login-btn {
+  color: #f1f1f1 !important;
+}
+
 .user-avatar {
   width: 100%;
   height: 100%;
@@ -291,13 +296,7 @@ body.theme-dark .user-avatar-btn:focus {
   font-weight: 600;
   font-size: 16px;
   color: #333;
-}
-
-.device-id {
-  font-size: 11px;
-  color: #888;
-  margin-top: 2px;
-  word-break: break-all;
+  margin-bottom: 4px;
 }
 
 .device-type {
@@ -488,7 +487,6 @@ body.theme-dark .user-avatar-btn:focus {
 ::ng-deep body.theme-dark .device-stat .stat-value {
   color: #f3eaff !important;
 }
-::ng-deep body.theme-dark .device-id,
 ::ng-deep body.theme-dark .device-type,
 ::ng-deep body.theme-dark .device-stat .stat-label {
   color: #b6a6d9 !important;
@@ -525,4 +523,8 @@ body.theme-dark .user-avatar-btn:focus {
 }
 ::ng-deep body.theme-dark .apexcharts-gridline {
   stroke: #3a2e5c !important;
+} 
+
+::ng-deep body.theme-dark .user-info span {
+  color: #f1f1f1 !important;
 } 
