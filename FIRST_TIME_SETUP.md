@@ -229,20 +229,6 @@ cd frontend
 ng test
 ```
 
-### 3. Тест Extension
-
-1. Відкрийте `chrome-extension://[ID]/test-config.html`
-2. Перевірте всі тести
-3. Перегляньте консоль на помилки
-
-### 4. Тест повної системи
-
-1. Запустіть backend та frontend
-2. Встановіть extension
-3. Увійдіть через Google
-4. Запустіть збір даних
-5. Перевірте dashboard
-
 ## 🔧 Розв'язання проблем
 
 ### Помилка "MongoDB connection failed"

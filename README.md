@@ -194,11 +194,6 @@ ng test
 ng e2e
 ```
 
-### Extension тести
-1. Відкрийте `chrome-extension://[ID]/test-config.html`
-2. Перевірте всі тести
-3. Перегляньте консоль на помилки
-
 ## 📦 Deployment
 
 ### Backend (Heroku)

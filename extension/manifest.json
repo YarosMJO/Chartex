@@ -34,7 +34,6 @@
         "firebase-app-compat.js",
         "firebase-config.js",
         "config.js",
-        "test-config.html",
         "crypto-utils.js",
         "dashboard/*"
       ],
