@@ -1,6 +1,7 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +15,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
 import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '../../utils/utils';

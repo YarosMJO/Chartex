@@ -1,8 +1,8 @@
 import { Component, signal, computed, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { AuthService } from './services/auth.service';
 import { CommonModule } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from './services/auth.service';
 import { AppTranslateService } from './services/translate.service';
 import { SettingsService } from './services/settings.service';
 

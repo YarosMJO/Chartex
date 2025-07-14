@@ -32,16 +32,6 @@
     <p>{{ 'COMMON.LOADING' | translate }}</p>
   </div>
 
-  <!-- Індикатор незбережених змін -->
-  <div *ngIf="hasUnsavedChanges" class="unsaved-changes-banner">
-    <mat-icon>warning</mat-icon>
-    <span>{{ 'SETTINGS.UNSAVED_CHANGES' | translate }}</span>
-    <button mat-raised-button color="primary" (click)="saveSettings()">
-      <mat-icon>save</mat-icon>
-      {{ 'COMMON.SAVE' | translate }}
-    </button>
-  </div>
-
   <!-- Основний контент -->
   <div class="settings-content">
     <div class="settings-grid">

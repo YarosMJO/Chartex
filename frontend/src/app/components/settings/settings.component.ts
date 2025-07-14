@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,15 +13,12 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SettingsService, AppSettings } from '../../services/settings.service';
 import { ApiService } from '../../services/api.service';
 import { AppTranslateService } from '../../services/translate.service';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { CanDeactivate } from '@angular/router';
 
 @Component({
@@ -42,16 +40,14 @@ import { CanDeactivate } from '@angular/router';
     MatDividerModule,
     MatMenuModule,
     MatSnackBarModule,
-    MatDialogModule,
     MatProgressSpinnerModule,
-    TranslateModule,
+    TranslateModule
   ]
 })
 export class SettingsComponent implements OnInit {
   currentUser: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null = null;
   loading = false;
-  hasUnsavedChanges = false;
-  originalSettings: AppSettings | null = null;
+  // Видалено: hasUnsavedChanges, originalSettings
   
   // Налаштування збору даних
   dataCollectionSettings: {
@@ -102,7 +98,6 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private apiService: ApiService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
     private translateService: AppTranslateService
   ) {}
 
@@ -113,7 +108,6 @@ export class SettingsComponent implements OnInit {
         this.router.navigate(['/dashboard']);
       }
     });
-    
     this.loadSettings();
   }
 
@@ -125,8 +119,6 @@ export class SettingsComponent implements OnInit {
         this.dataCollectionSettings = { ...this.dataCollectionSettings, ...settings.dataCollection };
         this.privacySettings = { ...this.privacySettings, ...settings.privacy };
         this.displaySettings = { ...this.displaySettings, ...settings.display };
-        this.originalSettings = JSON.parse(JSON.stringify(settings)); // Deep copy
-        this.hasUnsavedChanges = false;
         this.loading = false;
       },
       error: (error) => {
@@ -137,61 +129,34 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  // Збереження налаштувань
-  saveSettings() {
-    this.loading = true;
-    const settings: AppSettings = {
-      dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
-      display: this.displaySettings
-    };
-    
-    try {
-      this.settingsService.saveSettings(settings);
-      this.originalSettings = JSON.parse(JSON.stringify(settings));
-      this.hasUnsavedChanges = false;
-      this.snackBar.open('Налаштування збережено', 'Закрити', { duration: 2000 });
-      
-      // Застосування змін
-      this.applySettings(settings);
-    } catch (error) {
-      console.error('Помилка збереження налаштувань:', error);
-      this.snackBar.open('Помилка збереження налаштувань', 'Закрити', { duration: 3000 });
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  // Автоматичне збереження при зміні налаштувань
+  // Зберігати налаштування одразу при зміні будь-якого поля
   onSettingChange() {
-    this.checkForUnsavedChanges();
-    
-    // Автоматично застосовуємо деякі налаштування
+    this.saveSettings();
     this.applyImmediateSettings();
   }
 
   // Зміна мови
   onLanguageChange() {
-    this.checkForUnsavedChanges();
-    
-    // Застосовуємо мову одразу через AppTranslateService
-    this.translateService.setLanguage(this.displaySettings.language);
-    
-    // Зберігаємо налаштування
     this.saveSettings();
+    this.applyImmediateSettings();
+    this.translateService.setLanguage(this.displaySettings.language);
   }
 
-  // Перевірка на незбережені зміни
-  private checkForUnsavedChanges() {
-    if (!this.originalSettings) return;
-    
-    const currentSettings: AppSettings = {
+  // Збереження налаштувань
+  saveSettings() {
+    const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
       display: this.displaySettings
     };
-    
-    this.hasUnsavedChanges = JSON.stringify(currentSettings) !== JSON.stringify(this.originalSettings);
+    try {
+      this.settingsService.saveSettings(settings);
+      this.snackBar.open('Налаштування збережено', 'Закрити', { duration: 2000 });
+      this.applySettings(settings);
+    } catch (error) {
+      console.error('Помилка збереження налаштувань:', error);
+      this.snackBar.open('Помилка збереження налаштувань', 'Закрити', { duration: 3000 });
+    }
   }
 
   // Застосування налаштувань
@@ -260,31 +225,17 @@ export class SettingsComponent implements OnInit {
 
   // Скидання налаштувань до значень за замовчуванням
   resetSettings() {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '400px',
-      data: {
-        title: 'Скинути налаштування',
-        message: 'Ви впевнені, що хочете скинути всі налаштування до значень за замовчуванням? Ця дія не може бути скасована.',
-        confirmText: 'Скинути',
-        cancelText: 'Скасувати'
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loading = true;
-        try {
-          this.settingsService.resetSettings();
-          this.loadSettings();
-          this.snackBar.open('Налаштування скинуто', 'Закрити', { duration: 2000 });
-        } catch (error) {
-          console.error('Помилка скидання налаштувань:', error);
-          this.snackBar.open('Помилка скидання налаштувань', 'Закрити', { duration: 3000 });
-        } finally {
-          this.loading = false;
-        }
-      }
-    });
+    this.loading = true;
+    try {
+      this.settingsService.resetSettings();
+      this.loadSettings();
+      this.snackBar.open('Налаштування скинуто', 'Закрити', { duration: 2000 });
+    } catch (error) {
+      console.error('Помилка скидання налаштувань:', error);
+      this.snackBar.open('Помилка скидання налаштувань', 'Закрити', { duration: 3000 });
+    } finally {
+      this.loading = false;
+    }
   }
 
   // Експорт налаштувань
@@ -323,7 +274,6 @@ export class SettingsComponent implements OnInit {
           this.dataCollectionSettings = settings.dataCollection;
           this.privacySettings = settings.privacy;
           this.displaySettings = settings.display;
-          this.hasUnsavedChanges = true;
           this.snackBar.open('Налаштування імпортовано', 'Закрити', { duration: 2000 });
         } else {
           this.snackBar.open('Невірний формат файлу налаштувань', 'Закрити', { duration: 3000 });
@@ -349,90 +299,43 @@ export class SettingsComponent implements OnInit {
     );
   }
 
-  // Повернення до дашборду з перевіркою незбережених змін
+  // Видалити goBack з діалогом unsaved, залишити простий перехід
   goBack() {
-    if (this.hasUnsavedChanges) {
-      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-        width: '400px',
-        data: {
-          title: 'Незбережені зміни',
-          message: 'У вас є незбережені зміни. Ви впевнені, що хочете вийти без збереження?',
-          confirmText: 'Вийти',
-          cancelText: 'Залишитися'
-        }
-      });
-
-      dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          this.router.navigate(['/dashboard']);
-        }
-      });
-    } else {
-      this.router.navigate(['/dashboard']);
-    }
+    this.router.navigate(['/dashboard']);
   }
 
-  // Вихід з системи
+  // Видалити logout з діалогом unsaved, залишити простий діалог підтвердження виходу
   logout() {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '400px',
-      data: {
-        title: 'Вихід з системи',
-        message: 'Ви впевнені, що хочете вийти з системи?',
-        confirmText: 'Вийти',
-        cancelText: 'Скасувати'
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loading = true;
-        this.authService.logout().subscribe({
-          next: () => {
-            this.router.navigate(['/dashboard']);
-            this.snackBar.open('Ви успішно вийшли з системи', 'Закрити', { duration: 2000 });
-          },
-          error: (error) => {
-            console.error('Помилка виходу:', error);
-            this.snackBar.open('Помилка виходу з системи', 'Закрити', { duration: 3000 });
-            this.loading = false;
-          }
-        });
+    this.loading = true;
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/dashboard']);
+        this.snackBar.open('Ви успішно вийшли з системи', 'Закрити', { duration: 2000 });
+      },
+      error: (error) => {
+        console.error('Помилка виходу:', error);
+        this.snackBar.open('Помилка виходу з системи', 'Закрити', { duration: 3000 });
+        this.loading = false;
       }
     });
   }
 
   // Очищення даних
   clearData() {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '400px',
-      data: {
-        title: 'Очищення даних',
-        message: 'Ви впевнені, що хочете видалити всі зібрані дані? Ця дія не може бути скасована.',
-        confirmText: 'Видалити',
-        cancelText: 'Скасувати',
-        type: 'warning'
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loading = true;
-        
-        // Очищення даних через API
-        this.apiService.clearUserData().then((result) => {
-          this.snackBar.open('Дані успішно очищено', 'Закрити', { duration: 2000 });
-          
-          // Очищення локальних даних
-          this.clearLocalData();
-          
-          this.loading = false;
-        }).catch((error: any) => {
-          console.error('Помилка очищення даних:', error);
-          this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
-          this.loading = false;
-        });
-      }
+    this.loading = true;
+    
+    // Очищення даних через API
+    this.apiService.clearUserData().then((result) => {
+      this.snackBar.open('Дані успішно очищено', 'Закрити', { duration: 2000 });
+      
+      // Очищення локальних даних
+      this.clearLocalData();
+      
+      this.loading = false;
+    }).catch((error: any) => {
+      console.error('Помилка очищення даних:', error);
+      this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
+      this.loading = false;
     });
   }
 
@@ -513,28 +416,5 @@ export class SettingsComponent implements OnInit {
       console.error('Помилка отримання інформації про extension:', error);
       return null;
     }
-  }
-} 
-
-// Guard для перевірки незбережених змін
-export class SettingsCanDeactivateGuard implements CanDeactivate<SettingsComponent> {
-  canDeactivate(component: SettingsComponent): boolean | Promise<boolean> {
-    if (component.hasUnsavedChanges) {
-      return new Promise(resolve => {
-        const dialogRef = component.dialog.open(ConfirmDialogComponent, {
-          width: '400px',
-          data: {
-            title: 'Незбережені зміни',
-            message: 'У вас є незбережені зміни. Ви впевнені, що хочете вийти без збереження?',
-            confirmText: 'Вийти',
-            cancelText: 'Залишитися'
-          }
-        });
-        dialogRef.afterClosed().subscribe(result => {
-          resolve(!!result);
-        });
-      });
-    }
-    return true;
   }
 } 

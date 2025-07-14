@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
@@ -240,10 +240,10 @@ export class ApiService {
     };
   }
 
-    private async getHeaders(): Promise<HttpHeaders> {
-    return new HttpHeaders({
+    private async getHeaders() {
+    return {
       'Content-Type': 'application/json'
-    });
+    };
   }
 
   // Історія
@@ -258,11 +258,11 @@ export class ApiService {
     sortOrder?: 'asc' | 'desc';
   } = {}): Promise<PaginatedResponse<HistoryItem>> {
     const headers = await this.getHeaders();
-    const httpParams = new HttpParams({ fromObject: params as any });
+    const httpParams = new URLSearchParams(params as any);
     
     return this.http.get<PaginatedResponse<HistoryItem>>(
-      `${this.API_BASE_URL}/history`,
-      { headers, params: httpParams }
+      `${this.API_BASE_URL}/history?${httpParams.toString()}`,
+      { headers }
     ).toPromise() as Promise<PaginatedResponse<HistoryItem>>;
   }
 
@@ -273,11 +273,11 @@ export class ApiService {
     groupBy?: 'day' | 'hour' | 'domain';
   } = {}): Promise<any[]> {
     const headers = await this.getHeaders();
-    const httpParams = new HttpParams({ fromObject: params as any });
+    const httpParams = new URLSearchParams(params as any);
     
     return this.http.get<any[]>(
-      `${this.API_BASE_URL}/history/stats`,
-      { headers, params: httpParams }
+      `${this.API_BASE_URL}/history/stats?${httpParams.toString()}`,
+      { headers }
     ).toPromise() as Promise<any[]>;
   }
 
@@ -308,11 +308,11 @@ export class ApiService {
     domainHash?: string;
   } = {}): Promise<{ success: boolean; deletedCount: number }> {
     const headers = await this.getHeaders();
-    const httpParams = new HttpParams({ fromObject: params as any });
+    const httpParams = new URLSearchParams(params as any);
     
     return this.http.delete<{ success: boolean; deletedCount: number }>(
-      `${this.API_BASE_URL}/history`,
-      { headers, params: httpParams }
+      `${this.API_BASE_URL}/history?${httpParams.toString()}`,
+      { headers }
     ).toPromise() as Promise<{ success: boolean; deletedCount: number }>;
   }
 
@@ -384,11 +384,11 @@ export class ApiService {
     }>;
   }> {
     const headers = await this.getHeaders();
-    const httpParams = new HttpParams({ fromObject: params as any });
+    const httpParams = new URLSearchParams(params as any);
     
     return this.http.get<any>(
-      `${this.API_BASE_URL}/devices/${deviceId}/stats`,
-      { headers, params: httpParams }
+      `${this.API_BASE_URL}/devices/${deviceId}/stats?${httpParams.toString()}`,
+      { headers }
     ).toPromise() as Promise<any>;
   }
 
@@ -423,7 +423,7 @@ export class ApiService {
     deviceId?: string;
   } = {}): Promise<HistoryStats> {
     const headers = await this.getHeaders();
-    const httpParams = new HttpParams({ fromObject: params as any });
+    const httpParams = new URLSearchParams(params as any);
     
     console.log('API getUserStats params:', params);
     console.log('API getUserStats deviceId:', params.deviceId);
@@ -431,8 +431,8 @@ export class ApiService {
     console.log('API getUserStats URL:', `${this.API_BASE_URL}/users/stats`);
     
     return this.http.get<HistoryStats>(
-      `${this.API_BASE_URL}/users/stats`,
-      { headers, params: httpParams }
+      `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`,
+      { headers }
     ).toPromise() as Promise<HistoryStats>;
   }
 

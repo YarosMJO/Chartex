@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { SettingsComponent, SettingsCanDeactivateGuard } from './components/settings/settings.component';
+import { SettingsComponent } from './components/settings/settings.component';
 import { inject } from '@angular/core';
 import { AuthService } from './services/auth.service';
 import { map } from 'rxjs/operators';
@@ -23,8 +23,7 @@ export const routes: Routes = [
   { 
     path: 'settings', 
     component: SettingsComponent,
-    canActivate: [authGuard],
-    canDeactivate: [SettingsCanDeactivateGuard]
+    canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/dashboard' }
 ]; 
