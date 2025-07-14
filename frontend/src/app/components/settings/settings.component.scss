@@ -483,8 +483,39 @@ mat-divider {
 }
 ::ng-deep body.theme-dark .settings-card,
 ::ng-deep body.theme-dark .actions-card {
-  background: #23272f !important;
-  color: #f1f1f1;
+  background: #181a20 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  border: 1.5px solid #33384a;
+}
+::ng-deep body.theme-dark .settings-card *:not(button):not(.mat-raised-button):not(.mat-flat-button),
+::ng-deep body.theme-dark .actions-card *:not(button):not(.mat-raised-button):not(.mat-flat-button) {
+  color: #e2e2ea !important;
+}
+
+/* Оновлені кнопки управління у темній темі */
+::ng-deep body.theme-dark .actions-row button {
+  background: #3a2e5c !important;
+  color: #f3eaff !important;
+  border: 1.5px solid #6c4bb6 !important;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+  font-weight: 600;
+  opacity: 1 !important;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+::ng-deep body.theme-dark .actions-row button mat-icon {
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .actions-row button:hover {
+  background: #2a2042 !important;
+  color: #fff !important;
+  border-color: #a259f7 !important;
+}
+
+::ng-deep body.theme-dark .actions-row button:hover mat-icon {
+  color: #fff !important;
 }
 ::ng-deep body.theme-light .settings-card mat-card-header {
   background: #e3e6ef;
@@ -492,7 +523,7 @@ mat-divider {
 }
 ::ng-deep body.theme-dark .settings-card mat-card-header {
   background: #23272f;
-  color: #f1f1f1;
+  color: #fff;
 }
 ::ng-deep body.theme-light .setting-item:hover {
   background-color: #f0f0f0;
@@ -555,4 +586,17 @@ mat-divider {
 }
 ::ng-deep body.theme-dark .back-button mat-icon {
   color: #f1f1f1 !important;
+} 
+
+/* Явно перекриваємо світлий текст для кнопок у темній темі */
+::ng-deep body.theme-dark .actions-row button,
+::ng-deep body.theme-dark .actions-row button *,
+::ng-deep body.theme-dark .actions-row button mat-icon {
+  color: #23272f !important;
+}
+
+::ng-deep body.theme-dark .actions-row button:hover,
+::ng-deep body.theme-dark .actions-row button:hover *,
+::ng-deep body.theme-dark .actions-row button:hover mat-icon {
+  color: #181a20 !important;
 } 
