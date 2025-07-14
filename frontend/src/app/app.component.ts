@@ -4,6 +4,7 @@ import { AuthService } from './services/auth.service';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { AppTranslateService } from './services/translate.service';
+import { SettingsService } from './services/settings.service';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { AppTranslateService } from './services/translate.service';
 export class AppComponent {
   private auth = inject(AuthService);
   private translateService = inject(AppTranslateService);
+  private settingsService = inject(SettingsService);
   
   user$ = this.auth.getUser();
   user = signal<any>(null);
@@ -22,6 +24,9 @@ export class AppComponent {
 
   constructor() {
     this.auth.getUser().subscribe(user => this.user.set(user));
+    // Застосувати тему при старті застосунку
+    const theme = this.settingsService.getCurrentTheme();
+    this.settingsService.applyTheme(theme);
   }
 
   login() {

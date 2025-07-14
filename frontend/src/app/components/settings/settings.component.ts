@@ -21,6 +21,7 @@ import { SettingsService, AppSettings } from '../../services/settings.service';
 import { ApiService } from '../../services/api.service';
 import { AppTranslateService } from '../../services/translate.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { CanDeactivate } from '@angular/router';
 
 @Component({
   selector: 'app-settings',
@@ -101,7 +102,7 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private apiService: ApiService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog,
+    public dialog: MatDialog,
     private translateService: AppTranslateService
   ) {}
 
@@ -512,5 +513,28 @@ export class SettingsComponent implements OnInit {
       console.error('Помилка отримання інформації про extension:', error);
       return null;
     }
+  }
+} 
+
+// Guard для перевірки незбережених змін
+export class SettingsCanDeactivateGuard implements CanDeactivate<SettingsComponent> {
+  canDeactivate(component: SettingsComponent): boolean | Promise<boolean> {
+    if (component.hasUnsavedChanges) {
+      return new Promise(resolve => {
+        const dialogRef = component.dialog.open(ConfirmDialogComponent, {
+          width: '400px',
+          data: {
+            title: 'Незбережені зміни',
+            message: 'У вас є незбережені зміни. Ви впевнені, що хочете вийти без збереження?',
+            confirmText: 'Вийти',
+            cancelText: 'Залишитися'
+          }
+        });
+        dialogRef.afterClosed().subscribe(result => {
+          resolve(!!result);
+        });
+      });
+    }
+    return true;
   }
 } 

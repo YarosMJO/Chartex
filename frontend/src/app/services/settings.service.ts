@@ -88,9 +88,10 @@ export class SettingsService {
       };
 
       this.settingsSubject.next(settings);
-      
       // Застосувати мову з налаштувань
       this.translateService.setLanguage(settings.display.language);
+      // Застосувати тему з налаштувань
+      this.applyTheme(settings.display.theme);
     } catch (error) {
       console.error('Помилка завантаження налаштувань:', error);
       this.settingsSubject.next(this.getDefaultSettings());
@@ -101,6 +102,21 @@ export class SettingsService {
   private loadFromStorage<T>(key: string): Partial<T> {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : {};
+  }
+
+  // Застосувати тему (додає клас до body)
+  public applyTheme(theme: string) {
+    const body = document.body;
+    body.classList.remove('theme-default', 'theme-light', 'theme-dark');
+    if (theme === 'default') {
+      body.classList.add('theme-default');
+    } else if (theme === 'light') {
+      body.classList.add('theme-light');
+    } else if (theme === 'dark') {
+      body.classList.add('theme-dark');
+    } else {
+      body.classList.add('theme-default');
+    }
   }
 
   // Зберегти налаштування
