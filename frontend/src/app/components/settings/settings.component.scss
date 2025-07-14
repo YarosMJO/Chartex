@@ -168,13 +168,18 @@ mat-divider {
 }
 
 .actions-section {
-  margin-top: 20px;
+  margin-top: 48px;
+  display: flex;
+  justify-content: center;
 }
 
 .actions-card {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(123,47,242,0.10) 0%, rgba(243,87,168,0.10) 100%) !important;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(123, 47, 242, 0.13);
+  padding: 32px 24px;
+  border: 2px solid #a259f7;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .actions-row {
