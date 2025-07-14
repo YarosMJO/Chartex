@@ -42,6 +42,7 @@
     "LIGHT": "Світла",
     "DARK": "Темна",
     "AUTO": "Авто",
+    "DEFAULT": "Дефолтна",
     "ENABLE_COLLECTION": "Увімкнути збір даних",
     "ENABLE_COLLECTION_DESC": "Дозволити розширенню збирати дані про відвідування сайтів",
     "ENABLE_NOTIFICATIONS": "Увімкнути сповіщення",

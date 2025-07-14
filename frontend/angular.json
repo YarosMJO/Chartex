@@ -5,7 +5,11 @@
   "projects": {
     "chartex-frontend": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -23,7 +27,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css",
+              "src/styles.scss",
               "../node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
             ],
             "scripts": [],

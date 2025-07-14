@@ -56,6 +56,10 @@ if ('serviceWorker' in navigator && environment.production && !window.location.h
 ### Шляхи до ресурсів
 Всі шляхи налаштовані для роботи в контексті Chrome Extension.
 
+## Стилі
+
+Замість CSS тепер використовується SCSS. Всі нові стилі потрібно писати у .scss файлах. Для глобальних стилів використовуйте `src/styles.scss`.
+
 ## Структура проекту
 
 ```

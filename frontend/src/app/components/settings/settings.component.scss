@@ -461,3 +461,59 @@ mat-divider {
 ::ng-deep .mat-divider {
   border-color: #e9ecef;
 } 
+
+/* === ТЕМИ ДЛЯ СТОРІНКИ НАЛАШТУВАНЬ === */
+::ng-deep body.theme-light .settings-container {
+  background: #f5f5f5;
+  color: #222;
+} 
+::ng-deep body.theme-dark .settings-container {
+  background: #181a20;
+  color: #f1f1f1;
+}
+::ng-deep body.theme-light .settings-card,
+::ng-deep body.theme-light .actions-card {
+  background: #fff !important;
+  color: #222;
+}
+::ng-deep body.theme-dark .settings-card,
+::ng-deep body.theme-dark .actions-card {
+  background: #23272f !important;
+  color: #f1f1f1;
+}
+::ng-deep body.theme-light .settings-card mat-card-header {
+  background: #e3e6ef;
+  color: #333;
+}
+::ng-deep body.theme-dark .settings-card mat-card-header {
+  background: #23272f;
+  color: #f1f1f1;
+}
+::ng-deep body.theme-light .setting-item:hover {
+  background-color: #f0f0f0;
+}
+::ng-deep body.theme-dark .setting-item:hover {
+  background-color: #23272f;
+}
+::ng-deep body.theme-dark .mat-select-value,
+::ng-deep body.theme-dark .mat-form-field-label,
+::ng-deep body.theme-dark .mat-select-arrow {
+  color: #f1f1f1 !important;
+}
+::ng-deep body.theme-dark .mat-slide-toggle-bar {
+  background-color: #444 !important;
+}
+::ng-deep body.theme-dark .mat-slide-toggle-thumb {
+  background-color: #888 !important;
+}
+::ng-deep body.theme-dark .mat-raised-button.mat-primary {
+  background: #333 !important;
+  color: #f1f1f1 !important;
+}
+::ng-deep body.theme-dark .mat-raised-button.mat-warn {
+  background: #a94442 !important;
+  color: #fff !important;
+}
+::ng-deep body.theme-dark .mat-divider {
+  border-color: #333 !important;
+} 

@@ -231,9 +231,9 @@
             </div>
             <mat-form-field appearance="outline">
               <mat-select [(ngModel)]="displaySettings.theme" (selectionChange)="onSettingChange()">
+                <mat-option value="default">{{ 'SETTINGS.DEFAULT' | translate }}</mat-option>
                 <mat-option value="light">{{ 'SETTINGS.LIGHT' | translate }}</mat-option>
                 <mat-option value="dark">{{ 'SETTINGS.DARK' | translate }}</mat-option>
-                <mat-option value="auto">{{ 'SETTINGS.AUTO' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>

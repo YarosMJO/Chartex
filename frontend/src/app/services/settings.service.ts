@@ -18,7 +18,7 @@ export interface PrivacySettings {
 
 export interface DisplaySettings {
   language: 'uk' | 'en';
-  theme: 'light' | 'dark' | 'auto';
+  theme: 'default' | 'light' | 'dark';
   showDuration: boolean;
   showDevices: boolean;
   showCharts: boolean;
@@ -65,7 +65,7 @@ export class SettingsService {
       },
       display: {
         language: 'uk',
-        theme: 'light',
+        theme: 'default',
         showDuration: true,
         showDevices: true,
         showCharts: true,

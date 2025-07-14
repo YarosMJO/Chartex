@@ -42,6 +42,7 @@
     "LIGHT": "Light",
     "DARK": "Dark",
     "AUTO": "Auto",
+    "DEFAULT": "Default",
     "ENABLE_COLLECTION": "Enable data collection",
     "ENABLE_COLLECTION_DESC": "Allow extension to collect browsing data",
     "ENABLE_NOTIFICATIONS": "Enable notifications",

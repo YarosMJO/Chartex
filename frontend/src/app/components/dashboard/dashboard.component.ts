@@ -22,7 +22,7 @@ import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
+  styleUrls: ['./dashboard.component.scss'],
   standalone: true,
   imports: [
     CommonModule,

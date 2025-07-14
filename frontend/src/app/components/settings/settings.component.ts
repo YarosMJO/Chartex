@@ -25,7 +25,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.css'],
+  styleUrls: ['./settings.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -81,14 +81,14 @@ export class SettingsComponent implements OnInit {
   // Налаштування відображення
   displaySettings: {
     language: 'uk' | 'en';
-    theme: 'light' | 'dark' | 'auto';
+    theme: 'default' | 'light' | 'dark';
     showDuration: boolean;
     showDevices: boolean;
     showCharts: boolean;
     showDetails: boolean;
   } = {
     language: 'uk',
-    theme: 'light',
+    theme: 'default',
     showDuration: true,
     showDevices: true,
     showCharts: true,
@@ -208,14 +208,17 @@ export class SettingsComponent implements OnInit {
   // Застосування теми
   private applyTheme(theme: string) {
     const body = document.body;
-    body.classList.remove('theme-light', 'theme-dark');
-    
-    if (theme === 'auto') {
-      // Автоматичне визначення теми
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      body.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+    body.classList.remove('theme-default', 'theme-light', 'theme-dark');
+
+    if (theme === 'default') {
+      body.classList.add('theme-default');
+    } else if (theme === 'light') {
+      body.classList.add('theme-light');
+    } else if (theme === 'dark') {
+      body.classList.add('theme-dark');
     } else {
-      body.classList.add(`theme-${theme}`);
+      // fallback: дефолтна тема
+      body.classList.add('theme-default');
     }
   }
 

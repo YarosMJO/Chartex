@@ -1,3 +1,21 @@
+/* === ТЕМИ === */
+
+body.theme-default, body:not(.theme-light):not(.theme-dark):not(.theme-default) {
+  /* Дефолтна тема (існуючі стилі) */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #222 !important;
+}
+
+body.theme-light {
+  background: #fff !important;
+  color: #222 !important;
+}
+
+body.theme-dark {
+  background: #181a20 !important;
+  color: #f1f1f1 !important;
+}
+
 html, body {
   margin: 0 !important;
   padding: 0 !important;
