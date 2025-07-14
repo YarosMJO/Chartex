@@ -677,3 +677,18 @@ mat-divider {
     font-size: 0.98rem;
   }
 } 
+
+/* === DEFAULT THEME: Make text darker === */
+::ng-deep body.theme-default .settings-container,
+::ng-deep body.theme-default .settings-card,
+::ng-deep body.theme-default .actions-card,
+::ng-deep body.theme-default .settings-header,
+::ng-deep body.theme-default .header-content h1,
+::ng-deep body.theme-default .back-button,
+::ng-deep body.theme-default .user-info span,
+::ng-deep body.theme-default .setting-label,
+::ng-deep body.theme-default .setting-description,
+::ng-deep body.theme-default .mat-select-value,
+::ng-deep body.theme-default .mat-form-field-label {
+  color: #181818 !important;
+} 
