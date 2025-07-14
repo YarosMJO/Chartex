@@ -136,13 +136,15 @@
         <mat-card-content>
           <apx-chart
             [series]="[{ name: 'Відвідування', data: activityChartData }]"
-            [chart]="{ type: 'area', height: 300 }"
-            [xaxis]="{ type: 'category' }"
-            [colors]="['#667eea']"
-            [fill]="{ type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] } }"
-            [stroke]="{ curve: 'smooth' }"
-            [dataLabels]="{ enabled: false }"
-            [grid]="{ borderColor: '#e7e7e7', row: { colors: ['#f3f3f3', 'transparent'], opacity: 0.5 } }">
+            [chart]="activityChartOptions.chart"
+            [xaxis]="activityChartOptions.xaxis"
+            [yaxis]="activityChartOptions.yaxis"
+            [colors]="activityChartOptions.colors"
+            [fill]="activityChartOptions.fill"
+            [stroke]="activityChartOptions.stroke"
+            [dataLabels]="activityChartOptions.dataLabels"
+            [grid]="activityChartOptions.grid"
+            [tooltip]="activityChartOptions.tooltip">
           </apx-chart>
         </mat-card-content>
       </mat-card>

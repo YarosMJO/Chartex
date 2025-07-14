@@ -206,6 +206,37 @@ export class DashboardComponent implements OnInit {
   formatNumber = formatNumber;
   getPeriodLabel = getPeriodLabel;
 
+  get isDarkTheme(): boolean {
+    return document.body.classList.contains('theme-dark');
+  }
+
+  get activityChartOptions() {
+    if (this.isDarkTheme) {
+      return {
+        chart: { type: 'area', height: 300, foreColor: '#f3eaff', background: '#232136' },
+        xaxis: { type: 'category', labels: { style: { colors: '#f3eaff' } } },
+        yaxis: { labels: { style: { colors: '#f3eaff' } } },
+        colors: ['#a259f7'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.8, stops: [0, 90, 100], colorStops: [] } },
+        stroke: { curve: 'smooth', colors: ['#a259f7'] },
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#3a2e5c', row: { colors: ['#2a2042', 'transparent'], opacity: 0.3 } },
+        tooltip: { theme: 'dark', style: { fontSize: '14px', color: '#fff' }, y: { formatter: (val: any) => val } },
+      };
+    } else {
+      return {
+        chart: { type: 'area', height: 300 },
+        xaxis: { type: 'category' },
+        colors: ['#667eea'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] } },
+        stroke: { curve: 'smooth' },
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#e7e7e7', row: { colors: ['#f3f3f3', 'transparent'], opacity: 0.5 } },
+        tooltip: { theme: 'light' },
+      };
+    }
+  }
+
   // Перехід до налаштувань
   openSettings() {
     this.router.navigate(['/settings']);
