@@ -1,4 +1,2 @@
 <!-- Головний компонент Chartex -->
 <router-outlet></router-outlet>
-<button *ngIf="!(user$ | async)" (click)="login()">Увійти через Google</button>
-<button *ngIf="user$ | async as user" (click)="logout()">Вийти ({{user.email}})</button> 
