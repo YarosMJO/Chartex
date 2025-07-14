@@ -129,6 +129,10 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
+.top-sites-title {
+  margin-left: 10px;
+}
+
 .top-domains-list {
   max-height: 400px;
   overflow-y: auto;
@@ -138,7 +142,8 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 12px 0;
+  margin-right: 10px;
+  padding: 12px 10px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -402,4 +407,32 @@
 ::ng-deep body.theme-dark .mat-card-title,
 ::ng-deep body.theme-dark .mat-card-header {
   color: #f3eaff !important;
+} 
+
+// === Темна тема: контрастність для hover/active та ApexCharts ===
+::ng-deep body.theme-dark .domain-item:hover,
+::ng-deep body.theme-dark .domain-item.active {
+  background: #3a2e5c !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+::ng-deep body.theme-dark .domain-item:hover .domain-name,
+::ng-deep body.theme-dark .domain-item:hover .domain-url,
+::ng-deep body.theme-dark .domain-item:hover .domain-stats {
+  color: #fff !important;
+}
+
+// ApexCharts темна тема
+::ng-deep body.theme-dark .apexcharts-tooltip {
+  background: #2a2042 !important;
+  color: #fff !important;
+  border-color: #6c4bb6 !important;
+}
+::ng-deep body.theme-dark .apexcharts-xaxis-label,
+::ng-deep body.theme-dark .apexcharts-yaxis-label {
+  fill: #f3eaff !important;
+  color: #f3eaff !important;
+}
+::ng-deep body.theme-dark .apexcharts-gridline {
+  stroke: #3a2e5c !important;
 } 
