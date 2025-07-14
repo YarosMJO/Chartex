@@ -324,3 +324,82 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 } 
+
+/* === ТЕМИ ДЛЯ DASHBOARD === */
+::ng-deep body.theme-light .dashboard-container {
+  background: #f5f5f5;
+  color: #23272f;
+}
+::ng-deep body.theme-dark .dashboard-container {
+  background: #181a20;
+  color: #f1f1f1;
+}
+
+::ng-deep body.theme-light .dashboard-header {
+  background: rgba(255,255,255,0.85) !important;
+  color: #23272f !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+  border-bottom: 1px solid #e3e6ef;
+}
+::ng-deep body.theme-dark .dashboard-header {
+  background: rgba(35,39,47,0.95) !important;
+  color: #f1f1f1 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border-bottom: 1px solid #333;
+}
+
+::ng-deep body.theme-light .stat-card,
+::ng-deep body.theme-light .chart-card,
+::ng-deep body.theme-light .devices-card {
+  background: #fff !important;
+  color: #23272f;
+}
+::ng-deep body.theme-dark .stat-card,
+::ng-deep body.theme-dark .chart-card,
+::ng-deep body.theme-dark .devices-card {
+  background: #232136 !important;
+  color: #f3eaff !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  border: 1.5px solid #6c4bb6;
+}
+
+::ng-deep body.theme-dark .stat-card *,
+::ng-deep body.theme-dark .chart-card *,
+::ng-deep body.theme-dark .devices-card * {
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .stat-icon {
+  color: #a259f7 !important;
+}
+
+::ng-deep body.theme-dark .domain-item {
+  background: #232136;
+  border-bottom: 1px solid #2a2042;
+}
+::ng-deep body.theme-dark .domain-item .domain-name {
+  color: #f3eaff !important;
+}
+::ng-deep body.theme-dark .domain-item .domain-url,
+::ng-deep body.theme-dark .domain-item .domain-stats {
+  color: #b6a6d9 !important;
+}
+
+::ng-deep body.theme-dark .device-item {
+  background: #2a2042 !important;
+  border: 1px solid #6c4bb6 !important;
+}
+::ng-deep body.theme-dark .device-name,
+::ng-deep body.theme-dark .device-stat .stat-value {
+  color: #f3eaff !important;
+}
+::ng-deep body.theme-dark .device-id,
+::ng-deep body.theme-dark .device-type,
+::ng-deep body.theme-dark .device-stat .stat-label {
+  color: #b6a6d9 !important;
+}
+
+::ng-deep body.theme-dark .mat-card-title,
+::ng-deep body.theme-dark .mat-card-header {
+  color: #f3eaff !important;
+} 
