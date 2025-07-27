@@ -39,6 +39,8 @@ let lastUserUid = null; // Track previous user for state persistence
     });
     if (data.user) {
       console.log('Відновлення сесії користувача:', data.user.email);
+      // Don't validate during initialization to avoid blocking auth process
+      // Validation will happen during getStatus calls
     }
   } catch (error) {
     console.error('Помилка ініціалізації глобальних змінних:', error);
@@ -518,26 +520,20 @@ async function clearUserData(uid) {
 async function clearUserDataOnBackend(uid) {
   try {
     console.log(`Очищення даних користувача ${uid} на бекенді`);
-    
     // Wait a bit to ensure Firebase auth is ready
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
     const user = firebase.auth().currentUser;
     console.log('Поточний користувач Firebase:', user ? user.uid : 'null');
-    
     if (!user) {
       console.warn('Користувач не авторизований для очищення даних');
       return;
     }
-    
     if (user.uid !== uid) {
       console.warn(`UID не співпадає: очікував ${uid}, отримав ${user.uid}`);
       return;
     }
-    
     const idToken = await user.getIdToken();
     console.log('Отримано ID токен для очищення даних');
-    
     const response = await APIUtils.makeRequest('/users/clear-data', {
       method: 'POST',
       headers: {
@@ -548,40 +544,51 @@ async function clearUserDataOnBackend(uid) {
     console.log('Дані користувача очищено на бекенді:', response);
   } catch (error) {
     console.error(`Помилка очищення даних користувача на бекенді:`, error);
+    // Don't throw error - just log it and continue
+    console.log('Продовжуємо без очищення даних на бекенді');
   }
 }
 
 // Update collection state on user change
 async function handleUserSwitch(newUser) {
+  console.log('handleUserSwitch: початок для користувача:', newUser?.uid);
+  
   if (lastUserUid && lastUserUid !== newUser?.uid) {
+    console.log('handleUserSwitch: зберігаємо стан попереднього користувача:', lastUserUid);
     // Save previous user's state
     await saveCollectionStateForUser(lastUserUid, historyCollector.isCollecting);
     historyCollector.stop();
   }
+  
   if (newUser?.uid) {
-    console.log(`Переключення на користувача: ${newUser.uid}`);
+    console.log('handleUserSwitch: налаштовуємо нового користувача:', newUser.uid);
     
     // Clear old data for new user before starting collection
-    console.log('Крок 1: Очищення локальних даних...');
+    console.log('handleUserSwitch: крок 1 - очищення локальних даних...');
     await clearUserData(newUser.uid);
     
-    console.log('Крок 2: Очищення даних на бекенді...');
-    await clearUserDataOnBackend(newUser.uid);
+    console.log('handleUserSwitch: крок 2 - очищення даних на бекенді (асинхронно)...');
+    // Don't await this - let it run in background
+    clearUserDataOnBackend(newUser.uid).catch(error => {
+      console.error('Помилка асинхронного очищення даних на бекенді:', error);
+    });
     
-    console.log('Крок 3: Перевірка стану збору даних...');
+    console.log('handleUserSwitch: крок 3 - перевірка стану збору даних...');
     const collecting = await loadCollectionStateForUser(newUser.uid);
-    console.log(`Стан збору даних для користувача ${newUser.uid}: ${collecting}`);
+    console.log(`handleUserSwitch: стан збору даних для користувача ${newUser.uid}: ${collecting}`);
     
     if (collecting) {
-      console.log('Крок 4: Запуск збору даних...');
+      console.log('handleUserSwitch: крок 4 - запуск збору даних...');
       historyCollector.start();
       // Don't send dataSyncComplete here - let the collection process send it when complete
     } else {
-      console.log('Крок 4: Збір даних вимкнено для цього користувача');
+      console.log('handleUserSwitch: крок 4 - збір даних вимкнено для цього користувача');
       historyCollector.stop();
     }
     lastUserUid = newUser.uid;
+    console.log('handleUserSwitch: завершено для користувача:', newUser.uid);
   } else {
+    console.log('handleUserSwitch: користувач не вказаний, зупиняємо збір');
     lastUserUid = null;
     historyCollector.stop();
   }
@@ -590,9 +597,14 @@ async function handleUserSwitch(newUser) {
 // handleAuthentication: інтеграція chrome.identity + Firebase Auth
 async function handleAuthentication() {
   try {
+    console.log('handleAuthentication: початок');
+    
     // Якщо вже залогінений у Firebase
     const user = firebase.auth().currentUser;
+    console.log('handleAuthentication: поточний користувач Firebase:', user ? user.uid : 'null');
+    
     if (user) {
+      console.log('handleAuthentication: користувач вже авторизований, оновлюємо токен');
       const idToken = await user.getIdToken();
       await chrome.storage.local.set({
         user: {
@@ -604,14 +616,23 @@ async function handleAuthentication() {
         }
       });
       currentUser = user;
-      await handleUserSwitch(user); // <-- Load collection state for this user
+      console.log('handleAuthentication: викликаємо handleUserSwitch');
+      await handleUserSwitch(user);
+      console.log('handleAuthentication: handleUserSwitch завершено');
       return { success: true, user };
     }
     
+    console.log('handleAuthentication: користувач не авторизований, починаємо OAuth');
     // Якщо не залогінений — отримати Google OAuth токен через chrome.identity
     const googleToken = await getGoogleOAuthToken();
+    console.log('handleAuthentication: отримано Google токен');
+    
     const firebaseUser = await firebaseSignInWithGoogleToken(googleToken);
+    console.log('handleAuthentication: увійшли в Firebase:', firebaseUser.uid);
+    
     const idToken = await firebaseUser.getIdToken();
+    console.log('handleAuthentication: отримано Firebase токен');
+    
     await chrome.storage.local.set({
       user: {
         uid: firebaseUser.uid,
@@ -621,11 +642,16 @@ async function handleAuthentication() {
         idToken
       }
     });
+    console.log('handleAuthentication: збережено дані користувача');
+    
     currentUser = firebaseUser;
-    await handleUserSwitch(firebaseUser); // <-- Load collection state for this user
+    console.log('handleAuthentication: викликаємо handleUserSwitch для нового користувача');
+    await handleUserSwitch(firebaseUser);
+    console.log('handleAuthentication: handleUserSwitch завершено для нового користувача');
+    
     return { success: true, user: firebaseUser };
   } catch (error) {
-    console.error('Помилка авторизації:', error);
+    console.error('handleAuthentication: помилка:', error);
     return { success: false, error: error.message };
   }
 }
@@ -692,11 +718,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'getStatus':
       (async () => {
         const user = firebase.auth().currentUser;
+        
+        // Only validate authentication if user exists, don't block during auth process
+        let authValid = true;
+        if (user) {
+          authValid = await validateAuthentication();
+        }
+        
         console.log('BG: getStatus', { 
           isCollecting: historyCollector.isCollecting,
           deviceId: deviceId,
-          hasDeviceId: !!deviceId
+          hasDeviceId: !!deviceId,
+          authValid: authValid,
+          hasUser: !!user
         });
+        
         let deviceCount = 0;
         let historyCount = 0;
         let sessionCount = 0;
@@ -737,7 +773,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({
           isCollecting: historyCollector.isCollecting,
           deviceId: deviceId || 'undefined',
-          hasUser: !!user,
+          hasUser: !!user && authValid,
           userEmail: user?.email || null,
           deviceCount,
           historyCount,
@@ -912,8 +948,90 @@ chrome.runtime.onStartup.addListener(async () => {
     console.log('Дані розширення відновлено, deviceId:', deviceId);
     if (data.user) {
       console.log('Відновлення сесії користувача:', data.user.email);
+      // Don't validate during startup to avoid blocking auth process
+      // Validation will happen during getStatus calls
     }
+    
+    // Set up periodic token validation (every 10 minutes)
+    setInterval(async () => {
+      const user = firebase.auth().currentUser;
+      if (user) {
+        await validateAuthentication();
+      }
+    }, 10 * 60 * 1000);
+    
   } catch (error) {
     console.error('Помилка ініціалізації при запуску:', error);
   }
 });
+
+// Helper: Check if token is valid and refresh if needed
+async function checkAndRefreshToken() {
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      console.log('Користувач не авторизований');
+      return false;
+    }
+    
+    // Check if token needs refresh (Firebase tokens expire after 1 hour)
+    const tokenResult = await user.getIdTokenResult();
+    const expirationTime = new Date(tokenResult.expirationTime);
+    const now = new Date();
+    const timeUntilExpiry = expirationTime.getTime() - now.getTime();
+    
+    // Refresh token if it expires in less than 5 minutes
+    if (timeUntilExpiry < 5 * 60 * 1000) {
+      console.log('Токен скоро закінчиться, оновлюємо...');
+      const newToken = await user.getIdToken(true); // Force refresh
+      
+      // Update stored token
+      await chrome.storage.local.set({
+        user: {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          authMethod: 'firebase',
+          idToken: newToken
+        }
+      });
+      
+      console.log('Токен успішно оновлено');
+      return true;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Помилка перевірки/оновлення токена:', error);
+    return false;
+  }
+}
+
+// Helper: Validate current authentication state
+async function validateAuthentication() {
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      // Check if we have stored user data
+      const storedUser = await chrome.storage.local.get(['user']);
+      if (storedUser.user) {
+        console.log('Знайдено збережені дані користувача, але користувач не авторизований');
+        // Don't call handleAuthentication here, just return false
+        return false;
+      }
+      return false;
+    }
+    
+    // Check and refresh token if needed
+    const tokenValid = await checkAndRefreshToken();
+    if (!tokenValid) {
+      console.log('Токен недійсний, вимагається повторна авторизація');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Помилка валідації авторизації:', error);
+    return false;
+  }
+}

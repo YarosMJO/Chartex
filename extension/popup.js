@@ -20,8 +20,16 @@ class PopupManager {
   async init() {
     this.cacheElements();
     this.bindEvents();
-    await this.loadStatus();
+    
+    // Show loading overlay to prevent flickering during initial status check
+    this.showLoadingOverlay('Завантаження...');
+    
+    await this.loadStatus(true); // Skip spinner since overlay is active
     this.updateUI();
+    
+    // Hide loading overlay after initial load
+    this.hideLoadingOverlay();
+    
     // Listen for background messages about data sync completion
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (msg && msg.action === 'dataSyncComplete') {
