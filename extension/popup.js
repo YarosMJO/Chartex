@@ -43,7 +43,8 @@ class PopupManager {
       stopBtn: document.getElementById('stopBtn'),
       openDashboard: document.getElementById('openDashboard'),
       authStatus: document.getElementById('authStatus'),
-      loginBtn: document.getElementById('loginBtn')
+      loginBtn: document.getElementById('loginBtn'),
+      loadingOverlay: document.getElementById('loadingOverlay')
     };
   }
   
@@ -63,18 +64,18 @@ class PopupManager {
         console.log('LOGIN BUTTON CLICKED');
         if (this.status.hasUser) {
           // Logout
-          this.setProcessing(true);
+          this.showLoadingOverlay('Вихід з системи...');
           try {
             await this.sendMessage({ action: 'logout' });
             this.status.hasUser = false;
             this.status.userEmail = null;
             this.updateUI();
           } finally {
-            this.setProcessing(false);
+            this.hideLoadingOverlay();
           }
         } else {
           // Login
-          this.setProcessing(true);
+          this.showLoadingOverlay('Авторизація...');
           try {
             const response = await this.sendMessage({ action: 'authenticate' });
             console.log('BG RESPONSE:', response);
@@ -85,11 +86,13 @@ class PopupManager {
               this.status.userEmail = response.user.email;
               
               // Check if data collection is enabled for this user
+              this.showLoadingOverlay('Перевірка налаштувань...');
               const statusResponse = await this.sendMessage({ action: 'getStatus' });
               this.status.isCollecting = !!statusResponse.isCollecting;
               
               if (this.status.isCollecting) {
                 // Show spinner immediately when data collection is enabled
+                this.showLoadingOverlay('Збір даних...');
                 const historyCount = document.getElementById('historyCount');
                 const historyCountSpinner = document.getElementById('historyCountSpinner');
                 if (historyCount && historyCountSpinner) {
@@ -123,7 +126,7 @@ class PopupManager {
               this.showError('Помилка авторизації: ' + (response.error || 'невідома помилка'));
             }
           } finally {
-            this.setProcessing(false);
+            this.hideLoadingOverlay();
           }
         }
       });
@@ -407,26 +410,44 @@ class PopupManager {
   
   setProcessing(processing) {
     this.status.isProcessing = processing;
-    const buttons = [
+    
+    // Handle all buttons - make them visually disabled but keep text unchanged
+    const allButtons = [
       this.elements.startBtn,
       this.elements.stopBtn,
       this.elements.openDashboard,
       this.elements.loginBtn
     ].filter(Boolean);
     
-    buttons.forEach(button => {
+    allButtons.forEach(button => {
       button.disabled = processing;
       if (processing) {
-        button.dataset.originalText = button.textContent;
-        button.textContent = '⏳ Обробка...';
-      } else if (button.dataset.originalText) {
-        button.textContent = button.dataset.originalText;
-        delete button.dataset.originalText;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+      } else {
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
       }
     });
     
     // Update UI to reflect processing state
     this.updateUI();
+  }
+  
+  showLoadingOverlay(text = 'Авторизація...') {
+    if (this.elements.loadingOverlay) {
+      const loadingText = this.elements.loadingOverlay.querySelector('.loading-text');
+      if (loadingText) {
+        loadingText.textContent = text;
+      }
+      this.elements.loadingOverlay.style.display = 'flex';
+    }
+  }
+  
+  hideLoadingOverlay() {
+    if (this.elements.loadingOverlay) {
+      this.elements.loadingOverlay.style.display = 'none';
+    }
   }
   
   showError(message) {

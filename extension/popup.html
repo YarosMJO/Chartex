@@ -167,6 +167,31 @@
       border: 1px solid rgba(76, 175, 80, 0.5);
       color: #c8e6c9;
     }
+
+    /* Loading overlay styles */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .loading-spinner {
+      text-align: center;
+    }
+
+    .loading-text {
+      color: white;
+      margin-top: 10px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +238,19 @@
     <button id="startBtn" class="primary">▶️ Почати збір даних</button>
     <button id="openDashboard">📊 Відкрити Analytics</button>
   </div>
+  
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner">
+      <svg width="50" height="50" viewBox="0 0 50 50">
+        <circle cx="25" cy="25" r="20" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+          <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      <div class="loading-text">Авторизація...</div>
+    </div>
+  </div>
+</div>
   
   <div class="auth-section">
     <div class="auth-status">
