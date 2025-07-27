@@ -25,8 +25,9 @@ class PopupManager {
     // Load language settings first
     await this.loadLanguageSettings();
     
-          // Show loading overlay to prevent flickering during initial status check
-      this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.LOADING'));
+    // Show loading overlay to prevent flickering during initial status check
+    // Use default text since translations might not be loaded yet
+    this.showLoadingOverlay('Завантаження...');
     
     await this.loadStatus(true); // Skip spinner since overlay is active
     this.updateUI();
@@ -101,15 +102,23 @@ class PopupManager {
             })
             .catch(fallbackError => {
               console.error('Не вдалося завантажити переклади для української мови:', fallbackError);
+              // Set empty translations object to prevent errors
+              this.translations = {};
             });
         } else {
           console.error('Не вдалося завантажити переклади для української мови');
-          // Don't update UI if translations failed to load
+          // Set empty translations object to prevent errors
+          this.translations = {};
         }
       });
   }
   
   translatePopup(translations) {
+    if (!translations || typeof translations !== 'object') {
+      console.error('Невірні переклади:', translations);
+      return;
+    }
+    
     console.log('translatePopup викликано з перекладами:', Object.keys(translations));
     console.log('POPUP_MESSAGES секція:', translations.POPUP_MESSAGES);
     this.translations = translations; // Store translations
@@ -162,6 +171,11 @@ class PopupManager {
   }
   
   getNestedTranslation(translations, key) {
+    if (!translations || typeof translations !== 'object') {
+      console.warn('Невірні переклади для getNestedTranslation:', translations);
+      return null;
+    }
+    
     console.log('getNestedTranslation викликано з ключем:', key, 'та перекладами:', Object.keys(translations));
     const keys = key.split('.');
     let value = translations;
@@ -226,7 +240,7 @@ class PopupManager {
         console.log('LOGIN BUTTON CLICKED');
         if (this.status.hasUser) {
           // Logout
-          this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.LOGGING_OUT'));
+          this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.LOGGING_OUT') : 'Вихід з системи...');
           try {
             await this.sendMessage({ action: 'logout' });
             this.status.hasUser = false;
@@ -237,7 +251,7 @@ class PopupManager {
           }
         } else {
           // Login
-          this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.AUTHORIZING'));
+          this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.AUTHORIZING') : 'Авторизація...');
           try {
                     const response = await this.sendMessage({ action: 'authenticate' });
             
@@ -247,13 +261,13 @@ class PopupManager {
               this.status.userEmail = response.user.email;
               
               // Check if data collection is enabled for this user
-              this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.CHECKING_SETTINGS'));
+              this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.CHECKING_SETTINGS') : 'Перевірка налаштувань...');
               const statusResponse = await this.sendMessage({ action: 'getStatus' });
               this.status.isCollecting = !!statusResponse.isCollecting;
               
               // If collection is enabled, start it immediately
               if (this.status.isCollecting) {
-                this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.COLLECTING_DATA'));
+                this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.COLLECTING_DATA') : 'Збір даних...');
                 
                 // Update UI to show user is logged in and spinner is active
                 this.updateUI();
@@ -278,7 +292,8 @@ class PopupManager {
               }
             } else {
               // Login failed
-              const errorMsg = this.getTranslation('POPUP_MESSAGES.AUTH_ERROR', { error: response.error || this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') });
+              const unknownError = this.translations ? this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') : 'невідома помилка';
+              const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.AUTH_ERROR', { error: response.error || unknownError }) : `Помилка авторизації: ${response.error || unknownError}`;
               this.showError(errorMsg);
             }
           } finally {
@@ -324,7 +339,7 @@ class PopupManager {
       }
       this.updateUI();
     } catch (error) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.LOAD_STATUS_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.LOAD_STATUS_ERROR', { error: error.message }) : `Помилка завантаження статусу: ${error.message}`;
       this.showError(errorMsg);
       // Hide spinner, show number even on error
       const historyCount = document.getElementById('historyCount');
@@ -338,7 +353,7 @@ class PopupManager {
   
   async toggleCollection() {
     if (!this.status.hasUser) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.LOGIN_FIRST');
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.LOGIN_FIRST') : 'Будь ласка, спочатку увійдіть в систему.';
       this.showError(errorMsg);
       return;
     }
@@ -349,11 +364,12 @@ class PopupManager {
         this.status.isCollecting = response.collecting;
         this.updateUI();
       } else {
-        const errorMsg = this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: response.error || this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') });
+        const unknownError = this.translations ? this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') : 'невідома помилка';
+        const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: response.error || unknownError }) : `Помилка перемикання стану збору: ${response.error || unknownError}`;
         this.showError(errorMsg);
       }
     } catch (error) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: error.message }) : `Помилка перемикання стану збору: ${error.message}`;
       this.showError(errorMsg);
     } finally {
       this.setProcessing(false);
@@ -371,7 +387,7 @@ class PopupManager {
     }
     
     // Only update text elements if translations are loaded
-    if (Object.keys(this.translations).length > 0) {
+    if (this.translations && Object.keys(this.translations).length > 0) {
       if (this.elements.statusText) {
         const statusText = this.status.isCollecting ? 
           this.getTranslation('POPUP.STATUS_TEXT_COLLECTING') : 
@@ -394,7 +410,7 @@ class PopupManager {
       
       if (this.elements.authStatus) {
         if (this.status.hasUser) {
-          const email = this.status.userEmail || this.getTranslation('POPUP_MESSAGES.USER_DEFAULT');
+          const email = this.status.userEmail || (this.translations ? this.getTranslation('POPUP_MESSAGES.USER_DEFAULT') : 'Користувач');
           const authText = this.getTranslation('POPUP.AUTH_STATUS_LOGGED_IN', { email: email });
           if (authText) {
             this.elements.authStatus.textContent = authText;
@@ -468,14 +484,14 @@ class PopupManager {
       if (response.success) {
         this.status.isCollecting = true;
         this.updateUI();
-        const successMsg = this.getTranslation('POPUP_MESSAGES.COLLECTION_STARTED');
+        const successMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.COLLECTION_STARTED') : 'Збір даних розпочато';
         this.showSuccess(successMsg);
       } else {
-                  const errorMsg = this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: response.error });
+                  const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: response.error }) : `Помилка запуску збору даних: ${response.error}`;
         this.showError(errorMsg);
       }
     } catch (error) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: error.message }) : `Помилка запуску збору даних: ${error.message}`;
       this.showError(errorMsg);
     } finally {
       this.setLoading(false);
@@ -490,14 +506,14 @@ class PopupManager {
       if (response.success) {
         this.status.isCollecting = false;
         this.updateUI();
-        const successMsg = this.getTranslation('POPUP_MESSAGES.COLLECTION_STOPPED');
+        const successMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.COLLECTION_STOPPED') : 'Збір даних зупинено';
         this.showSuccess(successMsg);
       } else {
-                  const errorMsg = this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: response.error });
+                  const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: response.error }) : `Помилка зупинки збору даних: ${response.error}`;
         this.showError(errorMsg);
       }
     } catch (error) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: error.message }) : `Помилка зупинки збору даних: ${error.message}`;
       this.showError(errorMsg);
     } finally {
       this.setLoading(false);
@@ -507,10 +523,10 @@ class PopupManager {
   openDashboard() {
     try {
       chrome.runtime.openOptionsPage();
-      const successMsg = this.getTranslation('POPUP_MESSAGES.DASHBOARD_OPENED');
+      const successMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.DASHBOARD_OPENED') : 'Панель управління відкрито';
       this.showSuccess(successMsg);
     } catch (error) {
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.OPEN_DASHBOARD_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.OPEN_DASHBOARD_ERROR', { error: error.message }) : `Помилка відкриття панелі управління: ${error.message}`;
       this.showError(errorMsg);
     }
   }
@@ -532,16 +548,16 @@ class PopupManager {
       
       if (response.success) {
         console.log('Тест успішний:', response);
-        const successMsg = this.getTranslation('POPUP_MESSAGES.TEST_COMPLETED');
+        const successMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_COMPLETED') : 'Тест завершено.';
         this.showSuccess(successMsg);
       } else {
         console.error('Тест невдалий:', response.error);
-                  const errorMsg = this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: response.error });
+                  const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: response.error }) : `Помилка тесту: ${response.error}`;
         this.showError(errorMsg);
       }
     } catch (error) {
       console.error('Помилка тесту:', error);
-      const errorMsg = this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: error.message });
+      const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: error.message }) : `Помилка тесту: ${error.message}`;
       this.showError(errorMsg);
     } finally {
       this.setLoading(false);
@@ -572,7 +588,9 @@ class PopupManager {
       button.disabled = loading;
       if (loading) {
         button.dataset.originalText = button.textContent;
-        button.textContent = this.getTranslation('POPUP_MESSAGES.LOADING_TEXT');
+        // Use fallback text if translations not loaded
+        const loadingText = this.translations ? this.getTranslation('POPUP_MESSAGES.LOADING_TEXT') : '⏳ Завантаження...';
+        button.textContent = loadingText;
       } else if (button.dataset.originalText) {
         button.textContent = button.dataset.originalText;
         delete button.dataset.originalText;
@@ -608,7 +626,8 @@ class PopupManager {
   
   showLoadingOverlay(text = null) {
     if (!text) {
-      text = this.getTranslation('POPUP_MESSAGES.AUTHORIZING_DEFAULT');
+      // Try to get translation, fallback to default if translations not loaded
+      text = this.translations ? this.getTranslation('POPUP_MESSAGES.AUTHORIZING_DEFAULT') : 'Авторизація...';
     }
     if (this.elements.loadingOverlay) {
       const loadingText = this.elements.loadingOverlay.querySelector('.loading-text');
@@ -655,7 +674,7 @@ class PopupManager {
     console.log('formatLastSync викликано з timestamp:', timestamp);
     
     if (!timestamp) {
-      const neverText = this.getTranslation('POPUP_MESSAGES.NEVER');
+      const neverText = this.translations ? this.getTranslation('POPUP_MESSAGES.NEVER') : 'Ніколи';
       console.log('Повертаємо NEVER:', neverText);
       return neverText;
     }
@@ -667,20 +686,20 @@ class PopupManager {
     console.log('Розрахунок часу:', { date, now, diff, diffMinutes: Math.floor(diff / 60000) });
     
     if (diff < 60000) {
-      const justNowText = this.getTranslation('POPUP_MESSAGES.JUST_NOW');
+      const justNowText = this.translations ? this.getTranslation('POPUP_MESSAGES.JUST_NOW') : 'Щойно';
       console.log('Повертаємо JUST_NOW:', justNowText);
       return justNowText;
     }
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000);
-      const minutesText = this.getTranslation('POPUP_MESSAGES.MINUTES');
+      const minutesText = this.translations ? this.getTranslation('POPUP_MESSAGES.MINUTES') : 'хв';
       const result = `${minutes} ${minutesText} тому`;
       console.log('Повертаємо хвилини:', result);
       return result;
     }
     if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000);
-      const hoursText = this.getTranslation('POPUP_MESSAGES.HOURS');
+      const hoursText = this.translations ? this.getTranslation('POPUP_MESSAGES.HOURS') : 'год';
       const result = `${hours} ${hoursText} тому`;
       console.log('Повертаємо години:', result);
       return result;
@@ -692,6 +711,11 @@ class PopupManager {
   }
 
   getTranslation(key, params = {}) {
+    if (!this.translations) {
+      console.warn('Переклади не завантажені для ключа:', key);
+      return key; // Return key when translations are not loaded
+    }
+    
     let translation = this.getNestedTranslation(this.translations, key);
     if (!translation) {
       console.warn('Переклад не знайдено для ключа:', key, 'Доступні переклади:', Object.keys(this.translations));
@@ -721,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (chrome && chrome.runtime && chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
       } else {
-        alert(this.getTranslation('POPUP_MESSAGES.CANT_OPEN_OPTIONS'));
+        alert(this.translations ? this.getTranslation('POPUP_MESSAGES.CANT_OPEN_OPTIONS') : 'Не вдалося відкрити сторінку налаштувань.');
       }
     });
   }
