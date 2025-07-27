@@ -151,9 +151,13 @@ export class ApiService {
         console.log('Успішно дешифровано:', decryptedData);
         return decryptedData;
       }
-      throw new Error('Невірний ключ шифрування');
+      
+      // Якщо ключ не співпадає, повертаємо undefined замість викидання помилки
+      console.warn('Невірний ключ шифрування для даних');
+      return undefined;
     } catch (error) {
       console.error('Помилка дешифрування:', error);
+      // Повертаємо undefined замість викидання помилки
       return undefined;
     }
   }

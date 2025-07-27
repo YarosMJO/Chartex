@@ -73,16 +73,16 @@ export class DashboardComponent implements OnInit {
           this.ngZone.run(() => {
             if (encryptionKey) {
               this.apiService.setEncryptionKey(encryptionKey);
+              console.log('Ключ шифрування успішно встановлено');
             } else {
-              this.error = 'Ключ шифрування не знайдено - дані будуть показані як хеші';
-              this.loading = false;
-              return;
+              this.error = 'Ключ шифрування не знайдено - деякі дані можуть відображатися як хеші';
+              console.warn('Ключ шифрування не знайдено, дані будуть показані як хеші');
             }
           });
         } catch (error) {
           this.ngZone.run(() => {
-            this.error = 'Помилка отримання ключа шифрування';
-            this.loading = false;
+            this.error = 'Помилка отримання ключа шифрування - деякі дані можуть відображатися як хеші';
+            console.error('Помилка отримання ключа шифрування:', error);
           });
         }
         this.initializeDashboard();

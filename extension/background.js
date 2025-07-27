@@ -20,28 +20,39 @@ let sessionId = null;
 let isCollecting = false;
 let lastUserUid = null; // Track previous user for state persistence
 
-// Ініціалізація глобальних змінних
+// === Ініціалізація глобальних змінних ===
 (async function initializeGlobals() {
   try {
+    console.log('Ініціалізація глобальних змінних...');
+    
     // === Стабільна ініціалізація deviceId ===
     deviceId = await getOrCreateStableDeviceId();
-    // Завантажити інші дані
-    const data = await chrome.storage.local.get(['encryptionKey', 'sessionId', 'user']);
-    encryptionKey = data.encryptionKey;
+    console.log('DeviceId ініціалізовано:', deviceId);
+    
+    // === Ініціалізація encryptionKey та sessionId ===
+    const data = await chrome.storage.local.get(['encryptionKey', 'sessionId']);
+    encryptionKey = data.encryptionKey || CryptoUtils.generateKey();
     sessionId = data.sessionId || CryptoUtils.generateSessionId();
+    
+    // Зберегти, якщо не були збережені раніше
+    if (!data.encryptionKey) {
+      await chrome.storage.local.set({ encryptionKey });
+    }
     if (!data.sessionId) {
       await chrome.storage.local.set({ sessionId });
     }
-    console.log('Глобальні змінні ініціалізовано:', {
-      deviceId: deviceId?.substring(0, 10) + '...',
-      hasEncryptionKey: !!encryptionKey,
-      hasSessionId: !!sessionId
-    });
-    if (data.user) {
-      console.log('Відновлення сесії користувача:', data.user.email);
-      // Don't validate during initialization to avoid blocking auth process
-      // Validation will happen during getStatus calls
+    
+    console.log('EncryptionKey та SessionId ініціалізовано');
+    
+    // Автоматично зберегти ключ шифрування в chrome.storage для дашборду
+    if (encryptionKey) {
+      console.log('Автоматичне збереження ключа шифрування для дашборду...');
+      await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
+      console.log('Ключ шифрування збережено в chrome.storage.local');
     }
+    
+    // Don't validate during initialization to avoid blocking auth process
+    // Validation will happen during getStatus calls
   } catch (error) {
     console.error('Помилка ініціалізації глобальних змінних:', error);
   }
@@ -695,6 +706,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
       sendResponse({ encryptionKey: encryptionKey });
       return;
+      
+    case 'saveEncryptionKeyToStorage':
+      (async () => {
+        console.log('Збереження ключа шифрування в chrome.storage для дашборду');
+        if (encryptionKey) {
+          // Зберігаємо ключ в chrome.storage.local для доступу з дашборду
+          await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
+          console.log('Ключ шифрування збережено в chrome.storage.local');
+          sendResponse({ success: true });
+        } else {
+          sendResponse({ success: false, error: 'Ключ шифрування не знайдено' });
+        }
+      })();
+      return true;
       
     case 'startCollection':
       (async () => {
