@@ -151,6 +151,19 @@ router.get('/stats', authenticateToken, async (req, res) => {
     
     console.log('Фільтри:', { dateFilter, deviceFilter });
     
+    // Спочатку перевіримо, скільки записів знайдено
+    const totalRecords = await HistoryItem.countDocuments({ userId, ...dateFilter, ...deviceFilter });
+    console.log('Загальна кількість записів для користувача:', totalRecords);
+    
+    // Перевіримо кілька записів для діагностики
+    const sampleRecords = await HistoryItem.find({ userId, ...dateFilter, ...deviceFilter }).limit(5);
+    console.log('Приклади записів:', sampleRecords.map(record => ({
+      _id: record._id,
+      duration: record.duration,
+      visitTime: record.visitTime,
+      deviceId: record.deviceId
+    })));
+    
     const stats = await HistoryItem.aggregate([
       { $match: { userId, ...dateFilter, ...deviceFilter } },
       {
@@ -192,6 +205,12 @@ router.get('/stats', authenticateToken, async (req, res) => {
     ]);
     
     console.log('Топ доменів:', topDomains.length);
+    console.log('Приклади топ доменів:', topDomains.slice(0, 3).map(domain => ({
+      _id: domain._id,
+      visits: domain.visits,
+      totalDuration: domain.totalDuration
+    })));
+    
     console.log('Результат статистики:', {
       period,
       deviceId,

@@ -14,12 +14,16 @@ class PopupManager {
     };
     this.elements = {};
     this.config = window.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
+    this.translations = {}; // Store current translations
     this.init();
   }
   
   async init() {
     this.cacheElements();
     this.bindEvents();
+    
+    // Load language settings first
+    await this.loadLanguageSettings();
     
     // Show loading overlay to prevent flickering during initial status check
     this.showLoadingOverlay('Завантаження...');
@@ -36,6 +40,133 @@ class PopupManager {
         this.loadStatus();
       }
     });
+    
+    // Listen for storage changes to update language
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'local' && changes.chartex_language) {
+        console.log('Мова змінена в налаштуваннях:', changes.chartex_language.newValue);
+        this.applyLanguage(changes.chartex_language.newValue);
+      }
+    });
+  }
+  
+  async loadLanguageSettings() {
+    try {
+      // Load language from chrome.storage
+      const result = await chrome.storage.local.get(['chartex_language']);
+      const language = result.chartex_language || 'uk';
+      
+      console.log('Завантажена мова для popup:', language);
+      console.log('Результат з chrome.storage:', result);
+      
+      // Apply language to popup
+      this.applyLanguage(language);
+      
+    } catch (error) {
+      console.error('Помилка завантаження мови:', error);
+      // Fallback to Ukrainian
+      this.applyLanguage('uk');
+    }
+  }
+  
+  applyLanguage(language) {
+    console.log('Застосування мови в popup:', language);
+    
+    // Load translation file based on language
+    const translationFile = language === 'en' ? 'en.json' : 'uk.json';
+    const translationUrl = chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`);
+    
+    console.log('URL для завантаження перекладів:', translationUrl);
+    
+    fetch(translationUrl)
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(translations => {
+        console.log('Переклади завантажено:', translations);
+        this.translatePopup(translations);
+        // Update UI after translations are loaded
+        this.updateUI();
+      })
+      .catch(error => {
+        console.error('Помилка завантаження перекладів:', error);
+        // Try to load Ukrainian as fallback if current language is not Ukrainian
+        if (language !== 'uk') {
+          console.log('Спроба fallback на українську мову');
+          this.applyLanguage('uk');
+        } else {
+          console.error('Не вдалося завантажити переклади для української мови');
+          // Don't update UI if translations failed to load
+        }
+      });
+  }
+  
+  translatePopup(translations) {
+    this.translations = translations; // Store translations
+    console.log('Початок перекладу popup елементів');
+    
+    // Translate popup elements
+    const elementsToTranslate = {
+      'startBtn': 'POPUP.START_COLLECTION',
+      'openDashboard': 'POPUP.OPEN_DASHBOARD',
+      'loginBtn': 'POPUP.LOGIN',
+      'authStatus': 'POPUP.AUTH_STATUS',
+      'statusText': 'POPUP.STATUS_TEXT',
+      'deviceCount': 'POPUP.DEVICE_COUNT',
+      'historyCount': 'POPUP.HISTORY_COUNT',
+      'sessionCount': 'POPUP.SESSION_COUNT',
+      'lastSync': 'POPUP.LAST_SYNC'
+    };
+    
+    Object.entries(elementsToTranslate).forEach(([elementId, translationKey]) => {
+      const element = this.elements[elementId];
+      console.log(`Переклад елемента ${elementId}:`, element ? 'знайдено' : 'не знайдено');
+      if (element) {
+        const translation = this.getNestedTranslation(translations, translationKey);
+        console.log(`Ключ ${translationKey}:`, translation);
+        if (translation) {
+          if (element.tagName === 'INPUT' && element.type === 'placeholder') {
+            element.placeholder = translation;
+          } else {
+            element.textContent = translation;
+          }
+          console.log(`Елемент ${elementId} перекладено на:`, translation);
+        } else {
+          console.warn(`Переклад не знайдено для ключа: ${translationKey}`);
+        }
+      }
+    });
+    
+    // Update loading overlay text
+    if (this.elements.loadingOverlay) {
+      const loadingText = this.getNestedTranslation(translations, 'POPUP.LOADING') || 'Завантаження...';
+      const loadingTextElement = this.elements.loadingOverlay.querySelector('.loading-text');
+      if (loadingTextElement) {
+        loadingTextElement.textContent = loadingText;
+      }
+    }
+    
+    console.log('Переклад popup завершено');
+  }
+  
+  getNestedTranslation(translations, key) {
+    const keys = key.split('.');
+    let value = translations;
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return null;
+      }
+    }
+    
+    return value;
   }
   
   cacheElements() {
@@ -213,15 +344,58 @@ class PopupManager {
       }
     }
     
-    if (this.elements.statusText) {
-      this.elements.statusText.textContent = this.status.isCollecting ? 'Збір даних активний' : 'Збір даних зупинено';
+    // Only update text elements if translations are loaded
+    if (Object.keys(this.translations).length > 0) {
+      if (this.elements.statusText) {
+        const statusText = this.status.isCollecting ? 
+          this.getTranslation('POPUP.STATUS_TEXT_COLLECTING') : 
+          this.getTranslation('POPUP.STATUS_TEXT_STOPPED');
+        if (statusText) {
+          this.elements.statusText.textContent = statusText;
+        }
+      }
+      
+      if (this.elements.startBtn) {
+        this.elements.startBtn.disabled = !this.status.hasUser || this.status.isProcessing;
+        const btnText = this.status.isCollecting ? 
+          this.getTranslation('POPUP.STOP_COLLECTION') : 
+          this.getTranslation('POPUP.START_COLLECTION');
+        if (btnText) {
+          this.elements.startBtn.textContent = btnText;
+        }
+        this.elements.startBtn.className = this.status.isCollecting ? 'danger' : 'primary';
+      }
+      
+      if (this.elements.authStatus) {
+        if (this.status.hasUser) {
+          const email = this.status.userEmail || 'Користувач';
+          const authText = this.getTranslation('POPUP.AUTH_STATUS_LOGGED_IN', { email: email });
+          if (authText) {
+            this.elements.authStatus.textContent = authText;
+          }
+        } else {
+          const authText = this.getTranslation('POPUP.AUTH_STATUS_NOT_LOGGED_IN');
+          if (authText) {
+            this.elements.authStatus.textContent = authText;
+          }
+        }
+      }
+      
+      if (this.elements.loginBtn) {
+        if (this.status.hasUser) {
+          const logoutText = this.getTranslation('POPUP.LOGOUT');
+          if (logoutText) {
+            this.elements.loginBtn.textContent = logoutText;
+          }
+        } else {
+          const loginText = this.getTranslation('POPUP.LOGIN_GOOGLE');
+          if (loginText) {
+            this.elements.loginBtn.textContent = loginText;
+          }
+        }
+      }
     }
     
-    if (this.elements.startBtn) {
-      this.elements.startBtn.disabled = !this.status.hasUser || this.status.isProcessing;
-      this.elements.startBtn.textContent = this.status.isCollecting ? '⏹️ Зупинити збір' : '▶️ Почати збір даних';
-      this.elements.startBtn.className = this.status.isCollecting ? 'danger' : 'primary';
-    }
     if (this.elements.stopBtn) {
       this.elements.stopBtn.style.display = 'none'; // Hide stopBtn, use only one button
     }
@@ -242,7 +416,7 @@ class PopupManager {
       statusPanel.style.display = this.status.hasUser ? 'block' : 'none';
     }
     
-    // Оновлення статистики
+    // Оновлення статистики (завжди оновлюємо, незалежно від перекладів)
     if (this.elements.deviceCount) {
       this.elements.deviceCount.textContent = this.status.deviceCount || '-';
     }
@@ -254,24 +428,6 @@ class PopupManager {
     }
     if (this.elements.lastSync) {
       this.elements.lastSync.textContent = this.formatLastSync(this.status.lastSync);
-    }
-    
-    // Оновлення статусу авторизації
-    if (this.elements.authStatus) {
-      if (this.status.hasUser) {
-        const email = this.status.userEmail || 'Користувач';
-        this.elements.authStatus.textContent = `Авторизовано: ${email}`;
-      } else {
-        this.elements.authStatus.textContent = 'Статус авторизації: Не авторизовано';
-      }
-    }
-    
-    if (this.elements.loginBtn) {
-      if (this.status.hasUser) {
-        this.elements.loginBtn.textContent = '🔓 Вийти';
-      } else {
-        this.elements.loginBtn.textContent = '🔐 Увійти через Google';
-      }
     }
   }
   
@@ -494,6 +650,20 @@ class PopupManager {
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} год тому`;
     
     return date.toLocaleDateString('uk-UA');
+  }
+
+  getTranslation(key, params = {}) {
+    let translation = this.getNestedTranslation(this.translations, key);
+    if (!translation) {
+      console.warn(`Translation key not found: ${key}`);
+      return null; // Return null when translation is not found
+    }
+
+    // Replace placeholders with actual values
+    return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+      const regex = new RegExp(`{{${paramKey}}}`, 'g');
+      return acc.replace(regex, paramValue);
+    }, translation);
   }
 }
 

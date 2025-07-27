@@ -348,6 +348,29 @@ class HistoryCollector {
       // Отримати інформацію про пристрій
       const deviceInfo = DeviceUtils.getDeviceInfo();
       
+      // Обчислення duration: використовуємо більш надійний метод
+      let duration = 0;
+      if (historyItem.duration && historyItem.duration > 0) {
+        // Якщо Chrome надав duration, використовуємо його
+        duration = historyItem.duration;
+      } else {
+        // Інакше використовуємо приблизний час на основі типу переходу
+        // Це приблизний час, який користувач провів на сторінці
+        duration = 30; // 30 секунд за замовчуванням для звичайних переходів
+        if (historyItem.transition === 'typed' || historyItem.transition === 'generated') {
+          duration = 120; // 2 хвилини для введених URL
+        } else if (historyItem.transition === 'reload') {
+          duration = 60; // 1 хвилина для перезавантажень
+        }
+      }
+      
+      console.log('Обчислений duration для запису:', {
+        url: historyItem.url,
+        originalDuration: historyItem.duration,
+        calculatedDuration: duration,
+        transition: historyItem.transition
+      });
+      
       // Створити запис для відправки
       const record = {
         userId: currentUser?.uid || 'anonymous',
@@ -379,7 +402,7 @@ class HistoryCollector {
         domainHash: CryptoUtils.hashDomain(historyItem.url),
         visitCount: historyItem.visitCount || 1,
         typedCount: historyItem.typedCount || 0,
-        duration: historyItem.duration || 0,
+        duration: duration,
         transitionType: historyItem.transition || 'link',
         deviceType: deviceInfo.deviceType,
         browser: deviceInfo.browser,
@@ -398,20 +421,19 @@ class HistoryCollector {
       // Додати до черги
       this.pendingItems.push(record);
       
-      // Запланувати відправку, якщо накопичилося достатньо записів
+      // Оновити лічильник для поточного користувача
+      const historyCountKey = `historyCount_${currentUser?.uid}`;
+      const currentCount = await chrome.storage.local.get([historyCountKey]);
+      const newCount = (currentCount[historyCountKey] || 0) + 1;
+      await chrome.storage.local.set({ [historyCountKey]: newCount });
+      
+      console.log(`Запис додано до черги. Загальна кількість: ${newCount}, Duration: ${duration}с`);
+      
+      // Запланувати відправку, якщо досягнуто розмір пакету
       if (this.pendingItems.length >= this.batchSize) {
-        await this.flushBatch();
+        this.flushBatch();
       } else {
         this.scheduleBatchFlush();
-      }
-      
-      // Оновити лічильник в локальному сховищі
-      if (currentUser?.uid) {
-        const key = `historyCount_${currentUser.uid}`;
-        const currentCount = await chrome.storage.local.get([key]);
-        const newCount = (currentCount[key] || 0) + 1;
-        await chrome.storage.local.set({ [key]: newCount });
-        console.log(`Оновлено лічильник для користувача ${currentUser.uid}: ${newCount}`);
       }
       
     } catch (error) {
@@ -434,31 +456,30 @@ class HistoryCollector {
     if (this.pendingItems.length === 0) return;
     
     try {
-      console.log(`Відправка ${this.pendingItems.length} записів...`);
-      
       const itemsToSend = [...this.pendingItems];
       this.pendingItems = [];
       
-      if (this.batchTimeout) {
-        clearTimeout(this.batchTimeout);
-        this.batchTimeout = null;
-      }
+      // Обчислити загальну суму duration для логування
+      const totalDuration = itemsToSend.reduce((sum, item) => sum + (item.duration || 0), 0);
+      console.log(`Відправка пакету з ${itemsToSend.length} записами, загальний duration: ${totalDuration}с`);
       
-      const response = await APIUtils.sendHistoryBatch(itemsToSend);
-      console.log('Записи успішно відправлено:', response);
+      await APIUtils.sendHistoryBatch(itemsToSend);
       
       // Оновити час останньої синхронізації для поточного користувача
       if (currentUser?.uid) {
-        await chrome.storage.local.set({ [`lastSync_${currentUser.uid}`]: Date.now() });
+        const lastSyncKey = `lastSync_${currentUser.uid}`;
+        await chrome.storage.local.set({ [lastSyncKey]: new Date().toISOString() });
+        console.log(`Оновлено час останньої синхронізації для користувача ${currentUser.uid}`);
       }
       
-      // Notify all popups that data sync is complete
+      console.log('Пакет успішно відправлено');
+      
+      // Повідомити popup про завершення синхронізації
       chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
       
     } catch (error) {
-      console.error('Помилка відправки записів:', error);
-      
-      // Повернути записи назад до черги
+      console.error('Помилка відправки пакету:', error);
+      // Повернути елементи назад до черги
       this.pendingItems.unshift(...this.pendingItems);
     }
   }
@@ -717,6 +738,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: true });
         } else {
           sendResponse({ success: false, error: 'Ключ шифрування не знайдено' });
+        }
+      })();
+      return true;
+      
+    case 'updateSettings':
+      (async () => {
+        console.log('Отримано налаштування від дашборду:', request.settings);
+        try {
+          // Зберігаємо налаштування в chrome.storage для використання в popup
+          await chrome.storage.local.set({ 
+            chartex_settings: request.settings,
+            chartex_language: request.settings.display?.language || 'uk'
+          });
+          console.log('Налаштування збережено в chrome.storage');
+          sendResponse({ success: true });
+        } catch (error) {
+          console.error('Помилка збереження налаштувань:', error);
+          sendResponse({ success: false, error: error.message });
         }
       })();
       return true;
