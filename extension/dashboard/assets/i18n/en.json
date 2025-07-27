@@ -315,5 +315,10 @@
       "1Y": "1 year",
       "ALL": "All time"
     }
+  },
+  "DEVICE_TYPES": {
+    "DESKTOP": "Desktop",
+    "MOBILE": "Mobile",
+    "TABLET": "Tablet"
   }
 } 

@@ -44,6 +44,8 @@ class PopupManager {
     // Listen for storage changes to update language
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.chartex_language) {
+        console.log('Зміна мови в popup:', changes.chartex_language.newValue);
+        console.log('Поточні переклади перед оновленням:', Object.keys(this.translations));
         this.applyLanguage(changes.chartex_language.newValue);
       }
     });
@@ -66,9 +68,11 @@ class PopupManager {
   }
   
   applyLanguage(language) {
+    console.log('Застосування мови в popup:', language);
     // Load translation file based on language
     const translationFile = language === 'en' ? 'en.json' : 'uk.json';
     const translationUrl = chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`);
+    console.log('URL файлу перекладів:', translationUrl);
     
     fetch(translationUrl)
       .then(response => {
@@ -86,7 +90,18 @@ class PopupManager {
         console.error('Помилка завантаження перекладів:', error);
         // Try to load Ukrainian as fallback if current language is not Ukrainian
         if (language !== 'uk') {
-          this.applyLanguage('uk');
+          console.log('Спроба завантажити українську мову як fallback');
+          // Load Ukrainian translations directly without recursive call
+          const ukTranslationUrl = chrome.runtime.getURL('dashboard/assets/i18n/uk.json');
+          fetch(ukTranslationUrl)
+            .then(response => response.json())
+            .then(translations => {
+              this.translatePopup(translations);
+              this.updateUI();
+            })
+            .catch(fallbackError => {
+              console.error('Не вдалося завантажити переклади для української мови:', fallbackError);
+            });
         } else {
           console.error('Не вдалося завантажити переклади для української мови');
           // Don't update UI if translations failed to load
@@ -95,6 +110,8 @@ class PopupManager {
   }
   
   translatePopup(translations) {
+    console.log('translatePopup викликано з перекладами:', Object.keys(translations));
+    console.log('POPUP_MESSAGES секція:', translations.POPUP_MESSAGES);
     this.translations = translations; // Store translations
     
     // Translate popup elements
@@ -145,17 +162,23 @@ class PopupManager {
   }
   
   getNestedTranslation(translations, key) {
+    console.log('getNestedTranslation викликано з ключем:', key, 'та перекладами:', Object.keys(translations));
     const keys = key.split('.');
     let value = translations;
     
     for (const k of keys) {
+      console.log('Шукаємо ключ:', k, 'в об\'єкті:', Object.keys(value || {}));
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
+        console.log('Знайдено значення:', value);
       } else {
+        console.log('Ключ не знайдено:', k);
+        console.log('Доступні ключі в поточному об\'єкті:', Object.keys(value || {}));
         return null;
       }
     }
     
+    console.log('Повертаємо фінальне значення:', value);
     return value;
   }
   
@@ -430,7 +453,10 @@ class PopupManager {
       this.elements.sessionCount.textContent = this.status.sessionCount || '-';
     }
     if (this.elements.lastSync) {
-      this.elements.lastSync.textContent = this.formatLastSync(this.status.lastSync);
+      console.log('Оновлення lastSync з timestamp:', this.status.lastSync);
+      const formattedText = this.formatLastSync(this.status.lastSync);
+      console.log('Форматований текст lastSync:', formattedText);
+      this.elements.lastSync.textContent = formattedText;
     }
   }
   
@@ -626,36 +652,60 @@ class PopupManager {
   }
   
   formatLastSync(timestamp) {
-    if (!timestamp) return this.getTranslation('POPUP_MESSAGES.NEVER');
+    console.log('formatLastSync викликано з timestamp:', timestamp);
+    
+    if (!timestamp) {
+      const neverText = this.getTranslation('POPUP_MESSAGES.NEVER');
+      console.log('Повертаємо NEVER:', neverText);
+      return neverText;
+    }
     
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
     
-    if (diff < 60000) return this.getTranslation('POPUP_MESSAGES.JUST_NOW');
+    console.log('Розрахунок часу:', { date, now, diff, diffMinutes: Math.floor(diff / 60000) });
+    
+    if (diff < 60000) {
+      const justNowText = this.getTranslation('POPUP_MESSAGES.JUST_NOW');
+      console.log('Повертаємо JUST_NOW:', justNowText);
+      return justNowText;
+    }
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000);
-      return `${minutes} ${this.getTranslation('POPUP_MESSAGES.MINUTES')} тому`;
+      const minutesText = this.getTranslation('POPUP_MESSAGES.MINUTES');
+      const result = `${minutes} ${minutesText} тому`;
+      console.log('Повертаємо хвилини:', result);
+      return result;
     }
     if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000);
-      return `${hours} ${this.getTranslation('POPUP_MESSAGES.HOURS')} тому`;
+      const hoursText = this.getTranslation('POPUP_MESSAGES.HOURS');
+      const result = `${hours} ${hoursText} тому`;
+      console.log('Повертаємо години:', result);
+      return result;
     }
     
-    return date.toLocaleDateString('uk-UA');
+    const result = date.toLocaleDateString('uk-UA');
+    console.log('Повертаємо дату:', result);
+    return result;
   }
 
   getTranslation(key, params = {}) {
     let translation = this.getNestedTranslation(this.translations, key);
     if (!translation) {
-      return null; // Return null when translation is not found
+      console.warn('Переклад не знайдено для ключа:', key, 'Доступні переклади:', Object.keys(this.translations));
+      return key; // Return key when translation is not found
     }
 
     // Replace placeholders with actual values
-    return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+    const result = Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
       const regex = new RegExp(`{{${paramKey}}}`, 'g');
       return acc.replace(regex, paramValue);
     }, translation);
+    
+    console.log('Переклад для ключа', key, ':', result);
+    return result;
   }
 }
 

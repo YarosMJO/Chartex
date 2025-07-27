@@ -132,23 +132,12 @@ export class ApiService {
     }
 
     try {
-      console.log('Спроба дешифрування даних:', { 
-        hasEncryptedData: !!encryptedData, 
-        encryptedDataLength: encryptedData?.length 
-      });
-      
       // Використовуємо той самий алгоритм, що й в extension
       const decrypted = this.base64ToUtf8(encryptedData);
       const parts = decrypted.split('|');
       
-      console.log('Дешифровані частини:', { 
-        partsCount: parts.length, 
-        hasKey: parts[1] === this.encryptionKey 
-      });
-      
       if (parts[1] === this.encryptionKey) {
         const decryptedData = JSON.parse(parts[0]);
-        console.log('Успішно дешифровано:', decryptedData);
         return decryptedData;
       }
       
@@ -193,11 +182,23 @@ export class ApiService {
   } = {}): Promise<PaginatedResponse<HistoryItem & { decryptedData?: DecryptedData }>> {
     const response = await this.getHistory(params);
     
+    console.log('Отримана історія для дешифрування:', {
+      itemsCount: response.items?.length || 0,
+      hasEncryptionKey: !!this.encryptionKey
+    });
+    
     // Дешифрувати дані для кожного запису
     const itemsWithDecryptedData = response.items.map(item => ({
       ...item,
       decryptedData: this.decryptData(item.encryptedData)
     }));
+    
+    const decryptedCount = itemsWithDecryptedData.filter(item => item.decryptedData).length;
+    console.log('Результат дешифрування:', {
+      totalItems: itemsWithDecryptedData.length,
+      decryptedCount,
+      successRate: itemsWithDecryptedData.length > 0 ? (decryptedCount / itemsWithDecryptedData.length * 100).toFixed(1) + '%' : '0%'
+    });
 
     return {
       ...response,
@@ -210,44 +211,207 @@ export class ApiService {
     period?: '7d' | '30d' | '90d' | '1y' | 'all';
     deviceId?: string;
   } = {}): Promise<HistoryStats> {
-    const stats = await this.getUserStats(params);
-    
-    console.log('Отримана статистика для дешифрування:', {
-      hasStats: !!stats,
-      topDomainsCount: stats.topDomains?.length || 0,
-      hasEncryptionKey: !!this.encryptionKey
-    });
-    
-    // Дешифрувати дані для топ доменів
-    const topDomainsWithDecryptedData = stats.topDomains.map((domain, index) => {
-      console.log(`Дешифрування домену ${index + 1}:`, {
-        hasEncryptedData: !!domain.encryptedData,
-        encryptedDataLength: domain.encryptedData?.length
+    try {
+      // Розраховуємо дати для періоду
+      const now = new Date();
+      let fromDate: Date;
+      
+      switch (params.period) {
+        case '7d':
+          fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90d':
+          fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case '1y':
+          fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          fromDate = new Date(0); // Всі дані
+      }
+      
+      // Спочатку спробуємо отримати всі дані без фільтрів
+      console.log('Спроба отримання всіх даних без фільтрів...');
+      let historyResponse = await this.getHistoryWithDecryptedData({
+        limit: 1000
       });
       
-      const decryptedData = domain.encryptedData ? this.decryptData(domain.encryptedData) : undefined;
+      // Тестовий запит для перевірки backend
+      console.log('Тестовий запит до backend...');
+      try {
+        const testResponse = await this.http.get(`${this.API_BASE_URL}/health`).toPromise();
+        console.log('Backend health check:', testResponse);
+      } catch (error) {
+        console.error('Backend health check failed:', error);
+      }
       
-      console.log(`Результат дешифрування ${index + 1}:`, {
-        success: !!decryptedData,
-        decryptedUrl: decryptedData?.url
+      // Якщо немає даних, спробуємо з фільтрами
+      if (!historyResponse.items || historyResponse.items.length === 0) {
+        console.log('Немає даних без фільтрів, спробуємо з фільтрами...');
+        historyResponse = await this.getHistoryWithDecryptedData({
+          deviceId: params.deviceId,
+          from: fromDate.toISOString(),
+          to: now.toISOString(),
+          limit: 1000
+        });
+      }
+      
+      console.log('Отримана історія для агрегації:', {
+        hasHistory: !!historyResponse,
+        itemsCount: historyResponse.items?.length || 0,
+        hasEncryptionKey: !!this.encryptionKey,
+        encryptionKeyLength: this.encryptionKey?.length || 0
+      });
+      
+      if (!historyResponse.items || historyResponse.items.length === 0) {
+        console.log('Немає даних історії, спробуємо fallback до getUserStats...');
+        // Fallback до старого методу
+        try {
+          const fallbackStats = await this.getUserStats(params);
+          console.log('Fallback статистика отримана:', {
+            hasStats: !!fallbackStats,
+            topDomainsCount: fallbackStats.topDomains?.length || 0
+          });
+          return fallbackStats;
+        } catch (fallbackError) {
+          console.error('Помилка fallback статистики:', fallbackError);
+          // Повертаємо порожню статистику як останній fallback
+          return {
+            period: params.period || '30d',
+            stats: {
+              totalVisits: 0,
+              uniqueDomains: 0,
+              totalDuration: 0,
+              avgDuration: 0
+            },
+            topDomains: []
+          };
+        }
+      }
+      
+      // Агрегуємо дані з історії
+      const domainStats = new Map<string, {
+        visits: number;
+        totalDuration: number;
+        decryptedData?: DecryptedData;
+      }>();
+      
+      let totalVisits = 0;
+      let totalDuration = 0;
+      
+      historyResponse.items.forEach(item => {
+        totalVisits += item.visitCount || 1;
+        totalDuration += item.duration || 0;
+        
+        if (item.decryptedData?.url) {
+          const domain = this.getDomainFromUrl(item.decryptedData.url);
+          const existing = domainStats.get(domain);
+          
+          if (existing) {
+            existing.visits += item.visitCount || 1;
+            existing.totalDuration += item.duration || 0;
+          } else {
+            domainStats.set(domain, {
+              visits: item.visitCount || 1,
+              totalDuration: item.duration || 0,
+              decryptedData: item.decryptedData
+            });
+          }
+        }
+      });
+      
+      // Конвертуємо в масив і сортуємо за кількістю відвідувань
+      const topDomains = Array.from(domainStats.entries())
+        .map(([domain, stats]) => ({
+          _id: domain,
+          visits: stats.visits,
+          totalDuration: stats.totalDuration,
+          decryptedData: stats.decryptedData
+        }))
+        .sort((a, b) => b.visits - a.visits)
+        .slice(0, 10); // Топ 10 доменів
+      
+      const uniqueDomains = domainStats.size;
+      const avgDuration = uniqueDomains > 0 ? totalDuration / uniqueDomains : 0;
+      
+      console.log('Агрегована статистика:', {
+        totalVisits,
+        uniqueDomains,
+        totalDuration,
+        avgDuration,
+        topDomainsCount: topDomains.length
       });
       
       return {
-        ...domain,
-        decryptedData
+        period: params.period || '30d',
+        stats: {
+          totalVisits,
+          uniqueDomains,
+          totalDuration,
+          avgDuration
+        },
+        topDomains
       };
-    });
-
-    return {
-      ...stats,
-      topDomains: topDomainsWithDecryptedData
-    };
+    } catch (error) {
+      console.error('Помилка отримання статистики з дешифрованими даними:', error);
+      console.log('Спроба fallback до звичайної статистики...');
+      // Fallback до звичайної статистики
+      try {
+        const fallbackStats = await this.getUserStats(params);
+        console.log('Fallback статистика отримана:', {
+          hasStats: !!fallbackStats,
+          topDomainsCount: fallbackStats.topDomains?.length || 0
+        });
+        return fallbackStats;
+      } catch (fallbackError) {
+        console.error('Помилка fallback статистики:', fallbackError);
+        // Повертаємо порожню статистику як останній fallback
+        return {
+          period: params.period || '30d',
+          stats: {
+            totalVisits: 0,
+            uniqueDomains: 0,
+            totalDuration: 0,
+            avgDuration: 0
+          },
+          topDomains: []
+        };
+      }
+    }
+  }
+  
+  // Допоміжний метод для отримання домену з URL
+  private getDomainFromUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return url;
+    }
   }
 
     private async getHeaders() {
-    return {
+    const headers: { [key: string]: string } = {
       'Content-Type': 'application/json'
     };
+    
+    // Додаємо токен авторизації, якщо він є
+    try {
+      const token = await this.authService.getCurrentUserToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('Токен авторизації додано до заголовків');
+      } else {
+        console.warn('Токен авторизації не знайдено');
+      }
+    } catch (error) {
+      console.error('Помилка отримання токена авторизації:', error);
+    }
+    
+    return headers;
   }
 
   // Історія
@@ -264,10 +428,21 @@ export class ApiService {
     const headers = await this.getHeaders();
     const httpParams = new URLSearchParams(params as any);
     
-    return this.http.get<PaginatedResponse<HistoryItem>>(
+    console.log('API getHistory params:', params);
+    console.log('API getHistory URL:', `${this.API_BASE_URL}/history?${httpParams.toString()}`);
+    
+    const response = await this.http.get<PaginatedResponse<HistoryItem>>(
       `${this.API_BASE_URL}/history?${httpParams.toString()}`,
       { headers }
-    ).toPromise() as Promise<PaginatedResponse<HistoryItem>>;
+    ).toPromise();
+    
+    console.log('API getHistory response:', {
+      hasResponse: !!response,
+      itemsCount: response?.items?.length || 0,
+      totalItems: response?.pagination?.total || 0
+    });
+    
+    return response as PaginatedResponse<HistoryItem>;
   }
 
   async getHistoryStats(params: {
@@ -430,14 +605,21 @@ export class ApiService {
     const httpParams = new URLSearchParams(params as any);
     
     console.log('API getUserStats params:', params);
-    console.log('API getUserStats deviceId:', params.deviceId);
-    console.log('API getUserStats hasDeviceId:', !!params.deviceId);
-    console.log('API getUserStats URL:', `${this.API_BASE_URL}/users/stats`);
+    console.log('API getUserStats URL:', `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`);
     
-    return this.http.get<HistoryStats>(
+    const response = await this.http.get<HistoryStats>(
       `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`,
       { headers }
-    ).toPromise() as Promise<HistoryStats>;
+    ).toPromise();
+    
+    console.log('API getUserStats response:', {
+      hasResponse: !!response,
+      hasStats: !!response?.stats,
+      totalVisits: response?.stats?.totalVisits || 0,
+      topDomainsCount: response?.topDomains?.length || 0
+    });
+    
+    return response as HistoryStats;
   }
 
   async deleteAccount(): Promise<{ success: boolean; message: string }> {

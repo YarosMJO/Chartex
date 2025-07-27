@@ -54,6 +54,7 @@
     "COLLECTION_DISABLED": "Збір даних вимкнено",
     "NO_DATA": "Немає даних",
     "NEVER": "Ніколи",
+    "JUST_NOW": "Щойно",
     "AUTH_STATUS_LOGGED_IN": "Увійшов: {{email}}",
     "AUTH_STATUS_NOT_LOGGED_IN": "Не авторизовано",
     "STATUS_TEXT_COLLECTING": "Збір даних активний",
@@ -62,6 +63,20 @@
   "POPUP_HEADER": {
     "TITLE": "📊 Chartex",
     "DESCRIPTION": "Веб-аналітика браузерної активності"
+  },
+  "POPUP_MESSAGES": {
+    "LOADING": "Завантаження...",
+    "AUTHORIZING": "Авторизація...",
+    "AUTHORIZING_DEFAULT": "Авторизація користувача...",
+    "COLLECTING": "Збір даних...",
+    "PROCESSING": "Обробка даних...",
+    "CHECKING_SETTINGS": "Перевірка налаштувань...",
+    "COLLECTING_DATA": "Збір даних ...",
+    "NEVER": "Ніколи",
+    "JUST_NOW": "Щойно",
+    "MINUTES": "хв",
+    "HOURS": "год",
+    "CANT_OPEN_OPTIONS": "Не вдалося відкрити налаштування"
   },
   "HTML_ATTRIBUTES": {
     "GOOGLE_PROFILE_ALT": "Google профіль"
@@ -78,7 +93,7 @@
     "LIGHT": "Світла",
     "DARK": "Темна",
     "AUTO": "Авто",
-    "DEFAULT": "Дефолтна",
+    "DEFAULT": "По замовчуванню",
     "ENABLE_COLLECTION": "Увімкнути збір даних",
     "ENABLE_COLLECTION_DESC": "Дозволити розширенню збирати дані про відвідування сайтів",
     "ENABLE_NOTIFICATIONS": "Увімкнути сповіщення",
@@ -280,6 +295,11 @@
       "1Y": "1 рік",
       "ALL": "Весь час"
     }
+  },
+  "DEVICE_TYPES": {
+    "DESKTOP": "Настільний комп'ютер",
+    "MOBILE": "Мобільний пристрій",
+    "TABLET": "Планшет"
   },
   "CONTEXT_MENU": {
     "OPEN_DASHBOARD": "Відкрити панель управління",

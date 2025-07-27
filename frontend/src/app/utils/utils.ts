@@ -30,8 +30,8 @@ export const formatNumber = (num: number, translateService?: TranslateService): 
     }
     // Fallback translations
     const fallbacks: Record<string, string> = {
-      'UTILS.THOUSANDS': 'K',
-      'UTILS.MILLIONS': 'M'
+      'UTILS.THOUSANDS': 'тис.',
+      'UTILS.MILLIONS': 'млн'
     };
     return fallbacks[key] || key;
   };
@@ -75,5 +75,32 @@ export const getDomainFromUrl = (url: string): string => {
     return urlObj.hostname;
   } catch {
     return url;
+  }
+};
+
+// Локалізація типу пристрою
+export const getDeviceTypeLabel = (deviceType: string, translateService?: TranslateService): string => {
+  const getTranslation = (key: string): string => {
+    if (translateService) {
+      return translateService.instant(key);
+    }
+    // Fallback translations
+    const fallbacks: Record<string, string> = {
+      'DEVICE_TYPES.DESKTOP': 'Настільний комп\'ютер',
+      'DEVICE_TYPES.MOBILE': 'Мобільний пристрій',
+      'DEVICE_TYPES.TABLET': 'Планшет'
+    };
+    return fallbacks[key] || deviceType;
+  };
+
+  switch (deviceType?.toLowerCase()) {
+    case 'desktop':
+      return getTranslation('DEVICE_TYPES.DESKTOP');
+    case 'mobile':
+      return getTranslation('DEVICE_TYPES.MOBILE');
+    case 'tablet':
+      return getTranslation('DEVICE_TYPES.TABLET');
+    default:
+      return deviceType || 'Unknown';
   }
 }; 

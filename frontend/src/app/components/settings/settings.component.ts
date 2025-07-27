@@ -138,8 +138,6 @@ export class SettingsComponent implements OnInit {
   // Зміна мови
   onLanguageChange() {
     this.saveSettings();
-    this.applyImmediateSettings();
-    this.translateService.setLanguage(this.displaySettings.language);
   }
 
   // Збереження налаштувань
@@ -198,6 +196,8 @@ export class SettingsComponent implements OnInit {
     
     // Відправляємо подію про зміну мови
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language } }));
+    
+    console.log('Мова змінена на:', language);
   }
 
   // Застосування налаштувань, які не потребують збереження

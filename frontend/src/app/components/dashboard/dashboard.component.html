@@ -185,10 +185,10 @@
               <mat-icon class="device-icon">
                 {{ device.deviceType === 'mobile' ? 'smartphone' : 'computer' }}
               </mat-icon>
-              <div class="device-info">
-                <div class="device-name">{{ device.deviceName }}</div>
-                <div class="device-type">{{ device.browser }} • {{ device.os }}</div>
-              </div>
+                          <div class="device-info">
+              <div class="device-name">{{ device.deviceName }}</div>
+              <div class="device-type">{{ getDeviceTypeLabel(device.deviceType) }} • {{ device.browser }} • {{ device.os }}</div>
+            </div>
             </div>
             <div class="device-stats">
               <div class="device-stat">

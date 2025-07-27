@@ -74,6 +74,12 @@ let isCollecting = false;
 
 // === Ініціалізація глобальних змінних ===
 (async function initializeGlobals() {
+  // Слухаємо зміни в storage для оновлення перекладів
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.chartex_language) {
+      translationManager.loadTranslations();
+    }
+  });
   try {
     console.log(translationManager.getTranslation('BACKGROUND.INIT_GLOBALS'));
     
@@ -792,6 +798,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             chartex_settings: request.settings,
             chartex_language: request.settings.display?.language || 'uk'
           });
+          
+          // Оновлюємо переклади в background script
+          await translationManager.loadTranslations();
+          console.log('Переклади оновлено в background для мови:', request.settings.display?.language);
+          
           sendResponse({ success: true });
         } catch (error) {
           console.error('Помилка збереження налаштувань:', error);

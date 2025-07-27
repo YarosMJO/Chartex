@@ -26,8 +26,9 @@ export class AppTranslateService {
   // Метод для зміни мови
   setLanguage(lang: string) {
     if (['uk', 'en'].includes(lang)) {
+      console.log('AppTranslateService.setLanguage викликано з мовою:', lang);
       this.translate.use(lang);
-      localStorage.setItem('preferredLanguage', lang);
+      localStorage.setItem('chartex_language', lang);
     }
   }
 

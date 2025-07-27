@@ -17,7 +17,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
-import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '../../utils/utils';
+import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl, getDeviceTypeLabel } from '../../utils/utils';
 
 @Component({
   selector: 'app-dashboard',
@@ -65,16 +65,34 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Ініціалізуємо мову з localStorage
+    const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
+    console.log('Dashboard ініціалізує мову:', savedLanguage);
+    this.translateService.use(savedLanguage);
+    
+    // Слухаємо зміни мови
+    window.addEventListener('languageChanged', (event: any) => {
+      if (event.detail && event.detail.language) {
+        console.log('Dashboard отримав подію зміни мови:', event.detail.language);
+        this.translateService.use(event.detail.language);
+      }
+    });
+    
     this.authService.getUser().subscribe(async user => {
       this.currentUser = user;
       if (this.currentUser) {
         this.error = null;
         try {
+          console.log('Спроба отримання ключа шифрування...');
           const encryptionKey = await this.authService.getEncryptionKey();
           this.ngZone.run(() => {
             if (encryptionKey) {
               this.apiService.setEncryptionKey(encryptionKey);
-              console.log('Ключ шифрування успішно встановлено');
+              console.log('Ключ шифрування успішно встановлено:', {
+                hasKey: !!encryptionKey,
+                keyLength: encryptionKey.length,
+                keyPreview: encryptionKey.substring(0, 10) + '...'
+              });
             } else {
               this.error = 'Ключ шифрування не знайдено - деякі дані можуть відображатися як хеші';
               console.warn('Ключ шифрування не знайдено, дані будуть показані як хеші');
@@ -127,22 +145,36 @@ export class DashboardComponent implements OnInit {
   // Завантаження статистики користувача
   async loadUserStats() {
     try {
+      console.log('Початок завантаження статистики користувача...');
       const params: { period: '7d' | '30d' | '90d' | '1y' | 'all'; deviceId?: string } = {
         period: this.selectedPeriod
       };
       if (this.selectedDevice !== 'all') {
         params.deviceId = this.selectedDevice;
       }
+      
+      console.log('Параметри для статистики:', params);
       const stats = await this.apiService.getUserStatsWithDecryptedData(params);
+      
+      console.log('Статистика отримана:', {
+        hasStats: !!stats,
+        hasTopDomains: !!stats.topDomains,
+        topDomainsCount: stats.topDomains?.length || 0,
+        totalVisits: stats.stats?.totalVisits || 0
+      });
+      
       this.ngZone.run(() => {
         this.userStats = stats;
         if (!this.userStats || !this.userStats.stats) {
           this.error = 'Дані статистики не отримано.';
+          console.warn('Статистика не містить даних');
           return;
         }
+        console.log('Підготовка даних для графіків...');
         this.prepareChartData();
       });
     } catch (error) {
+      console.error('Помилка завантаження статистики:', error);
       this.ngZone.run(() => {
         this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
       });
@@ -171,6 +203,12 @@ export class DashboardComponent implements OnInit {
   prepareChartData() {
     if (!this.userStats) return;
     
+    console.log('Підготовка даних для графіків:', {
+      hasUserStats: !!this.userStats,
+      topDomainsCount: this.userStats.topDomains?.length || 0,
+      hasDecryptedData: this.userStats.topDomains?.some(d => d.decryptedData) || false
+    });
+    
     // Дані для графіка активності
     this.activityChartData = this.userStats.topDomains.map(domain => ({
       x: domain.decryptedData?.url ? getDomainFromUrl(domain.decryptedData.url) : domain._id,
@@ -178,12 +216,25 @@ export class DashboardComponent implements OnInit {
     }));
     
     // Дані для топ доменів
-    this.topDomainsData = this.userStats.topDomains.slice(0, 10).map(domain => ({
-      name: domain.decryptedData?.url || domain._id,
-      title: domain.decryptedData?.title || getDomainFromUrl(domain._id),
-      visits: domain.visits,
-      duration: domain.totalDuration
-    }));
+    this.topDomainsData = this.userStats.topDomains.slice(0, 10).map(domain => {
+      const name = domain.decryptedData?.url || domain._id;
+      const title = domain.decryptedData?.title || getDomainFromUrl(domain._id);
+      
+      console.log('Домен для відображення:', {
+        originalId: domain._id,
+        decryptedUrl: domain.decryptedData?.url,
+        finalName: name,
+        finalTitle: title,
+        visits: domain.visits
+      });
+      
+      return {
+        name,
+        title,
+        visits: domain.visits,
+        duration: domain.totalDuration
+      };
+    });
     
     // Дані для статистики пристроїв
     this.deviceStatsData = this.devices.map(device => ({
@@ -203,9 +254,22 @@ export class DashboardComponent implements OnInit {
     await this.loadUserStats();
   }
 
-  formatDuration = (seconds: number) => formatDuration(seconds, this.translateService);
-  formatNumber = (num: number) => formatNumber(num, this.translateService);
-  getPeriodLabel = (period: string) => getPeriodLabel(period, this.translateService);
+  formatDuration = (seconds: number) => {
+    console.log('Dashboard formatDuration викликано з:', seconds, 'поточна мова:', this.translateService.currentLang);
+    return formatDuration(seconds, this.translateService);
+  };
+  formatNumber = (num: number) => {
+    console.log('Dashboard formatNumber викликано з:', num, 'поточна мова:', this.translateService.currentLang);
+    return formatNumber(num, this.translateService);
+  };
+  getPeriodLabel = (period: string) => {
+    console.log('Dashboard getPeriodLabel викликано з:', period, 'поточна мова:', this.translateService.currentLang);
+    return getPeriodLabel(period, this.translateService);
+  };
+  getDeviceTypeLabel = (deviceType: string) => {
+    console.log('Dashboard getDeviceTypeLabel викликано з:', deviceType, 'поточна мова:', this.translateService.currentLang);
+    return getDeviceTypeLabel(deviceType, this.translateService);
+  };
 
   get isDarkTheme(): boolean {
     return document.body.classList.contains('theme-dark');

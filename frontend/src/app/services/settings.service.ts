@@ -88,8 +88,6 @@ export class SettingsService {
       };
 
       this.settingsSubject.next(settings);
-      // Застосувати мову з налаштувань
-      this.translateService.setLanguage(settings.display.language);
       // Застосувати тему з налаштувань
       this.applyTheme(settings.display.theme);
     } catch (error) {
@@ -127,9 +125,6 @@ export class SettingsService {
       localStorage.setItem(this.STORAGE_KEYS.DISPLAY, JSON.stringify(settings.display));
 
       this.settingsSubject.next(settings);
-
-      // Застосувати мову з налаштувань
-      this.translateService.setLanguage(settings.display.language);
 
       // Відправити налаштування до extension
       this.sendSettingsToExtension(settings);
