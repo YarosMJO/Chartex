@@ -196,8 +196,8 @@
 </head>
 <body>
   <div class="header">
-    <h2>📊 Chartex</h2>
-    <p>Веб-аналітика браузерної активності</p>
+    <h2 id="headerTitle">📊 Chartex</h2>
+    <p id="headerDescription">Веб-аналітика браузерної активності</p>
   </div>
   
   <div id="error" class="error" style="display: none;"></div>
@@ -210,7 +210,7 @@
     <div class="stats">
       <div class="stat-item">
         <div id="deviceCount" class="stat-value">-</div>
-        <div class="stat-label">Пристрої</div>
+        <div class="stat-label" id="deviceCountLabel">Пристрої</div>
       </div>
       <div class="stat-item">
         <div id="historyCount" class="stat-value">-</div>
@@ -221,22 +221,22 @@
             </circle>
           </svg>
         </div>
-        <div class="stat-label">Записи</div>
+        <div class="stat-label" id="historyCountLabel">Записи</div>
       </div>
       <div class="stat-item">
         <div id="sessionCount" class="stat-value">-</div>
-        <div class="stat-label">Сесії</div>
+        <div class="stat-label" id="sessionCountLabel">Сесії</div>
       </div>
       <div class="stat-item">
         <div id="lastSync" class="stat-value">-</div>
-        <div class="stat-label">Остання синхронізація</div>
+        <div class="stat-label" id="lastSyncLabel">Остання синхронізація</div>
       </div>
     </div>
   </div>
   
   <div class="buttons" id="mainButtons" style="display: none;">
     <button id="startBtn" class="primary">▶️ Почати збір даних</button>
-    <button id="openDashboard">📊 Відкрити Analytics</button>
+    <button id="openDashboard">📊 Відкрити аналітику</button>
   </div>
   
   <!-- Loading overlay -->
@@ -247,7 +247,7 @@
           <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
         </circle>
       </svg>
-      <div class="loading-text">Авторизація...</div>
+      <div class="loading-text" id="loadingText">Авторизація...</div>
     </div>
   </div>
 </div>

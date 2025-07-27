@@ -14,7 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
 import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl } from '../../utils/utils';
@@ -60,7 +60,8 @@ export class DashboardComponent implements OnInit {
     public authService: AuthService,
     private apiService: ApiService,
     private ngZone: NgZone,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -202,9 +203,9 @@ export class DashboardComponent implements OnInit {
     await this.loadUserStats();
   }
 
-  formatDuration = formatDuration;
-  formatNumber = formatNumber;
-  getPeriodLabel = getPeriodLabel;
+  formatDuration = (seconds: number) => formatDuration(seconds, this.translateService);
+  formatNumber = (num: number) => formatNumber(num, this.translateService);
+  getPeriodLabel = (period: string) => getPeriodLabel(period, this.translateService);
 
   get isDarkTheme(): boolean {
     return document.body.classList.contains('theme-dark');

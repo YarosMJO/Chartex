@@ -1,4 +1,59 @@
 // Альтернативна авторизація через Chrome Identity API
+
+// Translation manager for error messages
+class TranslationManager {
+  constructor() {
+    this.translations = {};
+    this.currentLanguage = 'uk';
+    this.loadTranslations();
+  }
+  
+  async loadTranslations() {
+    try {
+      const result = await chrome.storage.local.get(['chartex_language']);
+      this.currentLanguage = result.chartex_language || 'uk';
+      
+      const translationFile = this.currentLanguage === 'en' ? 'en.json' : 'uk.json';
+      const response = await fetch(chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`));
+      this.translations = await response.json();
+    } catch (error) {
+      console.error('Помилка завантаження перекладів:', error);
+      // Fallback translations
+      this.translations = {
+        CHROME_AUTH_ERRORS: {
+          TOKEN_NOT_OBTAINED: "Не вдалося отримати токен",
+          USER_INFO_ERROR: "Помилка отримання інформації користувача"
+        }
+      };
+    }
+  }
+  
+  getTranslation(key, params = {}) {
+    const keys = key.split('.');
+    let value = this.translations;
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key; // Return key if translation not found
+      }
+    }
+    
+    if (typeof value !== 'string') {
+      return key;
+    }
+    
+    // Replace placeholders with actual values
+    return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+      const regex = new RegExp(`{{${paramKey}}}`, 'g');
+      return acc.replace(regex, paramValue);
+    }, value);
+  }
+}
+
+const translationManager = new TranslationManager();
+
 class ChromeAuth {
   static async authenticate() {
     try {
@@ -17,7 +72,7 @@ class ChromeAuth {
         };
         return { success: true, user: userInfo, idToken };
       } else {
-        return { success: false, error: 'Не вдалося отримати токен' };
+        return { success: false, error: translationManager.getTranslation('CHROME_AUTH_ERRORS.TOKEN_NOT_OBTAINED') };
       }
     } catch (error) {
       console.error('Помилка авторизації через Chrome Identity:', error);
@@ -45,7 +100,7 @@ class ChromeAuth {
     });
     
     if (!response.ok) {
-      throw new Error('Помилка отримання інформації користувача');
+      throw new Error(translationManager.getTranslation('CHROME_AUTH_ERRORS.USER_INFO_ERROR'));
     }
     
     const userInfo = await response.json();

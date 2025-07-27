@@ -10,7 +10,7 @@
         <span>{{ currentUser.displayName || currentUser.email }}</span>
         <button class="user-avatar-btn" mat-icon-button [matMenuTriggerFor]="userMenu">
           <ng-container *ngIf="currentUser?.photoURL; else showIcon">
-            <img [src]="currentUser.photoURL" alt="Google профіль" class="user-avatar" width="40" height="40" />
+            <img [src]="currentUser.photoURL" [alt]="'HTML_ATTRIBUTES.GOOGLE_PROFILE_ALT' | translate" class="user-avatar" width="40" height="40" />
           </ng-container>
           <ng-template #showIcon>
             <mat-icon>account_circle</mat-icon>

@@ -4,14 +4,10 @@
 
 ### Спосіб 1: Через Popup
 1. Клікніть на іконку Chartex extension в панелі інструментів
-2. У popup вікні натисніть кнопку **"📊 Відкрити Analytics"**
+2. У popup вікні натисніть кнопку **"📊 Відкрити аналітику"**
 3. Dashboard відкриється в новій вкладці
 
-### Спосіб 2: Через Контекстне меню
-1. Клікніть правою кнопкою миші на іконку Chartex extension
-2. Виберіть **"📊 Chartex Analytics"** → **"Відкрити Analytics Dashboard"**
-
-### Спосіб 3: Через Chrome Settings
+### Спосіб 2: Через Chrome Settings
 1. Відкрийте `chrome://extensions/`
 2. Знайдіть Chartex extension
 3. Клікніть **"Details"**

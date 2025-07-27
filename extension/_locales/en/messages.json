@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "Chartex Browser Analytics",
+    "description": "The name of the extension"
+  },
+  "appDescription": {
+    "message": "Web analytics and visualization of user browser activity.",
+    "description": "The description of the extension"
+  }
+} 

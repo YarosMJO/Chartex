@@ -1,3 +1,60 @@
+// Chartex Background Script
+// Глобальні змінні
+let deviceId = null;
+let encryptionKey = null;
+let sessionId = null;
+let currentUser = null;
+let lastUserUid = null;
+let historyCollector = null;
+let popupManager = null;
+
+// Утиліта для локалізації
+class TranslationManager {
+  constructor() {
+    this.translations = {};
+    this.currentLanguage = 'uk';
+    this.loadTranslations();
+  }
+  
+  async loadTranslations() {
+    try {
+      const result = await chrome.storage.local.get(['chartex_language']);
+      this.currentLanguage = result.chartex_language || 'uk';
+      
+      const translationFile = this.currentLanguage === 'en' ? 'en.json' : 'uk.json';
+      const response = await fetch(chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`));
+      this.translations = await response.json();
+    } catch (error) {
+      console.error('Помилка завантаження перекладів:', error);
+    }
+  }
+  
+  getTranslation(key, params = {}) {
+    const keys = key.split('.');
+    let value = this.translations;
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+    
+    if (typeof value !== 'string') {
+      return key;
+    }
+    
+    return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+      const regex = new RegExp(`{{${paramKey}}}`, 'g');
+      return acc.replace(regex, paramValue);
+    }, value);
+  }
+}
+
+// Створюємо глобальний екземпляр менеджера перекладів
+const translationManager = new TranslationManager();
+
 // Фоновий скрипт для збору історії браузера та взаємодії з бекендом
 // Завантаження утиліт
 importScripts('crypto-js.min.js');
@@ -12,22 +69,17 @@ if (typeof firebase !== 'undefined' && firebase.apps && !firebase.apps.length) {
   firebase.initializeApp(typeof firebaseConfig !== 'undefined' ? firebaseConfig : window.firebaseConfig);
 }
 
-// Глобальні змінні
-let currentUser = null;
-let deviceId = null;
-let encryptionKey = null;
-let sessionId = null;
+// Глобальні змінні (вже оголошені вище)
 let isCollecting = false;
-let lastUserUid = null; // Track previous user for state persistence
 
 // === Ініціалізація глобальних змінних ===
 (async function initializeGlobals() {
   try {
-    console.log('Ініціалізація глобальних змінних...');
+    console.log(translationManager.getTranslation('BACKGROUND.INIT_GLOBALS'));
     
     // === Стабільна ініціалізація deviceId ===
     deviceId = await getOrCreateStableDeviceId();
-    console.log('DeviceId ініціалізовано:', deviceId);
+    console.log(translationManager.getTranslation('BACKGROUND.DEVICE_ID_INIT'), deviceId);
     
     // === Ініціалізація encryptionKey та sessionId ===
     const data = await chrome.storage.local.get(['encryptionKey', 'sessionId']);
@@ -42,19 +94,19 @@ let lastUserUid = null; // Track previous user for state persistence
       await chrome.storage.local.set({ sessionId });
     }
     
-    console.log('EncryptionKey та SessionId ініціалізовано');
+    console.log(translationManager.getTranslation('BACKGROUND.ENCRYPTION_INIT'));
     
     // Автоматично зберегти ключ шифрування в chrome.storage для дашборду
     if (encryptionKey) {
-      console.log('Автоматичне збереження ключа шифрування для дашборду...');
+      console.log(translationManager.getTranslation('BACKGROUND.SAVING_ENCRYPTION_KEY'));
       await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
-      console.log('Ключ шифрування збережено в chrome.storage.local');
+      console.log(translationManager.getTranslation('BACKGROUND.ENCRYPTION_KEY_SAVED'));
     }
     
     // Don't validate during initialization to avoid blocking auth process
     // Validation will happen during getStatus calls
   } catch (error) {
-    console.error('Помилка ініціалізації глобальних змінних:', error);
+    console.error(translationManager.getTranslation('BACKGROUND.INIT_ERROR'), error);
   }
 })();
 
@@ -499,7 +551,7 @@ class HistoryCollector {
 }
 
 // Ініціалізація об'єктів
-const historyCollector = new HistoryCollector();
+historyCollector = new HistoryCollector();
 
 // Отримати Google OAuth токен через chrome.identity
 async function getGoogleOAuthToken() {
@@ -711,47 +763,35 @@ async function handleLogout() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
     case 'getGoogleIdToken':
-      console.log('Отримано запит на Google ID Token');
       chrome.identity.getAuthToken({ interactive: true }, function(token) {
-        console.log('Отримано токен:', token);
         sendResponse({ idToken: token });
       });
       return true;
       
     case 'getEncryptionKey':
-      console.log('Запит на отримання ключа шифрування від frontend');
-      console.log('Ключ шифрування:', { 
-        hasKey: !!encryptionKey, 
-        keyLength: encryptionKey?.length,
-        keyPreview: encryptionKey?.substring(0, 10) + '...'
-      });
       sendResponse({ encryptionKey: encryptionKey });
       return;
       
     case 'saveEncryptionKeyToStorage':
       (async () => {
-        console.log('Збереження ключа шифрування в chrome.storage для дашборду');
         if (encryptionKey) {
           // Зберігаємо ключ в chrome.storage.local для доступу з дашборду
           await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
-          console.log('Ключ шифрування збережено в chrome.storage.local');
           sendResponse({ success: true });
         } else {
-          sendResponse({ success: false, error: 'Ключ шифрування не знайдено' });
+          sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.ENCRYPTION_KEY_NOT_FOUND') });
         }
       })();
       return true;
       
     case 'updateSettings':
       (async () => {
-        console.log('Отримано налаштування від дашборду:', request.settings);
         try {
           // Зберігаємо налаштування в chrome.storage для використання в popup
           await chrome.storage.local.set({ 
             chartex_settings: request.settings,
             chartex_language: request.settings.display?.language || 'uk'
           });
-          console.log('Налаштування збережено в chrome.storage');
           sendResponse({ success: true });
         } catch (error) {
           console.error('Помилка збереження налаштувань:', error);
@@ -762,10 +802,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
     case 'startCollection':
       (async () => {
-        console.log('Ручний запуск збору даних');
         if (currentUser?.uid) {
           // Clear data before starting manual collection
-          console.log('Очищення даних перед ручним збором...');
           await clearUserData(currentUser.uid);
           await clearUserDataOnBackend(currentUser.uid);
         }
@@ -789,13 +827,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           authValid = await validateAuthentication();
         }
         
-        console.log('BG: getStatus', { 
-          isCollecting: historyCollector.isCollecting,
-          deviceId: deviceId,
-          hasDeviceId: !!deviceId,
-          authValid: authValid,
-          hasUser: !!user
-        });
+        // Status logging removed for cleaner console
         
         let deviceCount = 0;
         let historyCount = 0;
@@ -812,25 +844,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           if (user?.uid) {
             lastSync = data[`lastSync_${user.uid}`];
             historyCount = data[`historyCount_${user.uid}`] || 0;
-            console.log(`Отримано дані для користувача ${user.uid}:`, {
-              historyCount,
-              lastSync,
-              hasHistoryCount: !!data[`historyCount_${user.uid}`],
-              storageKey: `historyCount_${user.uid}`,
-              allKeys: keys,
-              allData: data
-            });
+            // User data logging removed for cleaner console
           } else {
             lastSync = null;
             historyCount = 0;
           }
           sessionCount = sessionId ? 1 : 0;
-          console.log('Storage data:', {
-            storedDeviceId: data.deviceId,
-            hasStoredDeviceId: !!data.deviceId,
-            globalDeviceId: deviceId,
-            hasGlobalDeviceId: !!deviceId
-          });
+          // Storage data logging removed for cleaner console
         } catch (error) {
           console.error('Помилка отримання статистики:', error);
         }
@@ -848,7 +868,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
       
     case 'authenticate':
-      console.log('BG: AUTHENTICATE ACTION RECEIVED');
       handleAuthentication().then(sendResponse);
       return true;
       
@@ -857,7 +876,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
       
     case 'openOptions':
-      console.log('BG: Відкриття options page');
       chrome.runtime.openOptionsPage();
       sendResponse({ success: true });
       break;
@@ -865,9 +883,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'testSendData':
       (async () => {
         try {
-          console.log('Тестова відправка даних:', request.data);
           if (!request.data) {
-            sendResponse({ success: false, error: 'Немає даних для тесту' });
+            sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.NO_TEST_DATA') });
             return;
           }
           await historyCollector.processHistoryItem(request.data);
@@ -889,7 +906,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const newState = !historyCollector.isCollecting;
         if (newState) {
           // Clear data before starting collection
-          console.log('Очищення даних перед перемиканням збору...');
           await clearUserData(currentUser.uid);
           await clearUserDataOnBackend(currentUser.uid);
           historyCollector.start();
@@ -902,7 +918,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
       
     default:
-      sendResponse({ success: false, error: 'Невідома дія' });
+      sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.UNKNOWN_ACTION') });
   }
   return true;
 });
@@ -967,14 +983,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   chrome.contextMenus.create({
     id: 'open-dashboard',
     parentId: 'chartex-analytics',
-    title: 'Відкрити Analytics Dashboard',
+            title: translationManager.getTranslation('CONTEXT_MENU.OPEN_DASHBOARD'),
     contexts: ['action']
   });
   
   chrome.contextMenus.create({
     id: 'toggle-collection',
     parentId: 'chartex-analytics',
-    title: 'Перемкнути збір даних',
+            title: translationManager.getTranslation('CONTEXT_MENU.TOGGLE_COLLECTION'),
     contexts: ['action']
   });
 });

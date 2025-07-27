@@ -25,8 +25,8 @@ class PopupManager {
     // Load language settings first
     await this.loadLanguageSettings();
     
-    // Show loading overlay to prevent flickering during initial status check
-    this.showLoadingOverlay('Завантаження...');
+          // Show loading overlay to prevent flickering during initial status check
+      this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.LOADING'));
     
     await this.loadStatus(true); // Skip spinner since overlay is active
     this.updateUI();
@@ -44,7 +44,6 @@ class PopupManager {
     // Listen for storage changes to update language
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.chartex_language) {
-        console.log('Мова змінена в налаштуваннях:', changes.chartex_language.newValue);
         this.applyLanguage(changes.chartex_language.newValue);
       }
     });
@@ -55,9 +54,6 @@ class PopupManager {
       // Load language from chrome.storage
       const result = await chrome.storage.local.get(['chartex_language']);
       const language = result.chartex_language || 'uk';
-      
-      console.log('Завантажена мова для popup:', language);
-      console.log('Результат з chrome.storage:', result);
       
       // Apply language to popup
       this.applyLanguage(language);
@@ -70,25 +66,18 @@ class PopupManager {
   }
   
   applyLanguage(language) {
-    console.log('Застосування мови в popup:', language);
-    
     // Load translation file based on language
     const translationFile = language === 'en' ? 'en.json' : 'uk.json';
     const translationUrl = chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`);
     
-    console.log('URL для завантаження перекладів:', translationUrl);
-    
     fetch(translationUrl)
       .then(response => {
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
       })
       .then(translations => {
-        console.log('Переклади завантажено:', translations);
         this.translatePopup(translations);
         // Update UI after translations are loaded
         this.updateUI();
@@ -97,7 +86,6 @@ class PopupManager {
         console.error('Помилка завантаження перекладів:', error);
         // Try to load Ukrainian as fallback if current language is not Ukrainian
         if (language !== 'uk') {
-          console.log('Спроба fallback на українську мову');
           this.applyLanguage('uk');
         } else {
           console.error('Не вдалося завантажити переклади для української мови');
@@ -108,7 +96,6 @@ class PopupManager {
   
   translatePopup(translations) {
     this.translations = translations; // Store translations
-    console.log('Початок перекладу popup елементів');
     
     // Translate popup elements
     const elementsToTranslate = {
@@ -120,38 +107,41 @@ class PopupManager {
       'deviceCount': 'POPUP.DEVICE_COUNT',
       'historyCount': 'POPUP.HISTORY_COUNT',
       'sessionCount': 'POPUP.SESSION_COUNT',
-      'lastSync': 'POPUP.LAST_SYNC'
+      'lastSync': 'POPUP.LAST_SYNC',
+      // Header elements
+      'headerTitle': 'POPUP_HEADER.TITLE',
+      'headerDescription': 'POPUP_HEADER.DESCRIPTION',
+      // Stat labels
+      'deviceCountLabel': 'POPUP.DEVICE_COUNT',
+      'historyCountLabel': 'POPUP.HISTORY_COUNT',
+      'sessionCountLabel': 'POPUP.SESSION_COUNT',
+      'lastSyncLabel': 'POPUP.LAST_SYNC',
+      // Loading text
+      'loadingText': 'POPUP_MESSAGES.AUTHORIZING_DEFAULT'
     };
     
     Object.entries(elementsToTranslate).forEach(([elementId, translationKey]) => {
       const element = this.elements[elementId];
-      console.log(`Переклад елемента ${elementId}:`, element ? 'знайдено' : 'не знайдено');
       if (element) {
         const translation = this.getNestedTranslation(translations, translationKey);
-        console.log(`Ключ ${translationKey}:`, translation);
         if (translation) {
           if (element.tagName === 'INPUT' && element.type === 'placeholder') {
             element.placeholder = translation;
           } else {
             element.textContent = translation;
           }
-          console.log(`Елемент ${elementId} перекладено на:`, translation);
-        } else {
-          console.warn(`Переклад не знайдено для ключа: ${translationKey}`);
         }
       }
     });
     
     // Update loading overlay text
     if (this.elements.loadingOverlay) {
-      const loadingText = this.getNestedTranslation(translations, 'POPUP.LOADING') || 'Завантаження...';
+      const loadingText = this.getNestedTranslation(translations, 'POPUP.LOADING');
       const loadingTextElement = this.elements.loadingOverlay.querySelector('.loading-text');
       if (loadingTextElement) {
         loadingTextElement.textContent = loadingText;
       }
     }
-    
-    console.log('Переклад popup завершено');
   }
   
   getNestedTranslation(translations, key) {
@@ -183,7 +173,17 @@ class PopupManager {
       openDashboard: document.getElementById('openDashboard'),
       authStatus: document.getElementById('authStatus'),
       loginBtn: document.getElementById('loginBtn'),
-      loadingOverlay: document.getElementById('loadingOverlay')
+      loadingOverlay: document.getElementById('loadingOverlay'),
+      // Header elements
+      headerTitle: document.getElementById('headerTitle'),
+      headerDescription: document.getElementById('headerDescription'),
+      // Stat labels
+      deviceCountLabel: document.getElementById('deviceCountLabel'),
+      historyCountLabel: document.getElementById('historyCountLabel'),
+      sessionCountLabel: document.getElementById('sessionCountLabel'),
+      lastSyncLabel: document.getElementById('lastSyncLabel'),
+      // Loading text
+      loadingText: document.getElementById('loadingText')
     };
   }
   
@@ -203,7 +203,7 @@ class PopupManager {
         console.log('LOGIN BUTTON CLICKED');
         if (this.status.hasUser) {
           // Logout
-          this.showLoadingOverlay('Вихід з системи...');
+          this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.LOGGING_OUT'));
           try {
             await this.sendMessage({ action: 'logout' });
             this.status.hasUser = false;
@@ -214,10 +214,9 @@ class PopupManager {
           }
         } else {
           // Login
-          this.showLoadingOverlay('Авторизація...');
+          this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.AUTHORIZING'));
           try {
-            const response = await this.sendMessage({ action: 'authenticate' });
-            console.log('BG RESPONSE:', response);
+                    const response = await this.sendMessage({ action: 'authenticate' });
             
             // After successful login, check if data collection is enabled
             if (response.success && response.user) {
@@ -225,13 +224,13 @@ class PopupManager {
               this.status.userEmail = response.user.email;
               
               // Check if data collection is enabled for this user
-              this.showLoadingOverlay('Перевірка налаштувань...');
+              this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.CHECKING_SETTINGS'));
               const statusResponse = await this.sendMessage({ action: 'getStatus' });
               this.status.isCollecting = !!statusResponse.isCollecting;
               
+              // If collection is enabled, start it immediately
               if (this.status.isCollecting) {
-                // Show spinner immediately when data collection is enabled
-                this.showLoadingOverlay('Збір даних...');
+                this.showLoadingOverlay(this.getTranslation('POPUP_MESSAGES.COLLECTING_DATA'));
                 
                 // Update UI to show user is logged in and spinner is active
                 this.updateUI();
@@ -256,7 +255,8 @@ class PopupManager {
               }
             } else {
               // Login failed
-              this.showError('Помилка авторизації: ' + (response.error || 'невідома помилка'));
+              const errorMsg = this.getTranslation('POPUP_MESSAGES.AUTH_ERROR', { error: response.error || this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') });
+              this.showError(errorMsg);
             }
           } finally {
             this.hideLoadingOverlay();
@@ -301,7 +301,8 @@ class PopupManager {
       }
       this.updateUI();
     } catch (error) {
-      this.showError('Помилка завантаження статусу: ' + error.message);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.LOAD_STATUS_ERROR', { error: error.message });
+      this.showError(errorMsg);
       // Hide spinner, show number even on error
       const historyCount = document.getElementById('historyCount');
       const historyCountSpinner = document.getElementById('historyCountSpinner');
@@ -314,7 +315,8 @@ class PopupManager {
   
   async toggleCollection() {
     if (!this.status.hasUser) {
-      this.showError('Спочатку увійдіть у систему.');
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.LOGIN_FIRST');
+      this.showError(errorMsg);
       return;
     }
     try {
@@ -324,17 +326,18 @@ class PopupManager {
         this.status.isCollecting = response.collecting;
         this.updateUI();
       } else {
-        this.showError('Помилка зміни стану збору: ' + (response.error || 'невідома помилка'));
+        const errorMsg = this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: response.error || this.getTranslation('POPUP_MESSAGES.UNKNOWN_ERROR') });
+        this.showError(errorMsg);
       }
     } catch (error) {
-      this.showError('Помилка зміни стану збору: ' + error.message);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.TOGGLE_COLLECTION_ERROR', { error: error.message });
+      this.showError(errorMsg);
     } finally {
       this.setProcessing(false);
     }
   }
   
   updateUI() {
-    console.log('updateUI', this.status);
     // Оновлення індикатора статусу
     if (this.elements.statusIndicator) {
       if (this.status.isCollecting) {
@@ -368,7 +371,7 @@ class PopupManager {
       
       if (this.elements.authStatus) {
         if (this.status.hasUser) {
-          const email = this.status.userEmail || 'Користувач';
+          const email = this.status.userEmail || this.getTranslation('POPUP_MESSAGES.USER_DEFAULT');
           const authText = this.getTranslation('POPUP.AUTH_STATUS_LOGGED_IN', { email: email });
           if (authText) {
             this.elements.authStatus.textContent = authText;
@@ -439,12 +442,15 @@ class PopupManager {
       if (response.success) {
         this.status.isCollecting = true;
         this.updateUI();
-        this.showSuccess('Збір даних запущено');
+        const successMsg = this.getTranslation('POPUP_MESSAGES.COLLECTION_STARTED');
+        this.showSuccess(successMsg);
       } else {
-        this.showError('Помилка запуску збору даних: ' + response.error);
+                  const errorMsg = this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: response.error });
+        this.showError(errorMsg);
       }
     } catch (error) {
-      this.showError('Помилка запуску збору даних: ' + error.message);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.START_COLLECTION_ERROR', { error: error.message });
+      this.showError(errorMsg);
     } finally {
       this.setLoading(false);
     }
@@ -458,81 +464,59 @@ class PopupManager {
       if (response.success) {
         this.status.isCollecting = false;
         this.updateUI();
-        this.showSuccess('Збір даних зупинено');
+        const successMsg = this.getTranslation('POPUP_MESSAGES.COLLECTION_STOPPED');
+        this.showSuccess(successMsg);
       } else {
-        this.showError('Помилка зупинки збору даних: ' + response.error);
+                  const errorMsg = this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: response.error });
+        this.showError(errorMsg);
       }
     } catch (error) {
-      this.showError('Помилка зупинки збору даних: ' + error.message);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.STOP_COLLECTION_ERROR', { error: error.message });
+      this.showError(errorMsg);
     } finally {
       this.setLoading(false);
     }
   }
   
   openDashboard() {
-    this.setProcessing(true);
     try {
       chrome.runtime.openOptionsPage();
-      this.showSuccess('Dashboard відкрито');
+      const successMsg = this.getTranslation('POPUP_MESSAGES.DASHBOARD_OPENED');
+      this.showSuccess(successMsg);
     } catch (error) {
-      this.showError('Помилка відкриття dashboard: ' + error.message);
-    } finally {
-      this.setProcessing(false);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.OPEN_DASHBOARD_ERROR', { error: error.message });
+      this.showError(errorMsg);
     }
   }
   
   async testDataCollection() {
     try {
       this.setLoading(true);
-      console.log('=== ПОЧАТОК ТЕСТУ ЗБОРУ ДАНИХ ===');
+      console.log('Тестування збору даних...');
       
-      // Тест 1: Перевірити доступ до історії
-      const historyTest = await new Promise((resolve) => {
-        chrome.history.search({
-          text: '',
-          maxResults: 5,
-          startTime: Date.now() - 24 * 60 * 60 * 1000 // Останні 24 години
-        }, resolve);
+      const response = await this.sendMessage({ 
+        action: 'testDataCollection',
+        data: {
+          url: 'https://example.com',
+          title: 'Test Page',
+          visitTime: new Date().toISOString(),
+          duration: 30
+        }
       });
       
-      console.log('Тест доступу до історії:', {
-        hasAccess: !!historyTest,
-        itemsCount: historyTest?.length || 0,
-        sampleItem: historyTest?.[0]
-      });
-      
-      // Тест 2: Перевірити збережені дані
-      const storageTest = await new Promise((resolve) => {
-        chrome.storage.local.get(['deviceId', 'encryptionKey', 'user'], resolve);
-      });
-      
-      console.log('Тест збережених даних:', {
-        hasDeviceId: !!storageTest.deviceId,
-        hasEncryptionKey: !!storageTest.encryptionKey,
-        hasUser: !!storageTest.user,
-        userEmail: storageTest.user?.email
-      });
-      
-      // Тест 3: Перевірити статус збору
-      const statusTest = await this.sendMessage({ action: 'getStatus' });
-      console.log('Тест статусу:', statusTest);
-      
-      // Тест 4: Спробувати відправити тестовий запис
-      if (historyTest.length > 0 && storageTest.user) {
-        console.log('Спроба відправки тестового запису...');
-        const testResponse = await this.sendMessage({ 
-          action: 'testSendData',
-          data: historyTest[0]
-        });
-        console.log('Результат тестової відправки:', testResponse);
+      if (response.success) {
+        console.log('Тест успішний:', response);
+        const successMsg = this.getTranslation('POPUP_MESSAGES.TEST_COMPLETED');
+        this.showSuccess(successMsg);
+      } else {
+        console.error('Тест невдалий:', response.error);
+                  const errorMsg = this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: response.error });
+        this.showError(errorMsg);
       }
-      
-      console.log('=== КІНЕЦЬ ТЕСТУ ===');
-      this.showSuccess('Тест завершено. Перевірте консоль для деталей.');
-      
     } catch (error) {
       console.error('Помилка тесту:', error);
-      this.showError('Помилка тесту: ' + error.message);
+      const errorMsg = this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: error.message });
+      this.showError(errorMsg);
     } finally {
       this.setLoading(false);
     }
@@ -562,7 +546,7 @@ class PopupManager {
       button.disabled = loading;
       if (loading) {
         button.dataset.originalText = button.textContent;
-        button.textContent = '⏳ Завантаження...';
+        button.textContent = this.getTranslation('POPUP_MESSAGES.LOADING_TEXT');
       } else if (button.dataset.originalText) {
         button.textContent = button.dataset.originalText;
         delete button.dataset.originalText;
@@ -596,7 +580,10 @@ class PopupManager {
     this.updateUI();
   }
   
-  showLoadingOverlay(text = 'Авторизація...') {
+  showLoadingOverlay(text = null) {
+    if (!text) {
+      text = this.getTranslation('POPUP_MESSAGES.AUTHORIZING_DEFAULT');
+    }
     if (this.elements.loadingOverlay) {
       const loadingText = this.elements.loadingOverlay.querySelector('.loading-text');
       if (loadingText) {
@@ -639,15 +626,21 @@ class PopupManager {
   }
   
   formatLastSync(timestamp) {
-    if (!timestamp) return 'Ніколи';
+    if (!timestamp) return this.getTranslation('POPUP_MESSAGES.NEVER');
     
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
     
-    if (diff < 60000) return 'Тільки що';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} хв тому`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} год тому`;
+    if (diff < 60000) return this.getTranslation('POPUP_MESSAGES.JUST_NOW');
+    if (diff < 3600000) {
+      const minutes = Math.floor(diff / 60000);
+      return `${minutes} ${this.getTranslation('POPUP_MESSAGES.MINUTES')} тому`;
+    }
+    if (diff < 86400000) {
+      const hours = Math.floor(diff / 3600000);
+      return `${hours} ${this.getTranslation('POPUP_MESSAGES.HOURS')} тому`;
+    }
     
     return date.toLocaleDateString('uk-UA');
   }
@@ -655,7 +648,6 @@ class PopupManager {
   getTranslation(key, params = {}) {
     let translation = this.getNestedTranslation(this.translations, key);
     if (!translation) {
-      console.warn(`Translation key not found: ${key}`);
       return null; // Return null when translation is not found
     }
 
@@ -679,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (chrome && chrome.runtime && chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
       } else {
-        alert('Не вдалося відкрити сторінку налаштувань.');
+        alert(this.getTranslation('POPUP_MESSAGES.CANT_OPEN_OPTIONS'));
       }
     });
   }
