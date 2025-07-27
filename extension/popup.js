@@ -93,12 +93,6 @@ class PopupManager {
               if (this.status.isCollecting) {
                 // Show spinner immediately when data collection is enabled
                 this.showLoadingOverlay('Збір даних...');
-                const historyCount = document.getElementById('historyCount');
-                const historyCountSpinner = document.getElementById('historyCountSpinner');
-                if (historyCount && historyCountSpinner) {
-                  historyCount.style.display = 'none';
-                  historyCountSpinner.style.display = 'block';
-                }
                 
                 // Update UI to show user is logged in and spinner is active
                 this.updateUI();
@@ -114,11 +108,11 @@ class PopupManager {
                   await new Promise(resolve => setTimeout(resolve, remainingTime));
                 }
                 
-                // Reload status to get updated counts
-                await this.loadStatus();
+                // Reload status to get updated counts (skip spinner since overlay is active)
+                await this.loadStatus(true);
               } else {
                 // If collection is not enabled, just update UI normally
-                await this.loadStatus();
+                await this.loadStatus(true);
                 this.updateUI();
               }
             } else {
@@ -133,20 +127,24 @@ class PopupManager {
     }
   }
   
-  async loadStatus() {
+  async loadStatus(skipSpinner = false) {
     try {
-      // Show spinner for history count only if not already showing
+      // Show spinner for history count only if not already showing and not skipped
       const historyCount = document.getElementById('historyCount');
       const historyCountSpinner = document.getElementById('historyCountSpinner');
       const isSpinnerVisible = historyCountSpinner && historyCountSpinner.style.display === 'block';
       
-      if (historyCount && historyCountSpinner && !isSpinnerVisible) {
+      if (historyCount && historyCountSpinner && !isSpinnerVisible && !skipSpinner) {
         historyCount.style.display = 'none';
         historyCountSpinner.style.display = 'block';
       }
       
-      // Wait at least 2 seconds before showing the number
-      const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait at least 2 seconds before showing the number (only if spinner is shown)
+      let minDelay = Promise.resolve();
+      if (!skipSpinner && historyCountSpinner && historyCountSpinner.style.display === 'block') {
+        minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
       const response = await this.sendMessage({ action: 'getStatus' });
       console.log('POPUP: getStatus response', response);
       this.status.isCollecting = !!response.isCollecting;
