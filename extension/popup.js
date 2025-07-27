@@ -38,24 +38,20 @@ class PopupManager {
       stopBtn: document.getElementById('stopBtn'),
       openDashboard: document.getElementById('openDashboard'),
       authStatus: document.getElementById('authStatus'),
-      loginBtn: document.getElementById('loginBtn'),
-      testData: document.getElementById('testData')
+      loginBtn: document.getElementById('loginBtn')
     };
   }
   
   bindEvents() {
     // Перевіряємо, чи всі елементи існують перед додаванням event listeners
     if (this.elements.startBtn) {
-      this.elements.startBtn.addEventListener('click', () => this.startCollection());
+      this.elements.startBtn.addEventListener('click', () => this.toggleCollection());
     }
     if (this.elements.stopBtn) {
-      this.elements.stopBtn.addEventListener('click', () => this.stopCollection());
+      this.elements.stopBtn.addEventListener('click', () => this.toggleCollection());
     }
     if (this.elements.openDashboard) {
       this.elements.openDashboard.addEventListener('click', () => this.openDashboard());
-    }
-    if (this.elements.testData) {
-      this.elements.testData.addEventListener('click', () => this.testDataCollection());
     }
     if (this.elements.loginBtn) {
       this.elements.loginBtn.addEventListener('click', async () => {
@@ -93,6 +89,28 @@ class PopupManager {
     }
   }
   
+  async toggleCollection() {
+    if (!this.status.hasUser) {
+      this.showError('Спочатку увійдіть у систему.');
+      return;
+    }
+    try {
+      this.setLoading(true);
+      const response = await this.sendMessage({ action: 'toggleCollection' });
+      if (response.success) {
+        this.status.isCollecting = response.collecting;
+        this.updateUI();
+        this.showSuccess(response.collecting ? 'Збір даних запущено' : 'Збір даних зупинено');
+      } else {
+        this.showError('Помилка зміни стану збору: ' + (response.error || 'невідома помилка'));
+      }
+    } catch (error) {
+      this.showError('Помилка зміни стану збору: ' + error.message);
+    } finally {
+      this.setLoading(false);
+    }
+  }
+  
   updateUI() {
     console.log('updateUI', this.status);
     // Оновлення індикатора статусу
@@ -109,11 +127,17 @@ class PopupManager {
     }
     
     if (this.elements.startBtn) {
-      this.elements.startBtn.disabled = this.status.isCollecting;
+      this.elements.startBtn.disabled = !this.status.hasUser;
+      this.elements.startBtn.textContent = this.status.isCollecting ? '⏹️ Зупинити збір' : '▶️ Почати збір даних';
+      this.elements.startBtn.className = this.status.isCollecting ? 'danger' : 'primary';
     }
-    
     if (this.elements.stopBtn) {
-      this.elements.stopBtn.disabled = !this.status.isCollecting;
+      this.elements.stopBtn.style.display = 'none'; // Hide stopBtn, use only one button
+    }
+    // Show/hide mainButtons div based on auth status
+    const mainButtons = document.getElementById('mainButtons');
+    if (mainButtons) {
+      mainButtons.style.display = this.status.hasUser ? 'flex' : 'none';
     }
     
     // Оновлення статистики
@@ -276,7 +300,6 @@ class PopupManager {
       this.elements.startBtn,
       this.elements.stopBtn,
       this.elements.openDashboard,
-      this.elements.testData,
       this.elements.loginBtn
     ].filter(Boolean);
     

@@ -18,6 +18,7 @@ let deviceId = null;
 let encryptionKey = null;
 let sessionId = null;
 let isCollecting = false;
+let lastUserUid = null; // Track previous user for state persistence
 
 // API URL з конфігурації (для Service Worker)
 const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
@@ -430,6 +431,40 @@ async function firebaseSignInWithGoogleToken(token) {
   return userCredential.user;
 }
 
+// Helper: Load collection state for a user
+async function loadCollectionStateForUser(uid) {
+  const key = `collecting_${uid}`;
+  const data = await chrome.storage.local.get([key]);
+  return !!data[key];
+}
+
+// Helper: Save collection state for a user
+async function saveCollectionStateForUser(uid, collecting) {
+  const key = `collecting_${uid}`;
+  await chrome.storage.local.set({ [key]: collecting });
+}
+
+// Update collection state on user change
+async function handleUserSwitch(newUser) {
+  if (lastUserUid && lastUserUid !== newUser?.uid) {
+    // Save previous user's state
+    await saveCollectionStateForUser(lastUserUid, historyCollector.isCollecting);
+    historyCollector.stop();
+  }
+  if (newUser?.uid) {
+    const collecting = await loadCollectionStateForUser(newUser.uid);
+    if (collecting) {
+      historyCollector.start();
+    } else {
+      historyCollector.stop();
+    }
+    lastUserUid = newUser.uid;
+  } else {
+    lastUserUid = null;
+    historyCollector.stop();
+  }
+}
+
 // handleAuthentication: інтеграція chrome.identity + Firebase Auth
 async function handleAuthentication() {
   try {
@@ -447,6 +482,7 @@ async function handleAuthentication() {
         }
       });
       currentUser = user;
+      await handleUserSwitch(user); // <-- Load collection state for this user
       return { success: true, user };
     }
     
@@ -464,6 +500,7 @@ async function handleAuthentication() {
       }
     });
     currentUser = firebaseUser;
+    await handleUserSwitch(firebaseUser); // <-- Load collection state for this user
     return { success: true, user: firebaseUser };
   } catch (error) {
     console.error('Помилка авторизації:', error);
@@ -473,12 +510,15 @@ async function handleAuthentication() {
 
 async function handleLogout() {
   try {
+    if (currentUser?.uid) {
+      await saveCollectionStateForUser(currentUser.uid, historyCollector.isCollecting);
+    }
     await firebase.auth().signOut();
     currentUser = null;
-    
+    lastUserUid = null;
     // Видалити користувача з локального сховища
     await chrome.storage.local.remove(['user']);
-    
+    historyCollector.stop();
     console.log('Користувач вийшов з системи');
     return { success: true };
   } catch (error) {
@@ -589,6 +629,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           console.error('Помилка тестової відправки:', error);
           sendResponse({ success: false, error: error.message });
         }
+      })();
+      return true;
+      
+    case 'toggleCollection':
+      (async () => {
+        if (!currentUser?.uid) {
+          sendResponse({ success: false, error: 'Not logged in' });
+          return;
+        }
+        const newState = !historyCollector.isCollecting;
+        if (newState) {
+          historyCollector.start();
+        } else {
+          historyCollector.stop();
+        }
+        await saveCollectionStateForUser(currentUser.uid, newState);
+        sendResponse({ success: true, collecting: newState });
       })();
       return true;
       
