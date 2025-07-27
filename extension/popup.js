@@ -2,13 +2,17 @@
 
 class PopupManager {
   constructor() {
-    this.elements = {};
     this.status = {
       isCollecting: false,
-      deviceId: null,
       hasUser: false,
-      userEmail: null
+      userEmail: null,
+      deviceCount: 0,
+      historyCount: 0,
+      sessionCount: 0,
+      lastSync: null,
+      isProcessing: false // New state for processing
     };
+    this.elements = {};
     this.config = window.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
     this.init();
   }
@@ -18,11 +22,12 @@ class PopupManager {
     this.bindEvents();
     await this.loadStatus();
     this.updateUI();
-    
-    // Автоматично оновлювати статус кожні 5 секунд
-    setInterval(() => {
-      this.loadStatus();
-    }, 5000);
+    // Listen for background messages about data sync completion
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+      if (msg && msg.action === 'dataSyncComplete') {
+        this.loadStatus();
+      }
+    });
   }
   
   cacheElements() {
@@ -58,15 +63,68 @@ class PopupManager {
         console.log('LOGIN BUTTON CLICKED');
         if (this.status.hasUser) {
           // Logout
-          await this.sendMessage({ action: 'logout' });
-          this.status.hasUser = false;
-          this.status.userEmail = null;
-          this.updateUI();
+          this.setProcessing(true);
+          try {
+            await this.sendMessage({ action: 'logout' });
+            this.status.hasUser = false;
+            this.status.userEmail = null;
+            this.updateUI();
+          } finally {
+            this.setProcessing(false);
+          }
         } else {
           // Login
-          const response = await this.sendMessage({ action: 'authenticate' });
-          console.log('BG RESPONSE:', response);
-          await this.loadStatus();
+          this.setProcessing(true);
+          try {
+            const response = await this.sendMessage({ action: 'authenticate' });
+            console.log('BG RESPONSE:', response);
+            
+            // After successful login, check if data collection is enabled
+            if (response.success && response.user) {
+              this.status.hasUser = true;
+              this.status.userEmail = response.user.email;
+              
+              // Check if data collection is enabled for this user
+              const statusResponse = await this.sendMessage({ action: 'getStatus' });
+              this.status.isCollecting = !!statusResponse.isCollecting;
+              
+              if (this.status.isCollecting) {
+                // Show spinner immediately when data collection is enabled
+                const historyCount = document.getElementById('historyCount');
+                const historyCountSpinner = document.getElementById('historyCountSpinner');
+                if (historyCount && historyCountSpinner) {
+                  historyCount.style.display = 'none';
+                  historyCountSpinner.style.display = 'block';
+                }
+                
+                // Update UI to show user is logged in and spinner is active
+                this.updateUI();
+                
+                // Data collection is already started by handleUserSwitch, just wait for completion
+                // The dataSyncComplete message will be sent when collection finishes
+                const spinnerStartTime = Date.now();
+                
+                // Ensure spinner shows for at least 2 seconds
+                const elapsed = Date.now() - spinnerStartTime;
+                const remainingTime = Math.max(0, 2000 - elapsed);
+                if (remainingTime > 0) {
+                  await new Promise(resolve => setTimeout(resolve, remainingTime));
+                }
+                
+                // Reload status to get updated counts
+                await this.loadStatus();
+              } else {
+                // If collection is not enabled, just update UI normally
+                await this.loadStatus();
+                this.updateUI();
+              }
+            } else {
+              // Login failed
+              this.showError('Помилка авторизації: ' + (response.error || 'невідома помилка'));
+            }
+          } finally {
+            this.setProcessing(false);
+          }
         }
       });
     }
@@ -74,6 +132,18 @@ class PopupManager {
   
   async loadStatus() {
     try {
+      // Show spinner for history count only if not already showing
+      const historyCount = document.getElementById('historyCount');
+      const historyCountSpinner = document.getElementById('historyCountSpinner');
+      const isSpinnerVisible = historyCountSpinner && historyCountSpinner.style.display === 'block';
+      
+      if (historyCount && historyCountSpinner && !isSpinnerVisible) {
+        historyCount.style.display = 'none';
+        historyCountSpinner.style.display = 'block';
+      }
+      
+      // Wait at least 2 seconds before showing the number
+      const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
       const response = await this.sendMessage({ action: 'getStatus' });
       console.log('POPUP: getStatus response', response);
       this.status.isCollecting = !!response.isCollecting;
@@ -83,9 +153,22 @@ class PopupManager {
       this.status.historyCount = response.historyCount || 0;
       this.status.sessionCount = response.sessionCount || 0;
       this.status.lastSync = response.lastSync || null;
+      await minDelay;
+      // Hide spinner, show number
+      if (historyCount && historyCountSpinner) {
+        historyCount.style.display = 'block';
+        historyCountSpinner.style.display = 'none';
+      }
       this.updateUI();
     } catch (error) {
       this.showError('Помилка завантаження статусу: ' + error.message);
+      // Hide spinner, show number even on error
+      const historyCount = document.getElementById('historyCount');
+      const historyCountSpinner = document.getElementById('historyCountSpinner');
+      if (historyCount && historyCountSpinner) {
+        historyCount.style.display = 'block';
+        historyCountSpinner.style.display = 'none';
+      }
     }
   }
   
@@ -95,19 +178,18 @@ class PopupManager {
       return;
     }
     try {
-      this.setLoading(true);
+      this.setProcessing(true);
       const response = await this.sendMessage({ action: 'toggleCollection' });
       if (response.success) {
         this.status.isCollecting = response.collecting;
         this.updateUI();
-        this.showSuccess(response.collecting ? 'Збір даних запущено' : 'Збір даних зупинено');
       } else {
         this.showError('Помилка зміни стану збору: ' + (response.error || 'невідома помилка'));
       }
     } catch (error) {
       this.showError('Помилка зміни стану збору: ' + error.message);
     } finally {
-      this.setLoading(false);
+      this.setProcessing(false);
     }
   }
   
@@ -127,17 +209,28 @@ class PopupManager {
     }
     
     if (this.elements.startBtn) {
-      this.elements.startBtn.disabled = !this.status.hasUser;
+      this.elements.startBtn.disabled = !this.status.hasUser || this.status.isProcessing;
       this.elements.startBtn.textContent = this.status.isCollecting ? '⏹️ Зупинити збір' : '▶️ Почати збір даних';
       this.elements.startBtn.className = this.status.isCollecting ? 'danger' : 'primary';
     }
     if (this.elements.stopBtn) {
       this.elements.stopBtn.style.display = 'none'; // Hide stopBtn, use only one button
     }
+    if (this.elements.openDashboard) {
+      this.elements.openDashboard.disabled = this.status.isProcessing;
+    }
+    if (this.elements.loginBtn) {
+      this.elements.loginBtn.disabled = this.status.isProcessing;
+    }
     // Show/hide mainButtons div based on auth status
     const mainButtons = document.getElementById('mainButtons');
     if (mainButtons) {
       mainButtons.style.display = this.status.hasUser ? 'flex' : 'none';
+    }
+    // Show/hide statusPanel based on auth status
+    const statusPanel = document.getElementById('statusPanel');
+    if (statusPanel) {
+      statusPanel.style.display = this.status.hasUser ? 'block' : 'none';
     }
     
     // Оновлення статистики
@@ -145,7 +238,7 @@ class PopupManager {
       this.elements.deviceCount.textContent = this.status.deviceCount || '-';
     }
     if (this.elements.historyCount) {
-      this.elements.historyCount.textContent = this.status.historyCount || '-';
+      this.elements.historyCount.textContent = this.status.historyCount > 0 ? this.status.historyCount : '-';
     }
     if (this.elements.sessionCount) {
       this.elements.sessionCount.textContent = this.status.sessionCount || '-';
@@ -212,18 +305,15 @@ class PopupManager {
   }
   
   openDashboard() {
-    // Відкрити сторінку options (dashboard) extension через background script
-    this.sendMessage({ action: 'openOptions' }).then(response => {
-      if (response.success) {
-        console.log('Options page відкрито');
-      } else {
-        console.error('Помилка відкриття options page:', response.error);
-      }
-    }).catch(error => {
-      console.error('Помилка відкриття options page:', error);
-      // Fallback - спробувати відкрити напряму
+    this.setProcessing(true);
+    try {
       chrome.runtime.openOptionsPage();
-    });
+      this.showSuccess('Dashboard відкрито');
+    } catch (error) {
+      this.showError('Помилка відкриття dashboard: ' + error.message);
+    } finally {
+      this.setProcessing(false);
+    }
   }
   
   async testDataCollection() {
@@ -313,6 +403,30 @@ class PopupManager {
         delete button.dataset.originalText;
       }
     });
+  }
+  
+  setProcessing(processing) {
+    this.status.isProcessing = processing;
+    const buttons = [
+      this.elements.startBtn,
+      this.elements.stopBtn,
+      this.elements.openDashboard,
+      this.elements.loginBtn
+    ].filter(Boolean);
+    
+    buttons.forEach(button => {
+      button.disabled = processing;
+      if (processing) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = '⏳ Обробка...';
+      } else if (button.dataset.originalText) {
+        button.textContent = button.dataset.originalText;
+        delete button.dataset.originalText;
+      }
+    });
+    
+    // Update UI to reflect processing state
+    this.updateUI();
   }
   
   showError(message) {

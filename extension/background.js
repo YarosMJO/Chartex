@@ -20,6 +20,31 @@ let sessionId = null;
 let isCollecting = false;
 let lastUserUid = null; // Track previous user for state persistence
 
+// Ініціалізація глобальних змінних
+(async function initializeGlobals() {
+  try {
+    // === Стабільна ініціалізація deviceId ===
+    deviceId = await getOrCreateStableDeviceId();
+    // Завантажити інші дані
+    const data = await chrome.storage.local.get(['encryptionKey', 'sessionId', 'user']);
+    encryptionKey = data.encryptionKey;
+    sessionId = data.sessionId || CryptoUtils.generateSessionId();
+    if (!data.sessionId) {
+      await chrome.storage.local.set({ sessionId });
+    }
+    console.log('Глобальні змінні ініціалізовано:', {
+      deviceId: deviceId?.substring(0, 10) + '...',
+      hasEncryptionKey: !!encryptionKey,
+      hasSessionId: !!sessionId
+    });
+    if (data.user) {
+      console.log('Відновлення сесії користувача:', data.user.email);
+    }
+  } catch (error) {
+    console.error('Помилка ініціалізації глобальних змінних:', error);
+  }
+})();
+
 // API URL з конфігурації (для Service Worker)
 const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
 const API_BASE_URL = chartexConfig.apiUrl;
@@ -216,8 +241,10 @@ class HistoryCollector {
       const response = await APIUtils.registerDevice();
       console.log('Пристрій зареєстровано:', response);
       
-      // Зберегти час останньої синхронізації
-      await chrome.storage.local.set({ lastSync: Date.now() });
+      // Зберегти час останньої синхронізації для поточного користувача
+      if (currentUser?.uid) {
+        await chrome.storage.local.set({ [`lastSync_${currentUser.uid}`]: Date.now() });
+      }
     } catch (error) {
       console.error('Помилка реєстрації пристрою:', error);
     }
@@ -226,12 +253,10 @@ class HistoryCollector {
   async collectHistory() {
     try {
       console.log('Початок збору існуючої історії...');
-      
       // Отримати історію за останні дні з конфігурації
       const historyDays = chartexConfig.collection?.historyDays || 7;
       const endTime = Date.now();
       const startTime = endTime - (historyDays * 24 * 60 * 60 * 1000);
-      
       const historyItems = await new Promise((resolve) => {
         chrome.history.search({
           text: '',
@@ -240,18 +265,23 @@ class HistoryCollector {
           maxResults: 1000
         }, resolve);
       });
-      
       console.log(`Знайдено ${historyItems.length} записів історії`);
-      
       // Обробити кожен запис
+      let processedCount = 0;
       for (const item of historyItems) {
         await this.processHistoryItem(item);
+        processedCount++;
+        if (processedCount % 100 === 0) {
+          console.log(`Оброблено ${processedCount}/${historyItems.length} записів`);
+        }
       }
-      
+      console.log(`Завершено обробку ${processedCount} записів історії`);
       // Відправити накопичені записи
       await this.flushBatch();
-      
       console.log('Збір існуючої історії завершено');
+      
+      // Notify popups that initial data collection is complete
+      chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
     } catch (error) {
       console.error('Помилка збору історії:', error);
     }
@@ -279,6 +309,23 @@ class HistoryCollector {
         console.log('Пропущено внутрішню сторінку браузера:', historyItem.url);
         return;
       }
+      
+      // Перевірити та ініціалізувати необхідні дані, якщо потрібно
+      if (!deviceId || !encryptionKey || !sessionId) {
+        console.log('Ініціалізація необхідних змінних...');
+        if (!deviceId) {
+          deviceId = await getOrCreateStableDeviceId();
+        }
+        if (!encryptionKey || !sessionId) {
+          const data = await chrome.storage.local.get(['encryptionKey', 'sessionId']);
+          encryptionKey = data.encryptionKey;
+          sessionId = data.sessionId || CryptoUtils.generateSessionId();
+          if (!data.sessionId) {
+            await chrome.storage.local.set({ sessionId });
+          }
+        }
+      }
+      
       // Перевірити, чи є необхідні дані
       if (!deviceId || !encryptionKey || !sessionId) {
         console.warn('Відсутні необхідні дані для обробки запису');
@@ -346,9 +393,13 @@ class HistoryCollector {
       }
       
       // Оновити лічильник в локальному сховищі
-      const currentCount = await chrome.storage.local.get(['historyCount']);
-      const newCount = (currentCount.historyCount || 0) + 1;
-      await chrome.storage.local.set({ historyCount: newCount });
+      if (currentUser?.uid) {
+        const key = `historyCount_${currentUser.uid}`;
+        const currentCount = await chrome.storage.local.get([key]);
+        const newCount = (currentCount[key] || 0) + 1;
+        await chrome.storage.local.set({ [key]: newCount });
+        console.log(`Оновлено лічильник для користувача ${currentUser.uid}: ${newCount}`);
+      }
       
     } catch (error) {
       console.error('Помилка обробки запису історії:', error);
@@ -383,8 +434,13 @@ class HistoryCollector {
       const response = await APIUtils.sendHistoryBatch(itemsToSend);
       console.log('Записи успішно відправлено:', response);
       
-      // Оновити час останньої синхронізації
-      await chrome.storage.local.set({ lastSync: Date.now() });
+      // Оновити час останньої синхронізації для поточного користувача
+      if (currentUser?.uid) {
+        await chrome.storage.local.set({ [`lastSync_${currentUser.uid}`]: Date.now() });
+      }
+      
+      // Notify all popups that data sync is complete
+      chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
       
     } catch (error) {
       console.error('Помилка відправки записів:', error);
@@ -444,6 +500,57 @@ async function saveCollectionStateForUser(uid, collecting) {
   await chrome.storage.local.set({ [key]: collecting });
 }
 
+// Helper: Clear old data for user
+async function clearUserData(uid) {
+  try {
+    console.log(`Очищення старих даних для користувача ${uid}`);
+    // Clear history count
+    await chrome.storage.local.set({ [`historyCount_${uid}`]: 0 });
+    // Clear last sync time
+    await chrome.storage.local.set({ [`lastSync_${uid}`]: null });
+    console.log(`Дані користувача ${uid} очищено`);
+  } catch (error) {
+    console.error(`Помилка очищення даних користувача ${uid}:`, error);
+  }
+}
+
+// Helper: Clear user data on backend
+async function clearUserDataOnBackend(uid) {
+  try {
+    console.log(`Очищення даних користувача ${uid} на бекенді`);
+    
+    // Wait a bit to ensure Firebase auth is ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const user = firebase.auth().currentUser;
+    console.log('Поточний користувач Firebase:', user ? user.uid : 'null');
+    
+    if (!user) {
+      console.warn('Користувач не авторизований для очищення даних');
+      return;
+    }
+    
+    if (user.uid !== uid) {
+      console.warn(`UID не співпадає: очікував ${uid}, отримав ${user.uid}`);
+      return;
+    }
+    
+    const idToken = await user.getIdToken();
+    console.log('Отримано ID токен для очищення даних');
+    
+    const response = await APIUtils.makeRequest('/users/clear-data', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Дані користувача очищено на бекенді:', response);
+  } catch (error) {
+    console.error(`Помилка очищення даних користувача на бекенді:`, error);
+  }
+}
+
 // Update collection state on user change
 async function handleUserSwitch(newUser) {
   if (lastUserUid && lastUserUid !== newUser?.uid) {
@@ -452,10 +559,25 @@ async function handleUserSwitch(newUser) {
     historyCollector.stop();
   }
   if (newUser?.uid) {
+    console.log(`Переключення на користувача: ${newUser.uid}`);
+    
+    // Clear old data for new user before starting collection
+    console.log('Крок 1: Очищення локальних даних...');
+    await clearUserData(newUser.uid);
+    
+    console.log('Крок 2: Очищення даних на бекенді...');
+    await clearUserDataOnBackend(newUser.uid);
+    
+    console.log('Крок 3: Перевірка стану збору даних...');
     const collecting = await loadCollectionStateForUser(newUser.uid);
+    console.log(`Стан збору даних для користувача ${newUser.uid}: ${collecting}`);
+    
     if (collecting) {
+      console.log('Крок 4: Запуск збору даних...');
       historyCollector.start();
+      // Don't send dataSyncComplete here - let the collection process send it when complete
     } else {
+      console.log('Крок 4: Збір даних вимкнено для цього користувача');
       historyCollector.stop();
     }
     lastUserUid = newUser.uid;
@@ -549,9 +671,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return;
       
     case 'startCollection':
-      historyCollector.start();
-      sendResponse({ success: true });
-      break;
+      (async () => {
+        console.log('Ручний запуск збору даних');
+        if (currentUser?.uid) {
+          // Clear data before starting manual collection
+          console.log('Очищення даних перед ручним збором...');
+          await clearUserData(currentUser.uid);
+          await clearUserDataOnBackend(currentUser.uid);
+        }
+        historyCollector.start();
+        sendResponse({ success: true });
+      })();
+      return true;
       
     case 'stopCollection':
       historyCollector.stop();
@@ -571,12 +702,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         let sessionCount = 0;
         let lastSync = null;
         try {
-          const data = await chrome.storage.local.get(['deviceId', 'lastSync', 'historyCount']);
+          let keys = ['deviceId'];
+          if (user?.uid) {
+            keys.push(`lastSync_${user.uid}`);
+            keys.push(`historyCount_${user.uid}`);
+          }
+          const data = await chrome.storage.local.get(keys);
           deviceCount = data.deviceId ? 1 : 0;
-          lastSync = data.lastSync;
-          historyCount = data.historyCount || 0;
+          if (user?.uid) {
+            lastSync = data[`lastSync_${user.uid}`];
+            historyCount = data[`historyCount_${user.uid}`] || 0;
+            console.log(`Отримано дані для користувача ${user.uid}:`, {
+              historyCount,
+              lastSync,
+              hasHistoryCount: !!data[`historyCount_${user.uid}`],
+              storageKey: `historyCount_${user.uid}`,
+              allKeys: keys,
+              allData: data
+            });
+          } else {
+            lastSync = null;
+            historyCount = 0;
+          }
           sessionCount = sessionId ? 1 : 0;
-          
           console.log('Storage data:', {
             storedDeviceId: data.deviceId,
             hasStoredDeviceId: !!data.deviceId,
@@ -640,6 +788,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         const newState = !historyCollector.isCollecting;
         if (newState) {
+          // Clear data before starting collection
+          console.log('Очищення даних перед перемиканням збору...');
+          await clearUserData(currentUser.uid);
+          await clearUserDataOnBackend(currentUser.uid);
           historyCollector.start();
         } else {
           historyCollector.stop();
@@ -687,11 +839,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     try {
       // === Стабільна ініціалізація deviceId ===
-      deviceId = await getOrCreateStableDeviceId();
+      // deviceId = await getOrCreateStableDeviceId(); // This is now handled by initializeGlobals
       sessionId = CryptoUtils.generateSessionId();
       encryptionKey = CryptoUtils.generateKey();
       await chrome.storage.local.set({
-        deviceId,
+        deviceId, // This will be updated by initializeGlobals
         encryptionKey,
         sessionId,
         isFirstRun: true,
@@ -749,7 +901,7 @@ chrome.runtime.onStartup.addListener(async () => {
   console.log('Розширення Chartex запущено');
   try {
     // === Стабільна ініціалізація deviceId ===
-    deviceId = await getOrCreateStableDeviceId();
+    // deviceId = await getOrCreateStableDeviceId(); // This is now handled by initializeGlobals
     // Завантажити інші дані
     const data = await chrome.storage.local.get(['encryptionKey', 'sessionId', 'user']);
     encryptionKey = data.encryptionKey;

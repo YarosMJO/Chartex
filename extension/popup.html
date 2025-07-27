@@ -177,27 +177,35 @@
   
   <div id="error" class="error" style="display: none;"></div>
   
-  <div class="status">
-    <span id="statusIndicator" class="status-indicator inactive"></span>
-    <span id="statusText" class="status-text">Завантаження...</span>
-  </div>
-  
-  <div class="stats">
-    <div class="stat-item">
-      <div id="deviceCount" class="stat-value">-</div>
-      <div class="stat-label">Пристрої</div>
+  <div id="statusPanel" style="display: none;">
+    <div class="status">
+      <span id="statusIndicator" class="status-indicator inactive"></span>
+      <span id="statusText" class="status-text">Завантаження...</span>
     </div>
-    <div class="stat-item">
-      <div id="historyCount" class="stat-value">-</div>
-      <div class="stat-label">Записи</div>
-    </div>
-    <div class="stat-item">
-      <div id="sessionCount" class="stat-value">-</div>
-      <div class="stat-label">Сесії</div>
-    </div>
-    <div class="stat-item">
-      <div id="lastSync" class="stat-value">-</div>
-      <div class="stat-label">Остання синхронізація</div>
+    <div class="stats">
+      <div class="stat-item">
+        <div id="deviceCount" class="stat-value">-</div>
+        <div class="stat-label">Пристрої</div>
+      </div>
+      <div class="stat-item">
+        <div id="historyCount" class="stat-value">-</div>
+        <div id="historyCountSpinner" class="spinner" style="display: none; margin: 0 auto;">
+          <svg width="24" height="24" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="stat-label">Записи</div>
+      </div>
+      <div class="stat-item">
+        <div id="sessionCount" class="stat-value">-</div>
+        <div class="stat-label">Сесії</div>
+      </div>
+      <div class="stat-item">
+        <div id="lastSync" class="stat-value">-</div>
+        <div class="stat-label">Остання синхронізація</div>
+      </div>
     </div>
   </div>
   

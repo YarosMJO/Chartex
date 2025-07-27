@@ -106,6 +106,29 @@ router.delete('/account', authenticateToken, async (req, res) => {
   }
 });
 
+// Очистити дані користувача (для перезапису, не видалення акаунту)
+router.post('/clear-data', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    
+    console.log(`Очищення даних для користувача ${userId}`);
+    
+    // Видалити тільки дані історії, залишити користувача та пристрої
+    const deletedCount = await HistoryItem.deleteMany({ userId });
+    
+    console.log(`Видалено ${deletedCount.deletedCount} записів історії для користувача ${userId}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Дані користувача очищено',
+      deletedCount: deletedCount.deletedCount
+    });
+  } catch (err) {
+    console.error('Помилка очищення даних користувача:', err);
+    res.status(500).json({ error: 'Помилка очищення даних користувача' });
+  }
+});
+
 // Отримати статистику користувача
 router.get('/stats', authenticateToken, async (req, res) => {
   try {
