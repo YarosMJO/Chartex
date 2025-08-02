@@ -157,7 +157,7 @@
               </div>
             </div>
             <mat-form-field appearance="outline">
-              <mat-select [(ngModel)]="displaySettings.language" (selectionChange)="onLanguageChange()">
+              <mat-select [(ngModel)]="displaySettings.language" (ngModelChange)="onLanguageChange()">
                 <mat-option value="uk">Українська</mat-option>
                 <mat-option value="en">English</mat-option>
               </mat-select>
@@ -174,7 +174,7 @@
               </div>
             </div>
             <mat-form-field appearance="outline">
-              <mat-select [(ngModel)]="displaySettings.theme" (selectionChange)="onSettingChange()">
+              <mat-select [(ngModel)]="displaySettings.theme" (ngModelChange)="onSettingChange()">
                 <mat-option value="default">{{ 'SETTINGS.DEFAULT' | translate }}</mat-option>
                 <mat-option value="light">{{ 'SETTINGS.LIGHT' | translate }}</mat-option>
                 <mat-option value="dark">{{ 'SETTINGS.DARK' | translate }}</mat-option>

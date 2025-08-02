@@ -1,0 +1,27 @@
+<div class="filters-section">
+  <mat-card>
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'DASHBOARD.PERIOD' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodChange()">
+            <mat-option value="7d">{{ 'DASHBOARD.PERIODS.7D' | translate }}</mat-option>
+            <mat-option value="30d">{{ 'DASHBOARD.PERIODS.30D' | translate }}</mat-option>
+            <mat-option value="90d">{{ 'DASHBOARD.PERIODS.90D' | translate }}</mat-option>
+            <mat-option value="1y">{{ 'DASHBOARD.PERIODS.1Y' | translate }}</mat-option>
+            <mat-option value="all">{{ 'DASHBOARD.PERIODS.ALL' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'DASHBOARD.DEVICE' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedDevice" (ngModelChange)="onDeviceChange()">
+            <mat-option value="all">{{ 'DASHBOARD.ALL_DEVICES' | translate }}</mat-option>
+            <mat-option *ngFor="let device of devices" [value]="device.deviceId">
+              {{ device.deviceName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div> 

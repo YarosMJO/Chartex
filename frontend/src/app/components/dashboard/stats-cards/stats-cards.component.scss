@@ -1,0 +1,78 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.stat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  opacity: 0.8;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === ТЕМИ ДЛЯ STATS CARDS === */
+::ng-deep body.theme-light .stat-card {
+  background: #fff !important;
+  color: #23272f;
+}
+
+::ng-deep body.theme-dark .stat-card {
+  background: #232136 !important;
+  color: #f3eaff !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  border: 1.5px solid #6c4bb6;
+}
+
+::ng-deep body.theme-dark .stat-card * {
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .stat-icon {
+  color: #a259f7 !important;
+} 

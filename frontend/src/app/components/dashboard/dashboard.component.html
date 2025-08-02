@@ -31,33 +31,13 @@
   </mat-toolbar>
 
   <!-- Фільтри -->
-  <div class="filters-section">
-    <mat-card>
-      <mat-card-content>
-        <div class="filters-row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'DASHBOARD.PERIOD' | translate }}</mat-label>
-            <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
-              <mat-option value="7d">{{ 'DASHBOARD.PERIODS.7D' | translate }}</mat-option>
-              <mat-option value="30d">{{ 'DASHBOARD.PERIODS.30D' | translate }}</mat-option>
-              <mat-option value="90d">{{ 'DASHBOARD.PERIODS.90D' | translate }}</mat-option>
-              <mat-option value="1y">{{ 'DASHBOARD.PERIODS.1Y' | translate }}</mat-option>
-              <mat-option value="all">{{ 'DASHBOARD.PERIODS.ALL' | translate }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'DASHBOARD.DEVICE' | translate }}</mat-label>
-            <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
-              <mat-option value="all">{{ 'DASHBOARD.ALL_DEVICES' | translate }}</mat-option>
-              <mat-option *ngFor="let device of devices" [value]="device.deviceId">
-                {{ device.deviceName }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  <app-filters-section
+    [selectedPeriod]="selectedPeriod"
+    [selectedDevice]="selectedDevice"
+    [devices]="activeDevices"
+    (periodChange)="onPeriodChange()"
+    (deviceChange)="onDeviceChange()">
+  </app-filters-section>
 
   <!-- Помилка -->
   <div *ngIf="error" class="error-message">
@@ -80,129 +60,22 @@
   <!-- Основний контент -->
   <div *ngIf="!loading && !error && userStats" class="dashboard-content">
     <!-- Статистика -->
-    <div class="stats-grid">
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-content">
-            <mat-icon class="stat-icon">visibility</mat-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(userStats.stats.totalVisits) }}</div>
-              <div class="stat-label">{{ 'DASHBOARD.STATS.VISITS' | translate }}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-content">
-            <mat-icon class="stat-icon">language</mat-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(userStats.stats.uniqueDomains) }}</div>
-              <div class="stat-label">{{ 'DASHBOARD.STATS.UNIQUE_DOMAINS' | translate }}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-content">
-            <mat-icon class="stat-icon">schedule</mat-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatDuration(userStats.stats.totalDuration) }}</div>
-              <div class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-content">
-            <mat-icon class="stat-icon">devices</mat-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ devices.length }}</div>
-              <div class="stat-label">{{ 'DASHBOARD.STATS.DEVICES' | translate }}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
+    <app-stats-cards
+      [userStats]="userStats"
+      [devicesCount]="activeDevicesCount">
+    </app-stats-cards>
 
     <!-- Графіки -->
-    <div class="charts-grid">
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'DASHBOARD.CHARTS.ACTIVITY_TITLE' | translate:{period: getPeriodLabel(selectedPeriod)} }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <apx-chart
-            [series]="[{ name: 'Відвідування', data: activityChartData }]"
-            [chart]="activityChartOptions.chart"
-            [xaxis]="activityChartOptions.xaxis"
-            [yaxis]="activityChartOptions.yaxis"
-            [colors]="activityChartOptions.colors"
-            [fill]="activityChartOptions.fill"
-            [stroke]="activityChartOptions.stroke"
-            [dataLabels]="activityChartOptions.dataLabels"
-            [grid]="activityChartOptions.grid"
-            [tooltip]="activityChartOptions.tooltip">
-          </apx-chart>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title class="top-sites-title">{{ 'DASHBOARD.CHARTS.TOP_SITES' | translate }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="top-domains-list">
-            <div *ngFor="let domain of topDomainsData; let i = index" class="domain-item">
-              <div class="domain-rank">{{ i + 1 }}</div>
-              <div class="domain-info">
-                <div class="domain-name" [title]="domain.name">
-                  {{ domain.title }}
-                </div>
-                <div class="domain-url" *ngIf="domain.name !== domain.title">
-                  {{ domain.name }}
-                </div>
-                <div class="domain-stats">
-                  {{ domain.visits }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }} • {{ formatDuration(domain.duration) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
+    <app-charts-section
+      [activityChartData]="activityChartData"
+      [topDomainsData]="topDomainsData"
+      [selectedPeriod]="getPeriodLabel(selectedPeriod)"
+      [activityChartOptions]="activityChartOptions">
+    </app-charts-section>
 
     <!-- Статистика пристроїв -->
-    <mat-card class="devices-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'DASHBOARD.CHARTS.DEVICE_STATS' | translate }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="devices-grid">
-          <div *ngFor="let device of devices" class="device-item">
-            <div class="device-header">
-              <mat-icon class="device-icon">
-                {{ device.deviceType === 'mobile' ? 'smartphone' : 'computer' }}
-              </mat-icon>
-                          <div class="device-info">
-              <div class="device-name">{{ device.deviceName }}</div>
-              <div class="device-type">{{ getDeviceTypeLabel(device.deviceType) }} • {{ device.browser }} • {{ device.os }}</div>
-            </div>
-            </div>
-            <div class="device-stats">
-              <div class="device-stat">
-                <span class="stat-label">{{ 'DASHBOARD.STATS.VISITS' | translate }}:</span>
-                <span class="stat-value">{{ formatNumber(device.stats?.totalVisits || 0) }}</span>
-              </div>
-              <div class="device-stat">
-                <span class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}:</span>
-                <span class="stat-value">{{ formatDuration(device.stats?.totalDuration || 0) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <app-devices-section
+      [devices]="devices">
+    </app-devices-section>
   </div>
 </div> 

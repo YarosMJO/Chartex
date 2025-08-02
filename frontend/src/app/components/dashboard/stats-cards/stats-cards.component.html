@@ -1,0 +1,46 @@
+<div class="stats-grid">
+  <mat-card class="stat-card">
+    <mat-card-content>
+      <div class="stat-content">
+        <mat-icon class="stat-icon">visibility</mat-icon>
+        <div class="stat-info">
+          <div class="stat-value">{{ formatNumber(userStats?.stats.totalVisits || 0) }}</div>
+          <div class="stat-label">{{ 'DASHBOARD.STATS.VISITS' | translate }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="stat-card">
+    <mat-card-content>
+      <div class="stat-content">
+        <mat-icon class="stat-icon">language</mat-icon>
+        <div class="stat-info">
+          <div class="stat-value">{{ formatNumber(userStats?.stats.uniqueDomains || 0) }}</div>
+          <div class="stat-label">{{ 'DASHBOARD.STATS.UNIQUE_DOMAINS' | translate }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="stat-card">
+    <mat-card-content>
+      <div class="stat-content">
+        <mat-icon class="stat-icon">schedule</mat-icon>
+        <div class="stat-info">
+          <div class="stat-value">{{ formatDuration(userStats?.stats.totalDuration || 0) }}</div>
+          <div class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="stat-card">
+    <mat-card-content>
+      <div class="stat-content">
+        <mat-icon class="stat-icon">devices</mat-icon>
+        <div class="stat-info">
+          <div class="stat-value">{{ devicesCount }}</div>
+          <div class="stat-label">{{ 'DASHBOARD.STATS.DEVICES' | translate }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div> 

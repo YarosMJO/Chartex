@@ -78,6 +78,44 @@ export const getDomainFromUrl = (url: string): string => {
   }
 };
 
+// Очистити назву домену від зайвих частин
+export const cleanDomainName = (domain: string): string => {
+  if (!domain) return domain;
+  
+  // Видаляємо протокол якщо є
+  let cleaned = domain.replace(/^https?:\/\//, '');
+  
+  // Видаляємо www та інші поширені префікси
+  cleaned = cleaned.replace(/^www\./, '');
+  cleaned = cleaned.replace(/^m\./, ''); // мобільна версія
+  cleaned = cleaned.replace(/^mobile\./, ''); // мобільна версія
+  cleaned = cleaned.replace(/^app\./, ''); // додаток
+  cleaned = cleaned.replace(/^api\./, ''); // API
+  cleaned = cleaned.replace(/^cdn\./, ''); // CDN
+  cleaned = cleaned.replace(/^static\./, ''); // статичні файли
+  cleaned = cleaned.replace(/^blog\./, ''); // блог
+  cleaned = cleaned.replace(/^shop\./, ''); // магазин
+  cleaned = cleaned.replace(/^store\./, ''); // магазин
+  cleaned = cleaned.replace(/^support\./, ''); // підтримка
+  cleaned = cleaned.replace(/^help\./, ''); // допомога
+  cleaned = cleaned.replace(/^docs\./, ''); // документація
+  cleaned = cleaned.replace(/^dev\./, ''); // розробка
+  cleaned = cleaned.replace(/^staging\./, ''); // тестування
+  cleaned = cleaned.replace(/^test\./, ''); // тестування
+  cleaned = cleaned.replace(/^beta\./, ''); // бета версія
+  cleaned = cleaned.replace(/^alpha\./, ''); // альфа версія
+  
+  // Видаляємо порт якщо є
+  cleaned = cleaned.replace(/:\d+$/, '');
+  
+  // Видаляємо шлях та параметри
+  cleaned = cleaned.split('/')[0];
+  cleaned = cleaned.split('?')[0];
+  cleaned = cleaned.split('#')[0];
+  
+  return cleaned.toLowerCase();
+};
+
 // Локалізація типу пристрою
 export const getDeviceTypeLabel = (deviceType: string, translateService?: TranslateService): string => {
   const getTranslation = (key: string): string => {

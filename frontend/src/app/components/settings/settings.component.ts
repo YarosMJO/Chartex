@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -42,12 +42,15 @@ import { CanDeactivate } from '@angular/router';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     TranslateModule
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsComponent implements OnInit {
   currentUser: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null = null;
   loading = false;
-  // Видалено: hasUnsavedChanges, originalSettings
+  // Відстеження попередніх значень для уникнення зайвих оновлень
+  private previousLanguage: string = 'uk';
+  private previousTheme: string = 'default';
   
   // Налаштування збору даних
   dataCollectionSettings: {
@@ -98,7 +101,8 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private apiService: ApiService,
     private snackBar: MatSnackBar,
-    private translateService: AppTranslateService
+    private translateService: AppTranslateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -119,29 +123,47 @@ export class SettingsComponent implements OnInit {
         this.dataCollectionSettings = { ...this.dataCollectionSettings, ...settings.dataCollection };
         this.privacySettings = { ...this.privacySettings, ...settings.privacy };
         this.displaySettings = { ...this.displaySettings, ...settings.display };
+        
+        // Ініціалізуємо попередні значення
+        this.previousLanguage = this.displaySettings.language;
+        this.previousTheme = this.displaySettings.theme;
+        
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Помилка завантаження налаштувань:', error);
         this.snackBar.open('Помилка завантаження налаштувань', 'Закрити', { duration: 3000 });
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   // Зберігати налаштування одразу при зміні будь-якого поля
   onSettingChange() {
-    this.saveSettings();
-    this.applyImmediateSettings();
+    // Перевіряємо чи дійсно змінилася тема
+    if (this.displaySettings.theme !== this.previousTheme) {
+      this.previousTheme = this.displaySettings.theme;
+      this.saveSettings();
+      this.applyImmediateSettings();
+      this.cdr.markForCheck();
+    }
   }
 
   // Зміна мови
   onLanguageChange() {
-    this.saveSettings();
+    // Перевіряємо чи дійсно змінилася мова
+    if (this.displaySettings.language !== this.previousLanguage) {
+      this.previousLanguage = this.displaySettings.language;
+      this.saveSettings();
+      this.cdr.markForCheck();
+    }
   }
 
   // Збереження налаштувань
   saveSettings() {
+    console.log('saveSettings() викликано');
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
@@ -225,7 +247,9 @@ export class SettingsComponent implements OnInit {
 
   // Скидання налаштувань до значень за замовчуванням
   resetSettings() {
+    console.log('resetSettings() викликано');
     this.loading = true;
+    this.cdr.markForCheck();
     try {
       this.settingsService.resetSettings();
       this.loadSettings();
@@ -235,11 +259,13 @@ export class SettingsComponent implements OnInit {
       this.snackBar.open('Помилка скидання налаштувань', 'Закрити', { duration: 3000 });
     } finally {
       this.loading = false;
+      this.cdr.markForCheck();
     }
   }
 
   // Експорт налаштувань
   exportSettings() {
+    console.log('exportSettings() викликано');
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
@@ -307,6 +333,7 @@ export class SettingsComponent implements OnInit {
   // Видалити logout з діалогом unsaved, залишити простий діалог підтвердження виходу
   logout() {
     this.loading = true;
+    this.cdr.markForCheck();
     this.authService.logout().subscribe({
       next: () => {
         this.router.navigate(['/dashboard']);
@@ -316,27 +343,34 @@ export class SettingsComponent implements OnInit {
         console.error('Помилка виходу:', error);
         this.snackBar.open('Помилка виходу з системи', 'Закрити', { duration: 3000 });
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   // Очищення даних
   clearData() {
+    console.log('clearData() викликано');
     this.loading = true;
-    
-    // Очищення даних через API
-    this.apiService.clearUserData().then((result) => {
-      this.snackBar.open('Дані успішно очищено', 'Закрити', { duration: 2000 });
-      
-      // Очищення локальних даних
-      this.clearLocalData();
-      
-      this.loading = false;
-    }).catch((error: any) => {
+    this.cdr.markForCheck();
+    try {
+      // Очищення даних на backend
+      this.apiService.clearUserData().then((result) => {
+        this.snackBar.open('Дані очищено', 'Закрити', { duration: 2000 });
+        this.clearLocalData();
+      }).catch((error: any) => {
+        console.error('Помилка очищення даних:', error);
+        this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
+      }).finally(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      });
+    } catch (error) {
       console.error('Помилка очищення даних:', error);
       this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
       this.loading = false;
-    });
+      this.cdr.markForCheck();
+    }
   }
 
   // Очищення локальних даних

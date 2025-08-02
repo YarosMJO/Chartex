@@ -1,0 +1,26 @@
+.filters-section {
+  margin-bottom: 20px;
+}
+
+.filters-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+/* === ТЕМИ ДЛЯ FILTERS SECTION === */
+::ng-deep body.theme-dark .filters-section .mdc-card {
+  background: #232136 !important;
+  color: #f3eaff !important;
+  box-shadow: 0 2px 12px rgba(35, 33, 54, 0.22);
+  border: 1px solid #2a2042;
+} 

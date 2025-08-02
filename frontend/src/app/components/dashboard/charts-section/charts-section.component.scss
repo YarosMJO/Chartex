@@ -1,0 +1,179 @@
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.top-sites-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+.top-domains-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.domain-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-right: 10px;
+  padding: 12px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f8f9fa;
+  }
+}
+
+.domain-rank {
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.domain-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.domain-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.domain-url {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.domain-stats {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Scrollbar Styling */
+.top-domains-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.top-domains-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.top-domains-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.top-domains-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* === ТЕМИ ДЛЯ CHARTS SECTION === */
+::ng-deep body.theme-light .chart-card {
+  background: #fff !important;
+  color: #23272f;
+}
+
+::ng-deep body.theme-dark .chart-card {
+  background: #232136 !important;
+  color: #f3eaff !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  border: 1.5px solid #6c4bb6;
+}
+
+::ng-deep body.theme-dark .chart-card * {
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .domain-item {
+  background: #232136;
+  border-bottom: 1px solid #2a2042;
+}
+
+::ng-deep body.theme-dark .domain-item .domain-name {
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .domain-item .domain-url,
+::ng-deep body.theme-dark .domain-item .domain-stats {
+  color: #b6a6d9 !important;
+}
+
+::ng-deep body.theme-dark .domain-item:hover,
+::ng-deep body.theme-dark .domain-item.active {
+  background: #3a2e5c !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+::ng-deep body.theme-dark .domain-item:hover .domain-name,
+::ng-deep body.theme-dark .domain-item:hover .domain-url,
+::ng-deep body.theme-dark .domain-item:hover .domain-stats {
+  color: #fff !important;
+}
+
+::ng-deep body.theme-dark .mat-card-title,
+::ng-deep body.theme-dark .mat-card-header {
+  color: #f3eaff !important;
+}
+
+// ApexCharts темна тема
+::ng-deep body.theme-dark .apexcharts-tooltip {
+  background: #2a2042 !important;
+  color: #fff !important;
+  border-color: #6c4bb6 !important;
+}
+
+::ng-deep body.theme-dark .apexcharts-xaxis-label,
+::ng-deep body.theme-dark .apexcharts-yaxis-label {
+  fill: #f3eaff !important;
+  color: #f3eaff !important;
+}
+
+::ng-deep body.theme-dark .apexcharts-gridline {
+  stroke: #3a2e5c !important;
+} 

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { SettingsService } from './services/settings.service';
@@ -9,7 +9,8 @@ import { SettingsService } from './services/settings.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterOutlet, TranslateModule]
+  imports: [CommonModule, RouterOutlet, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
   private settingsService = inject(SettingsService);
