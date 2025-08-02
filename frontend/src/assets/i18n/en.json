@@ -49,12 +49,15 @@
       },
       "DURATION": {
         "TITLE": "Visit Duration",
+        "TYPE": "Filter Type",
+        "TOTAL": "Total Time",
+        "AVERAGE": "Average Time",
         "ALL": "All",
         "SHORT": "Short (< 5 min)",
         "MEDIUM": "Medium (5-30 min)",
         "LONG": "Long (> 30 min)",
         "CUSTOM": "Custom",
-        "CUSTOM_RANGE": "Custom range",
+        "CUSTOM_RANGE": "Custom Range",
         "MIN": "Minimum",
         "MAX": "Maximum"
       },

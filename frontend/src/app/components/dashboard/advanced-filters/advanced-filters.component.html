@@ -7,7 +7,7 @@
           {{ 'DASHBOARD.FILTERS.TITLE' | translate }}
         </mat-panel-title>
       </mat-expansion-panel-header>
-
+      
       <div class="filters-container">
         <!-- Категорії -->
         <div class="filter-section">
@@ -27,10 +27,29 @@
         <div class="filter-section">
           <h4>{{ 'DASHBOARD.FILTERS.DURATION.TITLE' | translate }}</h4>
           
+          <!-- Перемикач типу фільтрації -->
+          <div class="duration-type-toggle">
+            <label>{{ 'DASHBOARD.FILTERS.DURATION.TYPE' | translate }}</label>
+            <div class="toggle-buttons">
+              <button 
+                class="filter-button"
+                [class.selected]="filters.durationType === 'total'"
+                (click)="onDurationTypeChange('total')">
+                {{ 'DASHBOARD.FILTERS.DURATION.TOTAL' | translate }}
+              </button>
+              <button 
+                class="filter-button"
+                [class.selected]="filters.durationType === 'average'"
+                (click)="onDurationTypeChange('average')">
+                {{ 'DASHBOARD.FILTERS.DURATION.AVERAGE' | translate }}
+              </button>
+            </div>
+          </div>
+          
           <!-- Швидкі опції -->
           <div class="duration-options">
             <button 
-              *ngFor="let option of durationOptions"
+              *ngFor="let option of adjustedDurationOptions"
               class="filter-button"
               [class.selected]="selectedDurationOption === option.value"
               (click)="onDurationOptionChange(option.value)">
@@ -42,31 +61,31 @@
           <div class="custom-duration">
             <label>{{ 'DASHBOARD.FILTERS.DURATION.CUSTOM_RANGE' | translate }}</label>
             
-                         <div class="slider-container">
-               <div class="slider-item">
-                 <label>{{ 'DASHBOARD.FILTERS.DURATION.MIN' | translate }}</label>
-                                 <input
+            <div class="slider-container">
+              <div class="slider-item">
+                <label>{{ 'DASHBOARD.FILTERS.DURATION.MIN' | translate }}</label>
+                <input
                   type="range"
                   [min]="0"
-                  [max]="180"
+                  [max]="filters.durationType === 'average' ? 60 : 180"
                   [step]="1"
                   [value]="filters.durationRange.min"
                   (input)="onMinDurationChange($event.target.value)">
                 <span class="slider-value">{{ filters.durationRange.min | number:'1.0-0' }}хв</span>
-               </div>
-               
-               <div class="slider-item">
-                 <label>{{ 'DASHBOARD.FILTERS.DURATION.MAX' | translate }}</label>
-                                 <input
+              </div>
+              
+              <div class="slider-item">
+                <label>{{ 'DASHBOARD.FILTERS.DURATION.MAX' | translate }}</label>
+                <input
                   type="range"
                   [min]="0"
-                  [max]="180"
+                  [max]="filters.durationType === 'average' ? 60 : 180"
                   [step]="1"
                   [value]="filters.durationRange.max"
                   (input)="onMaxDurationChange($event.target.value)">
                 <span class="slider-value">{{ filters.durationRange.max | number:'1.0-0' }}хв</span>
-               </div>
-             </div>
+              </div>
+            </div>
           </div>
         </div>
 

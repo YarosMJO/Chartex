@@ -1,20 +1,20 @@
 .advanced-filters-card {
-  margin-bottom: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filters-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 16px 0;
+  gap: 16px;
+  padding: 12px 0;
 }
 
 .filter-section {
   h4 {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #333;
   }
@@ -23,24 +23,24 @@
 .categories-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: 1px solid #e0e0e0;
-  border-radius: 16px;
+  border-radius: 12px;
   background: #fff;
   color: #333;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: #f5f5f5;
     border-color: #ccc;
   }
-  
+
   &.selected {
     background: #667eea;
     color: #fff;
@@ -49,94 +49,113 @@
 }
 
 .duration-options {
-  margin-bottom: 16px;
-  
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+
   mat-chip-listbox {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+  }
+}
+
+.duration-type-toggle {
+  margin-bottom: 12px;
+  
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    color: #666;
+  }
+  
+  .toggle-buttons {
+    display: flex;
+    gap: 6px;
   }
 }
 
 .custom-duration {
   label {
     display: block;
-    margin-bottom: 8px;
-    font-size: 0.875rem;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
     color: #666;
   }
-  
+
   .slider-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
-  
+
   .slider-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    
+    gap: 6px;
+
     label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #666;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    
+
     input[type="range"] {
       width: 100%;
-      height: 6px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: #e0e0e0;
       outline: none;
       -webkit-appearance: none;
-      
+
       &::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: #667eea;
         cursor: pointer;
         border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
-      
+
       &::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: #667eea;
         cursor: pointer;
         border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
     }
-    
+
     .slider-value {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #666;
       text-align: center;
     }
   }
-  
+
   .duration-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #666;
   }
 }
 
 .date-range {
   display: flex;
-  gap: 16px;
-  
+  gap: 12px;
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
-  
+
   mat-form-field {
     flex: 1;
   }
@@ -145,8 +164,8 @@
 .filter-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid #e0e0e0;
 }
 
@@ -159,7 +178,7 @@
 ::ng-deep body.theme-dark .advanced-filters-card {
   background: #232136 !important;
   color: #f3eaff !important;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55);
   border: 1.5px solid #6c4bb6;
 }
 
@@ -242,37 +261,86 @@
 
 ::ng-deep body.theme-dark .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
   color: #a259f7 !important;
-} 
+}
 
 /* Стилі для input range в темній темі */
 ::ng-deep body.theme-dark input[type="range"] {
   background: #3a2e5c !important;
-  
+
   &::-webkit-slider-thumb {
     background: #a259f7 !important;
     border-color: #232136 !important;
   }
-  
+
   &::-moz-range-thumb {
     background: #a259f7 !important;
     border-color: #232136 !important;
   }
-} 
+}
 
 /* Стилі для filter-button в темній темі */
 ::ng-deep body.theme-dark .filter-button {
   background: #3a2e5c !important;
   color: #f3eaff !important;
   border-color: #6c4bb6 !important;
-  
+
   &:hover {
     background: #4a3e6c !important;
     border-color: #8a6fd6 !important;
   }
-  
+
   &.selected {
     background: #6c4bb6 !important;
     color: #f3eaff !important;
     border-color: #8a6fd6 !important;
   }
-} 
+}
+
+/* Компактні стилі для Material Form Fields */
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-wrapper {
+  padding-bottom: 0.5em;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix {
+  padding: 0.5em 0;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  top: 0;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-start,
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-end {
+  border-width: 1px 0 1px 1px;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-gap {
+  border-width: 1px 0 1px 0;
+}
+
+/* Компактні стилі для mat-expansion-panel */
+::ng-deep .mat-expansion-panel-body {
+  padding: 8px 16px 16px 16px;
+}
+
+::ng-deep .mat-expansion-panel-header {
+  height: 48px;
+}
+
+::ng-deep .mat-expansion-panel-header-title {
+  font-size: 0.9rem;
+}
+
+/* Компактні стилі для кнопок */
+::ng-deep .mat-raised-button {
+  min-height: 36px;
+  line-height: 36px;
+  padding: 0 16px;
+  font-size: 0.8rem;
+}
+
+::ng-deep .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

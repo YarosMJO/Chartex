@@ -92,7 +92,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     categories: [],
     durationRange: { min: 0, max: 180 },
     dateRange: { start: null, end: null },
-    customPeriod: false
+    customPeriod: false,
+    durationType: 'total'
   };
   isAdvancedFiltersExpanded: boolean = false;
 
@@ -529,11 +530,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearTimeout(this.advancedFiltersTimeout);
     }
     
+    // Встановлюємо діапазон в залежності від типу фільтрації
+    const maxRange = this.advancedFilters.durationType === 'average' ? 60 : 180;
+    
     this.advancedFilters = {
       categories: [],
-      durationRange: { min: 0, max: 180 },
+      durationRange: { min: 0, max: maxRange },
       dateRange: { start: null, end: null },
-      customPeriod: false
+      customPeriod: false,
+      durationType: this.advancedFilters.durationType // Зберігаємо поточний тип
     };
     console.log('advancedFilters очищено:', this.advancedFilters);
     
@@ -570,17 +575,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     // Фільтр за часом проведеним на сайті (конвертуємо з хвилин в секунди)
-    if (this.advancedFilters.durationRange.min > 0 || this.advancedFilters.durationRange.max < 180) {
-      console.log('Фільтруємо за часом проведеним на сайті:', this.advancedFilters.durationRange);
+    if (this.advancedFilters.durationRange.min > 0 || this.advancedFilters.durationRange.max < (this.advancedFilters.durationType === 'average' ? 60 : 180)) {
+      console.log('Фільтруємо за часом проведеним на сайті:', this.advancedFilters.durationRange, 'тип:', this.advancedFilters.durationType);
       
       // Конвертуємо хвилини в секунди для порівняння з даними
       const minSeconds = this.advancedFilters.durationRange.min * 60;
       const maxSeconds = this.advancedFilters.durationRange.max * 60;
       
       filteredDomains = filteredDomains.filter(domain => {
-        const totalDuration = domain.totalDuration || 0; // Час в секундах
-        const isInRange = totalDuration >= minSeconds && totalDuration <= maxSeconds;
-        console.log(`Домен ${domain._id} має ${totalDuration} секунд (${Math.round(totalDuration / 60)}хв), діапазон: ${minSeconds}-${maxSeconds}с (${this.advancedFilters.durationRange.min}-${this.advancedFilters.durationRange.max}хв), в діапазоні: ${isInRange}`);
+        let durationValue: number;
+        let durationTypeLabel: string;
+        
+        if (this.advancedFilters.durationType === 'total') {
+          // Фільтруємо по загальному часу
+          durationValue = domain.totalDuration || 0;
+          durationTypeLabel = 'загального';
+        } else {
+          // Фільтруємо по середньому часу (загальний час / кількість відвідувань)
+          const totalDuration = domain.totalDuration || 0;
+          const visits = domain.visits || 0;
+          
+          if (visits <= 0) {
+            // Якщо немає відвідувань, середній час = 0
+            durationValue = 0;
+          } else {
+            durationValue = totalDuration / visits;
+          }
+          
+          durationTypeLabel = 'середнього';
+        }
+        
+        const isInRange = durationValue >= minSeconds && durationValue <= maxSeconds;
+        const durationInMinutes = Math.round(durationValue / 60);
+        
+        // Детальне логування для діагностики
+        console.log(`Домен ${domain._id}:`, {
+          totalDuration: domain.totalDuration || 0,
+          visits: domain.visits || 0,
+          durationValue: durationValue,
+          durationInMinutes: durationInMinutes,
+          durationType: this.advancedFilters.durationType,
+          minSeconds: minSeconds,
+          maxSeconds: maxSeconds,
+          isInRange: isInRange
+        });
+        
         return isInRange;
       });
     }

@@ -17,6 +17,7 @@ export interface FilterOptions {
   durationRange: { min: number; max: number };
   dateRange: { start: Date | null; end: Date | null };
   customPeriod: boolean;
+  durationType: 'total' | 'average'; // Додаємо тип фільтрації часу
 }
 
 @Component({
@@ -45,7 +46,8 @@ export class AdvancedFiltersComponent implements OnDestroy {
     categories: [],
     durationRange: { min: 0, max: 180 }, // Максимальний час в хвилинах (3 години)
     dateRange: { start: null, end: null },
-    customPeriod: false
+    customPeriod: false,
+    durationType: 'total' // За замовчуванням фільтруємо по загальному часу
   };
 
   @Input() availableCategories: string[] = [];
@@ -77,6 +79,23 @@ export class AdvancedFiltersComponent implements OnDestroy {
     { value: 'long', label: 'DASHBOARD.FILTERS.DURATION.LONG', range: { min: 30, max: 180 } }, // Більше 30 хвилин
     { value: 'custom', label: 'DASHBOARD.FILTERS.DURATION.CUSTOM', range: { min: 0, max: 180 } }
   ];
+
+  // Оновлюємо діапазони в залежності від типу фільтрації
+  get adjustedDurationOptions() {
+    if (this.filters.durationType === 'average') {
+      // Для середнього часу використовуємо менші діапазони
+      return [
+        { value: 'all', label: 'DASHBOARD.FILTERS.DURATION.ALL', range: { min: 0, max: 60 } },
+        { value: 'short', label: 'DASHBOARD.FILTERS.DURATION.SHORT', range: { min: 0, max: 2 } }, // До 2 хвилин
+        { value: 'medium', label: 'DASHBOARD.FILTERS.DURATION.MEDIUM', range: { min: 2, max: 10 } }, // 2-10 хвилин
+        { value: 'long', label: 'DASHBOARD.FILTERS.DURATION.LONG', range: { min: 10, max: 60 } }, // Більше 10 хвилин
+        { value: 'custom', label: 'DASHBOARD.FILTERS.DURATION.CUSTOM', range: { min: 0, max: 60 } }
+      ];
+    } else {
+      // Для загального часу використовуємо оригінальні діапазони
+      return this.durationOptions;
+    }
+  }
 
   selectedDurationOption: string = 'all';
 
@@ -292,6 +311,24 @@ export class AdvancedFiltersComponent implements OnDestroy {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return mins > 0 ? `${hours}г ${mins}хв` : `${hours}г`;
+  }
+
+  // Додаємо метод для зміни типу фільтрації часу
+  onDurationTypeChange(type: 'total' | 'average') {
+    console.log('AdvancedFiltersComponent: змінюємо тип фільтрації часу на:', type);
+    
+    // Оновлюємо діапазон в залежності від типу
+    const maxRange = type === 'average' ? 60 : 180;
+    const newFilters = { 
+      ...this.filters, 
+      durationType: type,
+      durationRange: { min: 0, max: maxRange }
+    };
+    
+    // Скидаємо вибрану опцію
+    this.selectedDurationOption = 'all';
+    
+    this.updateFilters(newFilters);
   }
 
   ngOnDestroy(): void {
