@@ -39,6 +39,16 @@
     (deviceChange)="onDeviceChange()">
   </app-filters-section>
 
+  <!-- Пошук -->
+  <app-search-section
+    [searchQuery]="searchQuery"
+    [searchResults]="searchResults"
+    [isSearching]="isSearching"
+    [hasResults]="hasResults"
+    (searchChange)="onSearchChange($event)"
+    (clearSearch)="onClearSearch()">
+  </app-search-section>
+
   <!-- Помилка -->
   <div *ngIf="error" class="error-message">
     <mat-card>

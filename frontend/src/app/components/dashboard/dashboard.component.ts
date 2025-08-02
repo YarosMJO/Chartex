@@ -22,6 +22,7 @@ import { StatsCardsComponent } from './stats-cards/stats-cards.component';
 import { ChartsSectionComponent } from './charts-section/charts-section.component';
 import { FiltersSectionComponent } from './filters-section/filters-section.component';
 import { DevicesSectionComponent } from './devices-section/devices-section.component';
+import { SearchSectionComponent } from './search-section/search-section.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -47,7 +48,8 @@ import { DevicesSectionComponent } from './devices-section/devices-section.compo
     StatsCardsComponent,
     ChartsSectionComponent,
     FiltersSectionComponent,
-    DevicesSectionComponent
+    DevicesSectionComponent,
+    SearchSectionComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -75,6 +77,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activityChartData: { x: string; y: number }[] = [];
   topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
+
+  // Пошук
+  searchQuery: string = '';
+  searchResults: any[] = [];
+  isSearching: boolean = false;
+  hasResults: boolean = false;
 
   // Флаг для запобігання зайвим оновленням графіка
   private lastChartDataHash = '';
@@ -439,6 +447,63 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (window as any).chrome.runtime.sendMessage({ action: 'loginWithGoogle' });
     } else {
       this.error = 'Extension не знайдено. Будь ласка, встановіть Chartex extension.';
+      this.cdr.markForCheck();
+    }
+  }
+
+  // Пошук
+  onSearchChange(query: string) {
+    this.searchQuery = query;
+    this.hasResults = false;
+    this.searchResults = [];
+    
+    if (query.trim().length >= 2) {
+      this.performSearch(query);
+    }
+  }
+
+  onClearSearch() {
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.hasResults = false;
+    this.cdr.markForCheck();
+  }
+
+  private async performSearch(query: string) {
+    if (!this.userStats?.topDomains) return;
+
+    this.isSearching = true;
+    this.hasResults = false;
+    this.cdr.markForCheck();
+
+    try {
+      // Симулюємо затримку пошуку
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const results = this.userStats.topDomains
+        .filter(domain => {
+          const searchTerm = query.toLowerCase();
+          const url = domain.decryptedData?.url || domain._id;
+          const title = domain.decryptedData?.title || '';
+          const cleanUrl = cleanDomainName(url);
+          
+          return cleanUrl.toLowerCase().includes(searchTerm) || 
+                 title.toLowerCase().includes(searchTerm);
+        })
+        .map(domain => ({
+          url: domain.decryptedData?.url || domain._id,
+          title: domain.decryptedData?.title || cleanDomainName(domain._id),
+          visits: domain.visits,
+          duration: domain.totalDuration
+        }))
+        .slice(0, 10); // Обмежуємо до 10 результатів
+
+      this.searchResults = results;
+      this.hasResults = true;
+    } catch (error) {
+      console.error('Помилка пошуку:', error);
+    } finally {
+      this.isSearching = false;
       this.cdr.markForCheck();
     }
   }

@@ -27,6 +27,13 @@
       "VISITS_COUNT": "visits",
       "DEVICE_STATS": "Device statistics"
     },
+    "SEARCH": {
+      "PLACEHOLDER": "Search sites...",
+      "SEARCH": "Search",
+      "RESULTS": "Search results",
+      "NO_RESULTS": "No results found for your query",
+      "VISITS": "visits"
+    },
     "LOADING": "Loading data...",
     "ERROR": "Error loading data"
   },

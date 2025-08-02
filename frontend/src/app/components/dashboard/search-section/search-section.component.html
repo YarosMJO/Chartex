@@ -1,0 +1,61 @@
+<mat-card class="search-card">
+  <mat-card-content>
+    <div class="search-container">
+      <div class="search-input-container">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>{{ 'DASHBOARD.SEARCH.PLACEHOLDER' | translate }}</mat-label>
+          <input 
+            matInput 
+            [(ngModel)]="searchQuery"
+            (input)="onSearchInput($event)"
+            (keypress)="onKeyPress($event)"
+            [placeholder]="'DASHBOARD.SEARCH.PLACEHOLDER' | translate"
+            autocomplete="off">
+          <mat-icon matSuffix *ngIf="isSearching">search</mat-icon>
+          <button 
+            *ngIf="searchQuery" 
+            matSuffix 
+            mat-icon-button 
+            (click)="onClearSearch()"
+            aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+
+      <!-- Результати пошуку -->
+      <div *ngIf="hasResults && searchResults.length > 0" class="search-results">
+        <div class="results-header">
+          <h3>{{ 'DASHBOARD.SEARCH.RESULTS' | translate }} ({{ searchResults.length }})</h3>
+        </div>
+        <div class="results-list">
+          <div *ngFor="let result of searchResults" class="result-item">
+            <div class="result-header">
+              <mat-icon class="result-icon">language</mat-icon>
+              <div class="result-info">
+                <div class="result-title">{{ result.title || result.url }}</div>
+                <div class="result-url">{{ result.url }}</div>
+              </div>
+            </div>
+            <div class="result-stats">
+              <span class="stat">
+                <mat-icon>visibility</mat-icon>
+                {{ result.visits }} {{ 'DASHBOARD.SEARCH.VISITS' | translate }}
+              </span>
+              <span class="stat" *ngIf="result.duration > 0">
+                <mat-icon>schedule</mat-icon>
+                {{ formatDuration(result.duration) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Повідомлення про відсутність результатів -->
+      <div *ngIf="hasResults && searchResults.length === 0 && searchQuery" class="no-results">
+        <mat-icon>search_off</mat-icon>
+        <p>{{ 'DASHBOARD.SEARCH.NO_RESULTS' | translate }}</p>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card> 
