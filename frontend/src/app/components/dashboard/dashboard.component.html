@@ -49,6 +49,15 @@
     (clearSearch)="onClearSearch()">
   </app-search-section>
 
+  <!-- Розширені фільтри -->
+  <app-advanced-filters
+    [filters]="advancedFilters"
+    [availableCategories]="availableCategories"
+    [isExpanded]="isAdvancedFiltersExpanded"
+    (filtersChange)="onAdvancedFiltersChange($event)"
+    (clearFilters)="onClearAdvancedFilters()">
+  </app-advanced-filters>
+
   <!-- Помилка -->
   <div *ngIf="error" class="error-message">
     <mat-card>
@@ -79,7 +88,7 @@
     <app-charts-section
       [activityChartData]="activityChartData"
       [topDomainsData]="topDomainsData"
-      [selectedPeriod]="getPeriodLabel(selectedPeriod)"
+      [selectedPeriod]="getChartTitle()"
       [activityChartOptions]="activityChartOptions">
     </app-charts-section>
 

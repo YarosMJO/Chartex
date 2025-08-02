@@ -34,6 +34,39 @@
       "NO_RESULTS": "No results found for your query",
       "VISITS": "visits"
     },
+    "FILTERS": {
+      "TITLE": "Advanced Filters",
+      "CLEAR_ALL": "Clear all filters",
+      "CATEGORIES": {
+        "TITLE": "Site Categories",
+        "SOCIAL": "Social Media",
+        "NEWS": "News",
+        "WORK": "Work",
+        "EDUCATION": "Education",
+        "ENTERTAINMENT": "Entertainment",
+        "SHOPPING": "Shopping",
+        "TECHNOLOGY": "Technology"
+      },
+      "DURATION": {
+        "TITLE": "Visit Duration",
+        "ALL": "All",
+        "SHORT": "Short (< 5 min)",
+        "MEDIUM": "Medium (5-30 min)",
+        "LONG": "Long (> 30 min)",
+        "CUSTOM": "Custom",
+        "CUSTOM_RANGE": "Custom range",
+        "MIN": "Minimum",
+        "MAX": "Maximum"
+      },
+      "DATE_RANGE": {
+        "TITLE": "Date Range",
+        "START": "Start date",
+        "END": "End date"
+      },
+      "DEVICES": {
+        "TITLE": "Devices"
+      }
+    },
     "LOADING": "Loading data...",
     "ERROR": "Error loading data"
   },

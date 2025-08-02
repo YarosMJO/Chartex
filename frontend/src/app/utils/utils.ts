@@ -116,6 +116,90 @@ export const cleanDomainName = (domain: string): string => {
   return cleaned.toLowerCase();
 };
 
+// Категорізація сайтів
+export const categorizeWebsite = (domain: string): string => {
+  const cleanDomain = cleanDomainName(domain);
+  
+  // Соцмережі
+  const socialDomains = [
+    'facebook.com', 'fb.com', 'instagram.com', 'twitter.com', 'x.com', 
+    'linkedin.com', 'youtube.com', 'tiktok.com', 'snapchat.com', 'pinterest.com',
+    'reddit.com', 'discord.com', 'telegram.org', 'whatsapp.com', 'vk.com',
+    'ok.ru', 't.me', 'twitch.tv', 'spotify.com', 'soundcloud.com'
+  ];
+  
+  // Новини
+  const newsDomains = [
+    'bbc.com', 'cnn.com', 'reuters.com', 'nytimes.com', 'washingtonpost.com',
+    'theguardian.com', 'independent.co.uk', 'telegraph.co.uk', 'forbes.com',
+    'bloomberg.com', 'wsj.com', 'ft.com', 'economist.com', 'time.com',
+    'news.yahoo.com', 'msn.com', 'abcnews.go.com', 'nbcnews.com', 'cbsnews.com',
+    'foxnews.com', 'huffpost.com', 'buzzfeed.com', 'vox.com', 'theverge.com',
+    'techcrunch.com', 'wired.com', 'ars-technica.com', 'engadget.com'
+  ];
+  
+  // Робота
+  const workDomains = [
+    'github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com', 'stackexchange.com',
+    'jira.com', 'confluence.com', 'trello.com', 'asana.com', 'notion.so',
+    'slack.com', 'teams.microsoft.com', 'zoom.us', 'meet.google.com', 'webex.com',
+    'dropbox.com', 'drive.google.com', 'onedrive.live.com', 'box.com', 'evernote.com',
+    'figma.com', 'sketch.com', 'invisionapp.com', 'zeplin.io', 'abstract.com',
+    'linear.app', 'clickup.com', 'monday.com', 'basecamp.com', 'airtable.com'
+  ];
+  
+  // Освіта
+  const educationDomains = [
+    'coursera.org', 'edx.org', 'udemy.com', 'khanacademy.org', 'udacity.com',
+    'skillshare.com', 'pluralsight.com', 'lynda.com', 'linkedin-learning.com',
+    'codecademy.com', 'freecodecamp.org', 'w3schools.com', 'mdn-web-docs.com',
+    'stackoverflow.com', 'github.com', 'gitlab.com', 'bitbucket.org',
+    'medium.com', 'dev.to', 'hashnode.dev', 'css-tricks.com', 'smashingmagazine.com',
+    'sitepoint.com', 'tutsplus.com', 'envato.com', 'creativebloq.com'
+  ];
+  
+  // Розваги
+  const entertainmentDomains = [
+    'netflix.com', 'hulu.com', 'disneyplus.com', 'amazon.com', 'primevideo.com',
+    'youtube.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'mixer.com',
+    'spotify.com', 'apple.com', 'music.apple.com', 'soundcloud.com', 'bandcamp.com',
+    'deezer.com', 'tidal.com', 'pandora.com', 'last.fm', 'rateyourmusic.com',
+    'imdb.com', 'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
+    'goodreads.com', 'amazon.com', 'barnesandnoble.com', 'bookdepository.com'
+  ];
+  
+  // Покупки
+  const shoppingDomains = [
+    'amazon.com', 'ebay.com', 'etsy.com', 'shopify.com', 'woocommerce.com',
+    'walmart.com', 'target.com', 'bestbuy.com', 'homedepot.com', 'lowes.com',
+    'costco.com', 'samsclub.com', 'kroger.com', 'safeway.com', 'publix.com',
+    'alibaba.com', 'aliexpress.com', 'wish.com', 'temu.com', 'shein.com',
+    'zara.com', 'h&m.com', 'uniqlo.com', 'gap.com', 'oldnavy.com',
+    'nike.com', 'adidas.com', 'underarmour.com', 'puma.com', 'reebok.com'
+  ];
+  
+  // Технології
+  const technologyDomains = [
+    'apple.com', 'microsoft.com', 'google.com', 'amazon.com', 'meta.com',
+    'facebook.com', 'twitter.com', 'x.com', 'linkedin.com', 'github.com',
+    'stackoverflow.com', 'reddit.com', 'hackernews.com', 'producthunt.com',
+    'techcrunch.com', 'wired.com', 'theverge.com', 'ars-technica.com',
+    'engadget.com', 'gizmodo.com', 'mashable.com', 'readwrite.com',
+    'venturebeat.com', 'recode.net', 'techdirt.com', 'slashdot.org',
+    'digg.com', 'stumbleupon.com', 'delicious.com', 'pinterest.com'
+  ];
+  
+  if (socialDomains.some(d => cleanDomain.includes(d))) return 'social';
+  if (newsDomains.some(d => cleanDomain.includes(d))) return 'news';
+  if (workDomains.some(d => cleanDomain.includes(d))) return 'work';
+  if (educationDomains.some(d => cleanDomain.includes(d))) return 'education';
+  if (entertainmentDomains.some(d => cleanDomain.includes(d))) return 'entertainment';
+  if (shoppingDomains.some(d => cleanDomain.includes(d))) return 'shopping';
+  if (technologyDomains.some(d => cleanDomain.includes(d))) return 'technology';
+  
+  return 'other';
+};
+
 // Локалізація типу пристрою
 export const getDeviceTypeLabel = (deviceType: string, translateService?: TranslateService): string => {
   const getTranslation = (key: string): string => {

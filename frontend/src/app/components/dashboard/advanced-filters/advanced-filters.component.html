@@ -1,0 +1,121 @@
+<mat-card class="advanced-filters-card">
+  <mat-card-content>
+    <mat-expansion-panel [expanded]="isExpanded">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>filter_list</mat-icon>
+          {{ 'DASHBOARD.FILTERS.TITLE' | translate }}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="filters-container">
+        <!-- Категорії -->
+        <div class="filter-section">
+          <h4>{{ 'DASHBOARD.FILTERS.CATEGORIES.TITLE' | translate }}</h4>
+          <div class="categories-grid">
+            <button 
+              *ngFor="let category of predefinedCategories"
+              class="filter-button"
+              [class.selected]="filters.categories.includes(category.value)"
+              (click)="onCategoryChange(category.value, !filters.categories.includes(category.value))">
+              {{ category.label | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Тривалість -->
+        <div class="filter-section">
+          <h4>{{ 'DASHBOARD.FILTERS.DURATION.TITLE' | translate }}</h4>
+          
+          <!-- Швидкі опції -->
+          <div class="duration-options">
+            <button 
+              *ngFor="let option of durationOptions"
+              class="filter-button"
+              [class.selected]="selectedDurationOption === option.value"
+              (click)="onDurationOptionChange(option.value)">
+              {{ option.label | translate }}
+            </button>
+          </div>
+
+          <!-- Кастомний діапазон -->
+          <div class="custom-duration">
+            <label>{{ 'DASHBOARD.FILTERS.DURATION.CUSTOM_RANGE' | translate }}</label>
+            
+                         <div class="slider-container">
+               <div class="slider-item">
+                 <label>{{ 'DASHBOARD.FILTERS.DURATION.MIN' | translate }}</label>
+                                 <input
+                  type="range"
+                  [min]="0"
+                  [max]="180"
+                  [step]="1"
+                  [value]="filters.durationRange.min"
+                  (input)="onMinDurationChange($event.target.value)">
+                <span class="slider-value">{{ filters.durationRange.min | number:'1.0-0' }}хв</span>
+               </div>
+               
+               <div class="slider-item">
+                 <label>{{ 'DASHBOARD.FILTERS.DURATION.MAX' | translate }}</label>
+                                 <input
+                  type="range"
+                  [min]="0"
+                  [max]="180"
+                  [step]="1"
+                  [value]="filters.durationRange.max"
+                  (input)="onMaxDurationChange($event.target.value)">
+                <span class="slider-value">{{ filters.durationRange.max | number:'1.0-0' }}хв</span>
+               </div>
+             </div>
+          </div>
+        </div>
+
+        <!-- Діапазон дат -->
+        <div class="filter-section">
+          <h4>{{ 'DASHBOARD.FILTERS.DATE_RANGE.TITLE' | translate }}</h4>
+          
+          <div class="date-range">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'DASHBOARD.FILTERS.DATE_RANGE.START' | translate }}</mat-label>
+              <input 
+                matInput 
+                [matDatepicker]="startPicker"
+                [value]="filters.dateRange.start"
+                (dateChange)="onDateRangeChange('start', $event.value)"
+                (input)="onDateInputChange('start', $event)"
+                (blur)="onDateBlur('start', $event)"
+                (keyup)="onDateKeyup('start', $event)">
+              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'DASHBOARD.FILTERS.DATE_RANGE.END' | translate }}</mat-label>
+              <input 
+                matInput 
+                [matDatepicker]="endPicker"
+                [value]="filters.dateRange.end"
+                (dateChange)="onDateRangeChange('end', $event.value)"
+                (input)="onDateInputChange('end', $event)"
+                (blur)="onDateBlur('end', $event)"
+                (keyup)="onDateKeyup('end', $event)">
+              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Кнопки дій -->
+        <div class="filter-actions">
+          <button 
+            mat-raised-button 
+            color="warn" 
+            (click)="onClearFilters()">
+            <mat-icon>clear_all</mat-icon>
+            {{ 'DASHBOARD.FILTERS.CLEAR_ALL' | translate }}
+          </button>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-card-content>
+</mat-card> 
