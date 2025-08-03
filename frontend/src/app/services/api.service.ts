@@ -182,23 +182,11 @@ export class ApiService {
   } = {}): Promise<PaginatedResponse<HistoryItem & { decryptedData?: DecryptedData }>> {
     const response = await this.getHistory(params);
     
-    console.log('Отримана історія для дешифрування:', {
-      itemsCount: response.items?.length || 0,
-      hasEncryptionKey: !!this.encryptionKey
-    });
-    
     // Дешифрувати дані для кожного запису
-    const itemsWithDecryptedData = response.items.map(item => ({
+    const itemsWithDecryptedData = (response?.items || []).map(item => ({
       ...item,
       decryptedData: this.decryptData(item.encryptedData)
     }));
-    
-    const decryptedCount = itemsWithDecryptedData.filter(item => item.decryptedData).length;
-    console.log('Результат дешифрування:', {
-      totalItems: itemsWithDecryptedData.length,
-      decryptedCount,
-      successRate: itemsWithDecryptedData.length > 0 ? (decryptedCount / itemsWithDecryptedData.length * 100).toFixed(1) + '%' : '0%'
-    });
 
     return {
       ...response,
@@ -234,23 +222,12 @@ export class ApiService {
       }
       
       // Спочатку спробуємо отримати всі дані без фільтрів
-      console.log('Спроба отримання всіх даних без фільтрів...');
       let historyResponse = await this.getHistoryWithDecryptedData({
         limit: 1000
       });
       
-      // Тестовий запит для перевірки backend
-      console.log('Тестовий запит до backend...');
-      try {
-        const testResponse = await this.http.get(`${this.API_BASE_URL}/health`).toPromise();
-        console.log('Backend health check:', testResponse);
-      } catch (error) {
-        console.error('Backend health check failed:', error);
-      }
-      
       // Якщо немає даних, спробуємо з фільтрами
       if (!historyResponse.items || historyResponse.items.length === 0) {
-        console.log('Немає даних без фільтрів, спробуємо з фільтрами...');
         historyResponse = await this.getHistoryWithDecryptedData({
           deviceId: params.deviceId,
           from: fromDate.toISOString(),
@@ -259,22 +236,10 @@ export class ApiService {
         });
       }
       
-      console.log('Отримана історія для агрегації:', {
-        hasHistory: !!historyResponse,
-        itemsCount: historyResponse.items?.length || 0,
-        hasEncryptionKey: !!this.encryptionKey,
-        encryptionKeyLength: this.encryptionKey?.length || 0
-      });
-      
       if (!historyResponse.items || historyResponse.items.length === 0) {
-        console.log('Немає даних історії, спробуємо fallback до getUserStats...');
         // Fallback до старого методу
         try {
           const fallbackStats = await this.getUserStats(params);
-          console.log('Fallback статистика отримана:', {
-            hasStats: !!fallbackStats,
-            topDomainsCount: fallbackStats.topDomains?.length || 0
-          });
           return fallbackStats;
         } catch (fallbackError) {
           console.error('Помилка fallback статистики:', fallbackError);
@@ -427,20 +392,12 @@ export class ApiService {
   } = {}): Promise<PaginatedResponse<HistoryItem>> {
     const headers = await this.getHeaders();
     const httpParams = new URLSearchParams(params as any);
-    
-    console.log('API getHistory params:', params);
-    console.log('API getHistory URL:', `${this.API_BASE_URL}/history?${httpParams.toString()}`);
+    const url = `${this.API_BASE_URL}/history?${httpParams.toString()}`;
     
     const response = await this.http.get<PaginatedResponse<HistoryItem>>(
-      `${this.API_BASE_URL}/history?${httpParams.toString()}`,
+      url,
       { headers }
     ).toPromise();
-    
-    console.log('API getHistory response:', {
-      hasResponse: !!response,
-      itemsCount: response?.items?.length || 0,
-      totalItems: response?.pagination?.total || 0
-    });
     
     return response as PaginatedResponse<HistoryItem>;
   }

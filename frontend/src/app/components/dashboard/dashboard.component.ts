@@ -17,6 +17,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
+import { HeatmapService, HeatmapSeries } from '../../services/heatmap.service';
 import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl, getDeviceTypeLabel, cleanDomainName, categorizeWebsite } from '../../utils/utils';
 import { StatsCardsComponent } from './stats-cards/stats-cards.component';
 import { ChartsSectionComponent } from './charts-section/charts-section.component';
@@ -80,6 +81,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activityChartData: { x: string; y: number }[] = [];
   topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
+  activityHeatmapData: HeatmapSeries[] = [];
 
   // Пошук
   searchQuery: string = '';
@@ -107,6 +109,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
+    private heatmapService: HeatmapService,
     private ngZone: NgZone,
     private router: Router,
     private translateService: TranslateService,
@@ -244,7 +247,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
       
       this.userStats = stats;
-      this.prepareChartData();
+      await this.prepareChartData();
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Помилка завантаження статистики:', error);
@@ -273,7 +276,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Підготовка даних для графіків
-  prepareChartData() {
+  async prepareChartData() {
     if (!this.userStats) return;
     
     // Створюємо хеш поточних даних для порівняння
@@ -304,19 +307,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
       duration: device.stats?.totalDuration || 0
     }));
     
+    // Підготовка даних для теплової карти активності
+    await this.prepareActivityHeatmapData();
+    
     console.log('Дані для графіків підготовлені:', {
       activityChartDataLength: this.activityChartData.length,
       topDomainsDataLength: this.topDomainsData.length,
-      deviceStatsDataLength: this.deviceStatsData.length
+      deviceStatsDataLength: this.deviceStatsData.length,
+      activityHeatmapDataLength: this.activityHeatmapData.length
     });
     
     this.cdr.markForCheck();
   }
 
+  // Підготовка даних для теплової карти активності за днями тижня
+  private async prepareActivityHeatmapData() {
+    console.log('🔍 HEATMAP DEBUG: Starting prepareActivityHeatmapData');
+    
+    if (!this.userStats?.topDomains) {
+      console.log('🔍 HEATMAP DEBUG: No userStats.topDomains, returning');
+      return;
+    }
+    
+    try {
+      this.activityHeatmapData = await this.heatmapService.prepareActivityHeatmapData(
+        this.userStats,
+        this.selectedPeriod,
+        this.selectedDevice
+      );
+      
+      console.log('🔍 HEATMAP DEBUG: Heatmap data prepared:', this.activityHeatmapData);
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error preparing heatmap data:', error);
+      // Fallback to empty data
+      this.activityHeatmapData = [];
+      this.cdr.markForCheck();
+    }
+  }
+
+
+
   // Зміна періоду
   async onPeriodChange() {
-    console.log('onPeriodChange() викликано, поточний період:', this.selectedPeriod, 'попередній:', this.previousPeriod);
-    
     // Очищаємо попередній таймаут
     if (this.periodChangeTimeout) {
       clearTimeout(this.periodChangeTimeout);
@@ -326,20 +359,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.periodChangeTimeout = setTimeout(async () => {
       // Оновлюємо графік тільки якщо період дійсно змінився
       if (this.selectedPeriod !== this.previousPeriod) {
-        console.log('Період змінився з', this.previousPeriod, 'на', this.selectedPeriod);
         this.previousPeriod = this.selectedPeriod;
         await this.loadUserStats();
         this.cdr.markForCheck();
-      } else {
-        console.log('Період не змінився, пропускаємо оновлення');
       }
     }, 300); // Затримка 300мс
   }
 
   // Зміна пристрою
   async onDeviceChange() {
-    console.log('onDeviceChange() викликано, поточний пристрій:', this.selectedDevice, 'попередній:', this.previousDevice);
-    
     // Очищаємо попередній таймаут
     if (this.deviceChangeTimeout) {
       clearTimeout(this.deviceChangeTimeout);
@@ -349,12 +377,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.deviceChangeTimeout = setTimeout(async () => {
       // Оновлюємо графік тільки якщо пристрій дійсно змінився
       if (this.selectedDevice !== this.previousDevice) {
-        console.log('Пристрій змінився з', this.previousDevice, 'на', this.selectedDevice);
         this.previousDevice = this.selectedDevice;
         await this.loadUserStats();
         this.cdr.markForCheck();
-      } else {
-        console.log('Пристрій не змінився, пропускаємо оновлення');
       }
     }, 300); // Затримка 300мс
   }
@@ -416,6 +441,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         tooltip: { theme: 'light' },
       };
     }
+  }
+
+  get activityHeatmapOptions() {
+    console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', this.isDarkTheme);
+    console.log('🔍 HEATMAP DEBUG: Current activityHeatmapData length:', this.activityHeatmapData.length);
+    
+    return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme);
   }
 
   // Перехід до налаштувань
@@ -514,15 +546,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     
     // Встановлюємо новий таймаут
-    this.advancedFiltersTimeout = setTimeout(() => {
+    this.advancedFiltersTimeout = setTimeout(async () => {
       this.advancedFilters = filters;
       console.log('advancedFilters оновлено:', this.advancedFilters);
       this.applyAdvancedFilters();
-      this.prepareChartData(); // Додаємо виклик для оновлення заголовка
+      await this.prepareChartData(); // Додаємо виклик для оновлення заголовка
     }, 150); // Затримка 150мс для фільтрів
   }
 
-  onClearAdvancedFilters() {
+  async onClearAdvancedFilters() {
     console.log('onClearAdvancedFilters викликано');
     
     // Очищаємо таймаут
@@ -544,11 +576,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     // Повертаємо оригінальні дані
     if (this.userStats) {
-      this.prepareChartData();
+      await this.prepareChartData();
     }
     
     this.applyAdvancedFilters();
-    this.prepareChartData(); // Додаємо виклик для оновлення заголовка
+    await this.prepareChartData(); // Додаємо виклик для оновлення заголовка
   }
 
   private applyAdvancedFilters() {

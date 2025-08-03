@@ -25,7 +25,8 @@
       "ACTIVITY_TITLE": "Активність за {{period}}",
       "TOP_SITES": "Топ сайтів",
       "VISITS_COUNT": "відвідувань",
-      "DEVICE_STATS": "Статистика пристроїв"
+      "DEVICE_STATS": "Статистика пристроїв",
+                    "ACTIVITY_HEATMAP": "Активність за днями тижня"
     },
     "SEARCH": {
       "PLACEHOLDER": "Пошук сайтів...",

@@ -15,5 +15,8 @@
   },
   "devDependencies": {
     "sass": "^1.89.2"
+  },
+  "dependencies": {
+    "axios": "^1.11.0"
   }
 }

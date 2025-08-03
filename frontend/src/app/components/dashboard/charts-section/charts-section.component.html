@@ -18,6 +18,28 @@
       </apx-chart>
     </mat-card-content>
   </mat-card>
+  
+  <!-- Теплова карта активності за часом доби -->
+  <mat-card class="chart-card heatmap-card">
+    <mat-card-header>
+      <mat-card-title>{{ 'DASHBOARD.CHARTS.ACTIVITY_HEATMAP' | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <apx-chart
+        [series]="activityHeatmapData"
+        [chart]="activityHeatmapOptions.chart"
+        [xaxis]="activityHeatmapOptions.xaxis"
+        [yaxis]="activityHeatmapOptions.yaxis"
+        [colors]="activityHeatmapOptions.colors"
+        [dataLabels]="activityHeatmapOptions.dataLabels"
+        [grid]="activityHeatmapOptions.grid"
+        [tooltip]="activityHeatmapOptions.tooltip"
+        [plotOptions]="activityHeatmapOptions.plotOptions"
+        [noData]="{ text: 'Немає даних для відображення' }">
+      </apx-chart>
+    </mat-card-content>
+  </mat-card>
+  
   <mat-card class="chart-card">
     <mat-card-header>
       <mat-card-title class="top-sites-title">{{ 'DASHBOARD.CHARTS.TOP_SITES' | translate }}</mat-card-title>

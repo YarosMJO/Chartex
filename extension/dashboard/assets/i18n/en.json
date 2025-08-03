@@ -25,7 +25,8 @@
       "ACTIVITY_TITLE": "Activity for {{period}}",
       "TOP_SITES": "Top sites",
       "VISITS_COUNT": "visits",
-      "DEVICE_STATS": "Device statistics"
+      "DEVICE_STATS": "Device statistics",
+                    "ACTIVITY_HEATMAP": "Activity by Days of Week"
     },
     "SEARCH": {
       "PLACEHOLDER": "Search sites...",
