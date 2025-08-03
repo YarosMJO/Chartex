@@ -243,8 +243,8 @@ export class HeatmapService {
   /**
    * Генерація опцій для теплової карти
    */
-  getActivityHeatmapOptions(isDarkTheme: boolean): HeatmapOptions {
-    console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', isDarkTheme);
+  getActivityHeatmapOptions(isDarkTheme: boolean, isNarrowChart: boolean = false): HeatmapOptions {
+    console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', isDarkTheme, 'isNarrowChart:', isNarrowChart);
     
     if (isDarkTheme) {
       return {
@@ -266,8 +266,16 @@ export class HeatmapService {
         colors: ['#2a2042', '#6c4bb6', '#a259f7', '#d4a5ff'],
         dataLabels: { 
           enabled: true,
-          style: { colors: ['#f3eaff'] },
-          formatter: (val: any) => formatDuration(val)
+          style: { 
+            colors: ['#f3eaff'], 
+            fontSize: isNarrowChart ? '8px' : '10px' 
+          },
+          formatter: (val: any) => formatDuration(val),
+          rotate: isNarrowChart ? -90 : 0,
+          rotateAlways: isNarrowChart,
+          offsetX: isNarrowChart ? 8 : 0,
+          offsetY: isNarrowChart ? 0 : 0,
+          position: 'center'
         },
         grid: { 
           borderColor: '#3a2e5c',
@@ -314,8 +322,16 @@ export class HeatmapService {
         colors: ['#f8f9fa', '#e3f2fd', '#2196f3', '#1976d2'],
         dataLabels: { 
           enabled: true,
-          style: { colors: ['#333'] },
-          formatter: (val: any) => formatDuration(val)
+          style: { 
+            colors: ['#333'], 
+            fontSize: isNarrowChart ? '8px' : '10px' 
+          },
+          formatter: (val: any) => formatDuration(val),
+          rotate: isNarrowChart ? -90 : 0,
+          rotateAlways: isNarrowChart,
+          offsetX: isNarrowChart ? 8 : 0,
+          offsetY: isNarrowChart ? 0 : 0,
+          position: 'center'
         },
         grid: { 
           borderColor: '#e0e0e0',

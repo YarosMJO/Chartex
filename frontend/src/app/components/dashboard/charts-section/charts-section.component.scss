@@ -28,11 +28,21 @@
 
 .heatmap-card {
   grid-column: span 2;
-  
+
   @media (max-width: 1200px) {
     grid-column: span 1;
   }
 }
+
+::ng-deep .apexcharts-series {
+  &.apexcharts-heatmap-series {
+    @media (max-width: 1200px) {
+      text-orientation: mixed;
+      writing-mode: sideways-rl;
+    }
+  }
+}
+
 
 .top-sites-title {
   font-size: 1.25rem;
@@ -133,7 +143,7 @@
 ::ng-deep body.theme-dark .chart-card {
   background: #232136 !important;
   color: #f3eaff !important;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55);
   border: 1.5px solid #6c4bb6;
 }
 
@@ -188,4 +198,4 @@
 
 ::ng-deep body.theme-dark .apexcharts-gridline {
   stroke: #3a2e5c !important;
-} 
+}

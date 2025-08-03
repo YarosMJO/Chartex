@@ -83,11 +83,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
   activityHeatmapData: HeatmapSeries[] = [];
 
+  // Відстеження ширини графіка для адаптивності
+  private chartWidth: number = 0;
+  private resizeHandler = () => this.updateChartWidth();
+
   // Пошук
   searchQuery: string = '';
   searchResults: any[] = [];
   isSearching: boolean = false;
   hasResults: boolean = false;
+
+
 
   // Розширені фільтри
   advancedFilters: FilterOptions = {
@@ -138,6 +144,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Слухаємо зміни розміру вікна для адаптивності графіків
+    window.addEventListener('resize', this.resizeHandler);
+
+    // Ініціалізуємо ширину графіка
+    setTimeout(() => {
+      this.updateChartWidth();
+    }, 100);
     
     this.authService.getUser().subscribe(async user => {
       this.currentUser = user;
@@ -170,6 +184,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+
+
   }
 
   ngOnDestroy() {
@@ -183,6 +199,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearTimeout(this.advancedFiltersTimeout);
     }
     this.formatCache.clear();
+    
+    // Очищаємо слухачі подій
+    window.removeEventListener('resize', this.resizeHandler);
   }
 
   // Ініціалізація дашборду: завантаження статистики та пристроїв
@@ -277,72 +296,78 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Підготовка даних для графіків
   async prepareChartData() {
-    if (!this.userStats) return;
+    console.log('🔍 HEATMAP DEBUG: Starting prepareChartData');
     
-    // Створюємо хеш поточних даних для порівняння
-    const currentDataHash = JSON.stringify({
-      period: this.selectedPeriod,
-      device: this.selectedDevice,
-      stats: this.userStats.stats,
-      topDomains: this.userStats.topDomains,
-      advancedFilters: this.advancedFilters
-    });
-    
-    // Перевіряємо чи дані дійсно змінилися
-    if (currentDataHash === this.lastChartDataHash) {
-      console.log('Дані для графіків не змінилися, пропускаємо оновлення');
+    if (!this.userStats) {
+      console.log('🔍 HEATMAP DEBUG: No userStats available');
       return;
     }
-    
-    console.log('Дані для графіків змінилися, оновлюємо...');
-    this.lastChartDataHash = currentDataHash;
-    
-    // Застосовуємо фільтри до даних
-    this.applyAdvancedFilters();
-    
-    // Підготовка даних для статистики пристроїв
-    this.deviceStatsData = this.devices.map(device => ({
-      name: device.deviceName,
-      visits: device.stats?.totalVisits || 0,
-      duration: device.stats?.totalDuration || 0
-    }));
-    
-    // Підготовка даних для теплової карти активності
-    await this.prepareActivityHeatmapData();
-    
-    console.log('Дані для графіків підготовлені:', {
-      activityChartDataLength: this.activityChartData.length,
-      topDomainsDataLength: this.topDomainsData.length,
-      deviceStatsDataLength: this.deviceStatsData.length,
-      activityHeatmapDataLength: this.activityHeatmapData.length
-    });
-    
-    this.cdr.markForCheck();
+
+    try {
+      // Підготовка даних для графіка активності
+      this.activityChartData = this.userStats.topDomains
+        .slice(0, 10)
+        .map(domain => ({
+          x: cleanDomainName(domain.decryptedData?.url || domain._id),
+          y: domain.visits
+        }));
+
+      // Підготовка даних для топ доменів
+      this.topDomainsData = this.userStats.topDomains
+        .slice(0, 10)
+        .map(domain => ({
+          name: cleanDomainName(domain.decryptedData?.url || domain._id),
+          title: domain.decryptedData?.title || cleanDomainName(domain.decryptedData?.url || domain._id),
+          visits: domain.visits,
+          duration: domain.totalDuration
+        }));
+
+      // Підготовка даних для статистики пристроїв
+      this.deviceStatsData = this.devices
+        .filter(device => (device.stats?.totalVisits || 0) > 0)
+        .map(device => ({
+          name: getDeviceTypeLabel(device.deviceType),
+          visits: device.stats?.totalVisits || 0,
+          duration: device.stats?.totalDuration || 0
+        }));
+
+      // Підготовка даних для теплової карти
+      this.activityHeatmapData = await this.prepareActivityHeatmapData();
+
+      // Оновлюємо ширину графіка після підготовки даних
+      this.updateChartWidth();
+
+      console.log('🔍 HEATMAP DEBUG: Chart data prepared successfully');
+      console.log('🔍 HEATMAP DEBUG: Activity heatmap data length:', this.activityHeatmapData.length);
+      
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Помилка підготовки даних для графіків:', error);
+    }
   }
 
   // Підготовка даних для теплової карти активності за днями тижня
-  private async prepareActivityHeatmapData() {
+  private async prepareActivityHeatmapData(): Promise<HeatmapSeries[]> {
     console.log('🔍 HEATMAP DEBUG: Starting prepareActivityHeatmapData');
     
     if (!this.userStats?.topDomains) {
       console.log('🔍 HEATMAP DEBUG: No userStats.topDomains, returning');
-      return;
+      return [];
     }
     
     try {
-      this.activityHeatmapData = await this.heatmapService.prepareActivityHeatmapData(
+      const heatmapData = await this.heatmapService.prepareActivityHeatmapData(
         this.userStats,
         this.selectedPeriod,
         this.selectedDevice
       );
       
-      console.log('🔍 HEATMAP DEBUG: Heatmap data prepared:', this.activityHeatmapData);
-      this.cdr.markForCheck();
+      console.log('🔍 HEATMAP DEBUG: Heatmap data prepared:', heatmapData);
+      return heatmapData;
     } catch (error) {
       console.error('Error preparing heatmap data:', error);
       // Fallback to empty data
-      this.activityHeatmapData = [];
-      this.cdr.markForCheck();
+      return [];
     }
   }
 
@@ -447,7 +472,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', this.isDarkTheme);
     console.log('🔍 HEATMAP DEBUG: Current activityHeatmapData length:', this.activityHeatmapData.length);
     
-    return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme);
+    return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
   }
 
   // Перехід до налаштувань
@@ -873,7 +898,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get availableCategories(): string[] {
-    // Повертаємо категорії, які є в даних
-    return ['social', 'news', 'work', 'education', 'entertainment', 'shopping', 'technology'];
+    if (!this.userStats?.topDomains) return [];
+    
+    const categories = new Set<string>();
+    this.userStats.topDomains.forEach(domain => {
+      const url = domain.decryptedData?.url || domain._id;
+      const category = categorizeWebsite(url);
+      if (category) {
+        categories.add(category);
+      }
+    });
+    
+    return Array.from(categories).sort();
+  }
+
+  /**
+   * Визначає, чи є графік вузьким для адаптації підписів
+   */
+  private isChartNarrow(): boolean {
+    return this.chartWidth < 768; // Вважаємо графік вузьким, якщо ширина менше 768px
+  }
+
+  /**
+   * Оновлює ширину графіка при зміні розміру вікна
+   */
+  private updateChartWidth(): void {
+    // Отримуємо ширину контейнера графіка
+    const chartContainer = document.querySelector('.charts-section') as HTMLElement;
+    if (chartContainer) {
+      const newWidth = chartContainer.offsetWidth;
+      if (newWidth !== this.chartWidth) {
+        this.chartWidth = newWidth;
+        console.log('🔍 HEATMAP DEBUG: Chart width updated:', this.chartWidth, 'isNarrow:', this.isChartNarrow());
+        this.cdr.markForCheck();
+      }
+    } else {
+      // Якщо контейнер ще не доступний, використовуємо ширину вікна як приблизну оцінку
+      this.chartWidth = window.innerWidth;
+      console.log('🔍 HEATMAP DEBUG: Chart container not found, using window width:', this.chartWidth);
+    }
   }
 } 
