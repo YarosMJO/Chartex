@@ -21,6 +21,8 @@ export class ChartsSectionComponent implements OnInit, OnChanges {
   @Input() activityChartOptions: any = {};
   @Input() activityHeatmapData: HeatmapSeries[] = [];
   @Input() activityHeatmapOptions: any = {};
+  @Input() categoryDistributionData: number[] = [];
+  @Input() pieChartOptions: any = {};
 
   ngOnInit() {
     console.log('🔍 CHARTS DEBUG: ChartsSectionComponent initialized');

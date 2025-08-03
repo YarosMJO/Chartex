@@ -82,6 +82,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
   activityHeatmapData: HeatmapSeries[] = [];
+  categoryDistributionData: number[] = [];
 
   // Відстеження ширини графіка для адаптивності
   private chartWidth: number = 0;
@@ -334,6 +335,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Підготовка даних для теплової карти
       this.activityHeatmapData = await this.prepareActivityHeatmapData();
 
+      // Підготовка даних для кругової діаграми
+      this.prepareCategoryDistributionData();
+
       // Оновлюємо ширину графіка після підготовки даних
       this.updateChartWidth();
 
@@ -368,6 +372,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
       console.error('Error preparing heatmap data:', error);
       // Fallback to empty data
       return [];
+    }
+  }
+
+  // Підготовка даних для кругової діаграми розподілу за категоріями
+  private prepareCategoryDistributionData(): void {
+    try {
+      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
+        this.categoryDistributionData = [];
+        return;
+      }
+
+      const categoryStats = new Map<string, number>();
+      
+      this.userStats.topDomains.forEach(domain => {
+        if (domain.decryptedData) {
+          const domainName = getDomainFromUrl(domain.decryptedData.url);
+          const category = categorizeWebsite(domainName);
+          const duration = domain.totalDuration || 0;
+          
+          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
+        }
+      });
+
+      // Сортуємо категорії за часом та беремо топ-6
+      const sortedCategories = Array.from(categoryStats.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
+      
+      console.log('🔍 PIE CHART DEBUG: Category distribution data:', this.categoryDistributionData);
+    } catch (error) {
+      console.error('🔍 PIE CHART DEBUG: Error preparing category distribution data:', error);
+      this.categoryDistributionData = [];
     }
   }
 
@@ -473,6 +511,67 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('🔍 HEATMAP DEBUG: Current activityHeatmapData length:', this.activityHeatmapData.length);
     
     return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
+  }
+
+  get pieChartOptions() {
+    return {
+      chart: {
+        type: 'pie',
+        height: 250,
+        foreColor: this.isDarkTheme ? '#f3eaff' : '#23272f',
+        background: this.isDarkTheme ? '#232136' : '#fff'
+      },
+      labels: ['Соціальні мережі', 'Робота', 'Розваги', 'Новини', 'Покупки', 'Інше'],
+      colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'],
+      dataLabels: {
+        enabled: true,
+        formatter: function(val: number, opts: any) {
+          return opts.w.globals.seriesTotals[opts.seriesIndex] > 0 
+            ? Math.round(val) + '%' 
+            : '';
+        },
+        style: {
+          colors: this.isDarkTheme ? ['#f3eaff'] : ['#23272f']
+        }
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '60%',
+            labels: {
+              show: true,
+              name: {
+                show: true,
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                color: this.isDarkTheme ? '#f3eaff' : '#23272f'
+              },
+              value: {
+                show: true,
+                fontSize: '16px',
+                fontFamily: 'inherit',
+                fontWeight: 600,
+                color: this.isDarkTheme ? '#f3eaff' : '#23272f'
+              }
+            }
+          }
+        }
+      },
+      tooltip: {
+        theme: this.isDarkTheme ? 'dark' : 'light',
+        y: {
+          formatter: function(value: number) {
+            return formatDuration(value);
+          }
+        }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          colors: this.isDarkTheme ? '#f3eaff' : '#23272f'
+        }
+      }
+    };
   }
 
   // Перехід до налаштувань
