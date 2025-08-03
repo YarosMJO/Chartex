@@ -536,24 +536,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       plotOptions: {
         pie: {
-          donut: {
-            size: '60%',
-            labels: {
-              show: true,
-              name: {
-                show: true,
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                color: this.isDarkTheme ? '#f3eaff' : '#23272f'
-              },
-              value: {
-                show: true,
-                fontSize: '16px',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                color: this.isDarkTheme ? '#f3eaff' : '#23272f'
-              }
-            }
+          offsetY: 0,
+          dataLabels: {
+            offset: 0
           }
         }
       },
