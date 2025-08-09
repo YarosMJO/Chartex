@@ -709,14 +709,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       legend: {
         show: true,
-        position: 'top',
+        position: 'bottom',
         horizontalAlign: 'center',
+        floating: false,
         fontSize: '14px',
         fontFamily: 'inherit',
         markers: {
-          width: 12,
-          height: 12,
-          radius: 6
+          width: 10,
+          height: 10,
+          radius: 5
+        },
+        itemMargin: {
+          horizontal: 8,
+          vertical: 6
         }
       },
       stroke: {
