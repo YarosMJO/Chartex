@@ -790,23 +790,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
         labels: {
           style: {
             fontSize: '12px'
-          }
+          },
+          offsetX: 2,
+          formatter: (val: number) => `${Math.round(val)}`
         },
+        decimalsInFloat: 0,
         tooltip: {
           enabled: false
         },
         axisBorder: {
           show: true,
-          color: '#78909c'
+          color: '#78909c',
+          offsetX: 0
         },
         axisTicks: {
           show: true,
-          color: '#78909c'
+          color: '#78909c',
+          offsetX: 0
         },
         // Ensure proper spacing for bubbles
         crosshairs: {
           show: false
-        }
+        },
+        position: 'bottom'
       },
       yaxis: {
         title: {
@@ -819,6 +825,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           style: {
             fontSize: '12px'
           },
+          offsetX: -4,
           formatter: (val: number) => {
             const hLabel = this.translateService.instant('UTILS.HOURS');
             const mLabel = this.translateService.instant('UTILS.MINUTES');
@@ -838,6 +845,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           show: true,
           color: '#78909c'
         },
+        opposite: false,
         // Ensure proper spacing for bubbles
         crosshairs: {
           show: false
@@ -888,9 +896,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       grid: {
         padding: {
           top: 10,
-          right: 16,
-          bottom: 26,
-          left: 26
+          right: 8,
+          bottom: 6,
+          left: 9
         },
         show: true,
         borderColor: '#e0e0e0',
