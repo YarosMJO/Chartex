@@ -30,6 +30,19 @@ html, body {
 body { 
   margin: 0; 
   font-family: Roboto, "Helvetica Neue", sans-serif; 
+  font-size: 15px; /* slightly larger base font */
+  line-height: 1.55;
+}
+
+/* Scale key typography a touch for readability */
+h1 { font-size: 2.1rem; font-weight: 600; }
+h2 { font-size: 1.6rem; font-weight: 600; }
+h3 { font-size: 1.3rem; font-weight: 600; }
+p, span, li, label, input, button { font-size: 1.02em; }
+
+/* Material Title inside mat-card */
+.mat-card-title, mat-card-title {
+  font-size: 1.1rem;
 }
 
 /* Глобальні стилі для Chartex */

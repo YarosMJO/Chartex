@@ -488,7 +488,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Calculate ranges for better scaling
       const maxVisits = Math.max(...domainsToProcess.map((d: any) => d.visits || 0));
       const maxDuration = Math.max(...domainsToProcess.map((d: any) => d.totalDuration || 0));
-      // Max average duration per visit in minutes (used for bubble size)
+      // Max average duration per visit in minutes (used for y-axis now)
       const maxAvgDurationMinutes = Math.max(
         ...domainsToProcess.map((d: any) => {
           const visits = d.visits || 0;
@@ -513,17 +513,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const visitsCount = Math.max(visits, 1);
 
         // Normalize values to ensure they fit within reasonable chart bounds
-        // Scale X (time) to range 50-800 minutes (increased minimum for better spacing)
-        const normalizedTime = maxDuration > 0 ? (totalDurationMinutes / maxDuration) : 0;
-        const finalX = Math.max(Math.round(normalizedTime * 750) + 50, 50);
+        // Scale X by visits (keeps original intent for X = visits)
+        const normalizedXVisits = maxVisits > 0 ? (visitsCount / maxVisits) : 0;
+        const finalX = Math.max(Math.round(normalizedXVisits * 750) + 50, 50);
 
-        // Scale Y (visits) to range 10-200 visits (increased minimum for better spacing)
-        const normalizedVisits = maxVisits > 0 ? (visitsCount / maxVisits) : 0;
-        const finalY = Math.max(Math.round(normalizedVisits * 190) + 10, 10);
+        // Scale Y by average time (minutes) → 10..200
+        const avgMinutesY = visitsCount > 0 ? totalTimeMinutes / visitsCount : 0;
+        const normalizedAvg = maxAvgDurationMinutes > 0 ? (avgMinutesY / maxAvgDurationMinutes) : 0;
+        const finalY = Math.max(Math.round(normalizedAvg * 190) + 10, 10);
 
-        // Scale Z (bubble size) based on average time per visit (minutes)
-        const avgMinutes = visitsCount > 0 ? Math.round(totalTimeMinutes / visitsCount) : 0;
-        const normalizedZ = maxAvgDurationMinutes > 0 ? (avgMinutes / maxAvgDurationMinutes) : 0;
+        // Scale Z (bubble size) based on visits to keep variety
+        const normalizedZ = maxVisits > 0 ? (visitsCount / maxVisits) : 0;
         const finalZ = Math.max(Math.round(normalizedZ * 30) + 15, 15); // Range: 15-45
         
         // Ensure the bubble size is proportional but not too large
@@ -532,14 +532,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         
         // Scale down X and Y to ensure bubbles have enough space
         // Use smaller ranges to prevent bubbles from being cut off
-        const scaledX = Math.min(finalX, 800); // Cap at 800 to leave margin
+        const scaledX = Math.min(finalX, 800); // X now represents visits
         const scaledY = Math.min(finalY, 200); // Cap at 200 to leave margin
 
         const result = {
           x: scaledX,
           y: scaledY,
           z: clampedZ,
-          name: cleanDomainName(domain.decryptedData?.url || domain._id)
+          name: cleanDomainName(domain.decryptedData?.url || domain._id),
+          rawTotalMinutes: totalDurationMinutes,
+          rawVisits: visits,
+          rawAvgMinutes: Math.round(avgMinutesY)
         };
 
         console.log('🔍 BUBBLE DEBUG: Domain data:', domain);
@@ -779,7 +782,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       xaxis: {
         title: {
-          text: this.translateService.instant('DASHBOARD.CHARTS.X_AXIS_TOTAL_TIME') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.X_AXIS_UNITS')
+          text: this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_VISITS_COUNT') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_UNITS')
         },
         min: 0,
         max: 1000, // Increased to provide more padding for bubbles
@@ -807,7 +810,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       yaxis: {
         title: {
-          text: this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_VISITS_COUNT') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_UNITS')
+          text: this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.X_AXIS_UNITS')
         },
         min: 0,
         max: 250, // Increased to provide more padding for bubbles
@@ -815,6 +818,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
         labels: {
           style: {
             fontSize: '12px'
+          },
+          formatter: (val: number) => {
+            const hLabel = this.translateService.instant('UTILS.HOURS');
+            const mLabel = this.translateService.instant('UTILS.MINUTES');
+            if (val >= 60) {
+              const h = Math.floor(val / 60);
+              const m = Math.round(val % 60);
+              return `${h}${hLabel} ${m}${mLabel}`;
+            }
+            return `${Math.round(val)}${mLabel}`;
           }
         },
         axisBorder: {
@@ -835,7 +848,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
         formatter: function (val: any, opts: any) {
           try {
             const point = opts?.w?.config?.series?.[opts.seriesIndex]?.data?.[opts.dataPointIndex];
-            return point?.z ?? '';
+            // Show raw average time label on bubble for clarity
+            const minutes = point?.rawAvgMinutes ?? null;
+            if (minutes === null) return '';
+            if (minutes >= 60) {
+              const h = Math.floor(minutes / 60);
+              const m = Math.round(minutes % 60);
+              return `${h}г ${m}хв`;
+            }
+            return `${minutes}хв`;
           } catch {
             return '';
           }
@@ -884,14 +905,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         custom: ({ seriesIndex, dataPointIndex, w }: any) => {
           const data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
           const siteName = data?.name || '';
-          const totalMinutes = data?.x ?? 0;
-          const visits = data?.y ?? 0;
-          const avgMinutes = visits > 0 ? Math.round(totalMinutes / visits) : 0;
+          // Показуємо тільки загальний час (форматований), середній тепер на осі Y та в підписі бульбашки
+          const totalMinutes = Number.isFinite(data?.rawTotalMinutes) ? data.rawTotalMinutes : (data?.x ?? 0);
           return `
             <div class="bubble-tooltip">
               <div class="title">${siteName}</div>
-              <div class="row"><span class="label">${this.translateService.instant('DASHBOARD.CHARTS.TOTAL_TIME')}</span><span class="value">${totalMinutes} ${this.translateService.instant('DASHBOARD.CHARTS.MINUTES')}</span></div>
-              <div class="row"><span class="label">${this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE')}</span><span class="value">${avgMinutes} ${this.translateService.instant('DASHBOARD.CHARTS.MINUTES')}</span></div>
+              <div class="row"><span class="label">${this.translateService.instant('DASHBOARD.CHARTS.TOTAL_TIME')}</span><span class="value">${formatDuration(totalMinutes * 60, this.translateService)}</span></div>
             </div>
           `;
         }
