@@ -53,7 +53,12 @@ export class HeatmapService {
     try {
       // Отримуємо реальні дані з історії для аналізу активності
       console.log('🔍 HEATMAP DEBUG: Loading history for heatmap...');
-      const historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
+      let historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
+      // Виключаємо google.com з теплової карти
+      historyItems = (historyItems || []).filter(item => {
+        const host = (item?.domain || item?.url || '').toString();
+        return !host.includes('google.com');
+      });
       console.log('🔍 HEATMAP DEBUG: History items received:', historyItems?.length || 0);
       
       if (historyItems && historyItems.length > 0) {
@@ -253,7 +258,7 @@ export class HeatmapService {
           height: 300, 
           foreColor: '#f3eaff', 
           background: '#232136',
-          toolbar: { show: false }
+          toolbar: { show: true }
         },
         xaxis: { 
           type: 'category',
@@ -310,7 +315,7 @@ export class HeatmapService {
         chart: { 
           type: 'heatmap', 
           height: 300,
-          toolbar: { show: false }
+          toolbar: { show: true }
         },
         xaxis: { 
           type: 'category'

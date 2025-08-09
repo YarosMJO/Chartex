@@ -27,7 +27,16 @@
       "VISITS_COUNT": "відвідувань",
       "DEVICE_STATS": "Статистика пристроїв",
       "ACTIVITY_HEATMAP": "Активність за днями тижня",
-      "CATEGORY_DISTRIBUTION": "Розподіл за категоріями"
+      "CATEGORY_DISTRIBUTION": "Розподіл за категоріями",
+      "BUBBLE_CHART": "Активність сайтів",
+      "X_AXIS_TOTAL_TIME": "Загальний час",
+      "Y_AXIS_VISITS_COUNT": "Кількість відвідувань",
+      "TOTAL_TIME": "Загальний час",
+      "MINUTES": "хв",
+      "VISITS": "Відвідування",
+      "X_AXIS_UNITS": "(хв)",
+      "Y_AXIS_UNITS": "(відвідувань)",
+      "BUBBLE_SIZE_INFO": "Розмір бульбашки = середній час на відвідування"
     },
     "SEARCH": {
       "PLACEHOLDER": "Пошук сайтів...",
@@ -47,7 +56,8 @@
         "EDUCATION": "Освіта",
         "ENTERTAINMENT": "Розваги",
         "SHOPPING": "Покупки",
-        "TECHNOLOGY": "Технології"
+        "TECHNOLOGY": "Технології",
+        "SEARCH_ENGINE": "Пошукова система"
       },
       "DURATION": {
         "TITLE": "Тривалість відвідувань",

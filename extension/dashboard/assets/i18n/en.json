@@ -27,7 +27,16 @@
       "VISITS_COUNT": "visits",
       "DEVICE_STATS": "Device statistics",
       "ACTIVITY_HEATMAP": "Activity by Days of Week",
-      "CATEGORY_DISTRIBUTION": "Category Distribution"
+      "CATEGORY_DISTRIBUTION": "Category Distribution",
+      "BUBBLE_CHART": "Site Activity",
+      "X_AXIS_TOTAL_TIME": "Total Time",
+      "Y_AXIS_VISITS_COUNT": "Visits Count",
+      "TOTAL_TIME": "Total Time",
+      "MINUTES": "min",
+      "VISITS": "Visits",
+      "X_AXIS_UNITS": "(min)",
+      "Y_AXIS_UNITS": "(visits)",
+      "BUBBLE_SIZE_INFO": "Bubble size = average time per visit"
     },
     "SEARCH": {
       "PLACEHOLDER": "Search sites...",
@@ -47,7 +56,8 @@
         "EDUCATION": "Education",
         "ENTERTAINMENT": "Entertainment",
         "SHOPPING": "Shopping",
-        "TECHNOLOGY": "Technology"
+        "TECHNOLOGY": "Technology",
+        "SEARCH_ENGINE": "Search Engine"
       },
       "DURATION": {
         "TITLE": "Visit Duration",

@@ -120,6 +120,18 @@ export const cleanDomainName = (domain: string): string => {
 export const categorizeWebsite = (domain: string): string => {
   const cleanDomain = cleanDomainName(domain);
   
+  // Пошукові системи - виключаємо з аналітики
+  const searchEngines = [
+    'google.com', 'google.co.uk', 'google.de', 'google.fr', 'google.it', 'google.es', 'google.ca', 'google.com.au',
+    'bing.com', 'yahoo.com', 'duckduckgo.com', 'baidu.com', 'yandex.com', 'searchencrypt.com',
+    'startpage.com', 'qwant.com', 'ecosia.org', 'brave.com', 'swisscows.com'
+  ];
+  
+  // Якщо це пошукова система - не категорізуємо
+  if (searchEngines.some(d => cleanDomain.includes(d))) {
+    return 'search_engine';
+  }
+  
   // Соцмережі
   const socialDomains = [
     'facebook.com', 'fb.com', 'instagram.com', 'twitter.com', 'x.com', 
@@ -142,8 +154,8 @@ export const categorizeWebsite = (domain: string): string => {
   const workDomains = [
     'github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com', 'stackexchange.com',
     'jira.com', 'confluence.com', 'trello.com', 'asana.com', 'notion.so',
-    'slack.com', 'teams.microsoft.com', 'zoom.us', 'meet.google.com', 'webex.com',
-    'dropbox.com', 'drive.google.com', 'onedrive.live.com', 'box.com', 'evernote.com',
+    'slack.com', 'teams.microsoft.com', 'zoom.us', 'webex.com',
+    'dropbox.com', 'onedrive.live.com', 'box.com', 'evernote.com',
     'figma.com', 'sketch.com', 'invisionapp.com', 'zeplin.io', 'abstract.com',
     'linear.app', 'clickup.com', 'monday.com', 'basecamp.com', 'airtable.com'
   ];
@@ -180,7 +192,7 @@ export const categorizeWebsite = (domain: string): string => {
   
   // Технології
   const technologyDomains = [
-    'apple.com', 'microsoft.com', 'google.com', 'amazon.com', 'meta.com',
+    'apple.com', 'microsoft.com', 'amazon.com', 'meta.com',
     'facebook.com', 'twitter.com', 'x.com', 'linkedin.com', 'github.com',
     'stackoverflow.com', 'reddit.com', 'hackernews.com', 'producthunt.com',
     'techcrunch.com', 'wired.com', 'theverge.com', 'ars-technica.com',

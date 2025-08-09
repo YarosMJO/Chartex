@@ -68,7 +68,8 @@ export class AdvancedFiltersComponent implements OnDestroy {
     { value: 'education', label: 'DASHBOARD.FILTERS.CATEGORIES.EDUCATION' },
     { value: 'entertainment', label: 'DASHBOARD.FILTERS.CATEGORIES.ENTERTAINMENT' },
     { value: 'shopping', label: 'DASHBOARD.FILTERS.CATEGORIES.SHOPPING' },
-    { value: 'technology', label: 'DASHBOARD.FILTERS.CATEGORIES.TECHNOLOGY' }
+    { value: 'technology', label: 'DASHBOARD.FILTERS.CATEGORIES.TECHNOLOGY' },
+    { value: 'search_engine', label: 'DASHBOARD.FILTERS.CATEGORIES.SEARCH_ENGINE' }
   ];
 
   // Опції часу проведеного на сайті (в хвилинах)

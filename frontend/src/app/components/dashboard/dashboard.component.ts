@@ -64,14 +64,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedDevice: string = 'all';
   loading = false;
   error: string | null = null;
-  
+
   // Відстеження попередніх значень для уникнення зайвих оновлень
   private previousPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
   private previousDevice: string = 'all';
-  
+
   // Флаг для запобігання зайвих оновлень
   private isUpdating = false;
-  
+
   // Затримка для уникнення зайвих викликів
   private periodChangeTimeout: any = null;
   private deviceChangeTimeout: any = null;
@@ -83,6 +83,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
   activityHeatmapData: HeatmapSeries[] = [];
   categoryDistributionData: number[] = [];
+  bubbleChartData: { x: number; y: number; z: number; name: string }[] = [];
 
   // Відстеження ширини графіка для адаптивності
   private chartWidth: number = 0;
@@ -108,7 +109,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Флаг для запобігання зайвим оновленням графіка
   private lastChartDataHash = '';
-  
+
   // Кеш для методів форматування
   private formatCache = new Map<string, string>();
   private readonly MAX_CACHE_SIZE = 100;
@@ -121,14 +122,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Ініціалізуємо мову з localStorage
     const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
     console.log('Dashboard ініціалізує мову:', savedLanguage);
     this.translateService.use(savedLanguage);
-    
+
     // Слухаємо зміни мови
     window.addEventListener('languageChanged', (event: any) => {
       if (event.detail && event.detail.language) {
@@ -153,7 +154,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.updateChartWidth();
     }, 100);
-    
+
     this.authService.getUser().subscribe(async user => {
       this.currentUser = user;
       if (this.currentUser) {
@@ -178,6 +179,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           console.error('Помилка отримання ключа шифрування:', error);
           this.cdr.markForCheck();
         }
+        console.log('🔍 BUBBLE DEBUG: User authenticated, initializing dashboard');
         this.initializeDashboard();
       } else {
         this.error = 'Користувач не авторизований';
@@ -200,7 +202,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearTimeout(this.advancedFiltersTimeout);
     }
     this.formatCache.clear();
-    
+
     // Очищаємо слухачі подій
     window.removeEventListener('resize', this.resizeHandler);
   }
@@ -211,7 +213,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loading = true;
       this.error = null;
       this.cdr.markForCheck();
-      
+
       if (!this.currentUser) {
         this.error = 'Користувач не авторизований';
         this.cdr.markForCheck();
@@ -221,7 +223,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.loadUserStats(),
         this.loadDevices()
       ]);
-      
+
       // Ініціалізуємо попередні значення після завантаження
       this.previousPeriod = this.selectedPeriod;
       this.previousDevice = this.selectedDevice;
@@ -229,6 +231,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         previousPeriod: this.previousPeriod,
         previousDevice: this.previousDevice
       });
+      console.log('🔍 BUBBLE DEBUG: Dashboard initialized, bubbleChartData:', this.bubbleChartData);
     } catch (error) {
       this.error = 'Помилка завантаження даних: ' + (error instanceof Error ? error.message : String(error));
       this.cdr.markForCheck();
@@ -245,9 +248,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       console.log('Оновлення вже виконується, пропускаємо...');
       return;
     }
-    
+
     this.isUpdating = true;
-    
+
     try {
       console.log('Початок завантаження статистики користувача...');
       const params: { period: '7d' | '30d' | '90d' | '1y' | 'all'; deviceId?: string } = {
@@ -256,17 +259,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (this.selectedDevice !== 'all') {
         params.deviceId = this.selectedDevice;
       }
-      
+
       console.log('Параметри для статистики:', params);
       const stats = await this.apiService.getUserStatsWithDecryptedData(params);
-      
+
       console.log('Статистика отримана:', {
         hasStats: !!stats,
         hasTopDomains: !!stats.topDomains,
         topDomainsCount: stats.topDomains?.length || 0
       });
-      
+
       this.userStats = stats;
+      console.log('🔍 BUBBLE DEBUG: userStats set in loadUserStats:', this.userStats);
       await this.prepareChartData();
       this.cdr.markForCheck();
     } catch (error) {
@@ -298,15 +302,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Підготовка даних для графіків
   async prepareChartData() {
     console.log('🔍 HEATMAP DEBUG: Starting prepareChartData');
-    
+
     if (!this.userStats) {
       console.log('🔍 HEATMAP DEBUG: No userStats available');
       return;
     }
 
     try {
+      // Виключаємо google.com з усіх графіків
+      const filteredTopDomains = this.userStats.topDomains.filter(d => {
+        const domain = cleanDomainName(d.decryptedData?.url || d._id);
+        return domain !== 'google.com';
+      });
+
       // Підготовка даних для графіка активності
-      this.activityChartData = this.userStats.topDomains
+      this.activityChartData = filteredTopDomains
         .slice(0, 10)
         .map(domain => ({
           x: cleanDomainName(domain.decryptedData?.url || domain._id),
@@ -314,7 +324,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }));
 
       // Підготовка даних для топ доменів
-      this.topDomainsData = this.userStats.topDomains
+      this.topDomainsData = filteredTopDomains
         .slice(0, 10)
         .map(domain => ({
           name: cleanDomainName(domain.decryptedData?.url || domain._id),
@@ -338,12 +348,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Підготовка даних для кругової діаграми
       this.prepareCategoryDistributionData();
 
+      // Підготовка даних для бульбашкової діаграми
+      this.prepareBubbleChartData();
+
       // Оновлюємо ширину графіка після підготовки даних
       this.updateChartWidth();
 
       console.log('🔍 HEATMAP DEBUG: Chart data prepared successfully');
       console.log('🔍 HEATMAP DEBUG: Activity heatmap data length:', this.activityHeatmapData.length);
-      
+      console.log('🔍 BUBBLE DEBUG: Bubble chart data prepared:', this.bubbleChartData);
+
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Помилка підготовки даних для графіків:', error);
@@ -353,19 +367,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Підготовка даних для теплової карти активності за днями тижня
   private async prepareActivityHeatmapData(): Promise<HeatmapSeries[]> {
     console.log('🔍 HEATMAP DEBUG: Starting prepareActivityHeatmapData');
-    
+
     if (!this.userStats?.topDomains) {
       console.log('🔍 HEATMAP DEBUG: No userStats.topDomains, returning');
       return [];
     }
-    
+
     try {
       const heatmapData = await this.heatmapService.prepareActivityHeatmapData(
         this.userStats,
         this.selectedPeriod,
         this.selectedDevice
       );
-      
+
       console.log('🔍 HEATMAP DEBUG: Heatmap data prepared:', heatmapData);
       return heatmapData;
     } catch (error) {
@@ -384,13 +398,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
 
       const categoryStats = new Map<string, number>();
-      
+
       this.userStats.topDomains.forEach(domain => {
         if (domain.decryptedData) {
           const domainName = getDomainFromUrl(domain.decryptedData.url);
           const category = categorizeWebsite(domainName);
           const duration = domain.totalDuration || 0;
-          
+
           categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
         }
       });
@@ -401,11 +415,152 @@ export class DashboardComponent implements OnInit, OnDestroy {
         .slice(0, 6);
 
       this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
-      
+
       console.log('🔍 PIE CHART DEBUG: Category distribution data:', this.categoryDistributionData);
     } catch (error) {
       console.error('🔍 PIE CHART DEBUG: Error preparing category distribution data:', error);
       this.categoryDistributionData = [];
+    }
+  }
+
+  // Підготовка даних для бульбашкової діаграми
+  private prepareBubbleChartData(): void {
+    try {
+      console.log('🔍 BUBBLE DEBUG: Starting prepareBubbleChartData');
+      console.log('🔍 BUBBLE DEBUG: userStats:', this.userStats);
+      console.log('🔍 BUBBLE DEBUG: topDomains:', this.userStats?.topDomains);
+
+      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
+        console.log('🔍 BUBBLE DEBUG: No userStats or topDomains available, using test data');
+        // Test data with proportional bubble sizes based on visits
+        this.bubbleChartData = [
+          { x: 800, y: 20, z: 35, name: 'Test Site 1' },
+          { x: 600, y: 80, z: 40, name: 'Test Site 2' },
+          { x: 450, y: 45, z: 25, name: 'Test Site 3' },
+          { x: 900, y: 120, z: 45, name: 'Test Site 4' },
+          { x: 750, y: 95, z: 30, name: 'Test Site 5' }
+        ];
+        console.log('🔍 BUBBLE DEBUG: Test data set:', this.bubbleChartData);
+        return;
+      }
+
+      // Вилучаємо google.com
+      const filteredTopDomains = this.userStats.topDomains.filter((d: any) => {
+        const domain = cleanDomainName(d.decryptedData?.url || d._id);
+        return domain !== 'google.com';
+      });
+
+      const topDomains = filteredTopDomains.slice(0, 10);
+      console.log('🔍 BUBBLE DEBUG: Processing topDomains:', topDomains);
+      console.log('🔍 BUBBLE DEBUG: Real data sample:', topDomains.slice(0, 3).map(d => ({
+        url: d.decryptedData?.url || d._id,
+        visits: d.visits,
+        duration: d.totalDuration,
+        avgDuration: d.visits > 0 ? d.totalDuration / d.visits : 0
+      })));
+      
+      // Check if we have any domains with meaningful data
+      const domainsWithData = topDomains.filter((d: any) => (d.visits || 0) > 0 || (d.totalDuration || 0) > 0);
+      console.log('🔍 BUBBLE DEBUG: Domains with data:', domainsWithData.length);
+      console.log('🔍 BUBBLE DEBUG: Total domains:', topDomains.length);
+      
+      // Use domains with data, or fallback to test data if no meaningful data
+      const domainsToProcess = domainsWithData.length > 0 ? domainsWithData : topDomains;
+      console.log('🔍 BUBBLE DEBUG: Using domains:', domainsToProcess.length);
+      
+      // If we have no meaningful data, use test data
+      if (domainsWithData.length === 0) {
+        console.log('🔍 BUBBLE DEBUG: No meaningful data found, using test data');
+        this.bubbleChartData = [
+          { x: 800, y: 20, z: 35, name: 'Test Site 1' },
+          { x: 600, y: 80, z: 40, name: 'Test Site 2' },
+          { x: 450, y: 45, z: 25, name: 'Test Site 3' },
+          { x: 900, y: 120, z: 45, name: 'Test Site 4' },
+          { x: 750, y: 95, z: 30, name: 'Test Site 5' }
+        ];
+        return;
+      }
+
+            // Process real data
+      console.log('🔍 BUBBLE DEBUG: Processing real data for bubble chart');
+      console.log('🔍 BUBBLE DEBUG: domainsToProcess:', domainsToProcess);
+      
+      // Calculate ranges for better scaling
+      const maxVisits = Math.max(...domainsToProcess.map((d: any) => d.visits || 0));
+      const maxDuration = Math.max(...domainsToProcess.map((d: any) => d.totalDuration || 0));
+      // Max average duration per visit in minutes (used for bubble size)
+      const maxAvgDurationMinutes = Math.max(
+        ...domainsToProcess.map((d: any) => {
+          const visits = d.visits || 0;
+          const totalMinutes = Math.round((d.totalDuration || 0) / 60);
+          return visits > 0 ? Math.round(totalMinutes / visits) : 0;
+        })
+      );
+      const minVisits = Math.min(...domainsToProcess.map((d: any) => d.visits || 0));
+      const minDuration = Math.min(...domainsToProcess.map((d: any) => d.totalDuration || 0));
+
+      console.log('🔍 BUBBLE DEBUG: Data ranges - visits:', minVisits, '-', maxVisits, 'duration:', minDuration, '-', maxDuration);
+
+      this.bubbleChartData = domainsToProcess.map((domain: any) => {
+        const visits = domain.visits || 0;
+        const duration = domain.totalDuration || 0;
+
+        // Convert to minutes for better scaling
+        const totalDurationMinutes = Math.round(duration / 60);
+
+        // Ensure minimum values for visibility
+        const totalTimeMinutes = Math.max(totalDurationMinutes, 1);
+        const visitsCount = Math.max(visits, 1);
+
+        // Normalize values to ensure they fit within reasonable chart bounds
+        // Scale X (time) to range 50-800 minutes (increased minimum for better spacing)
+        const normalizedTime = maxDuration > 0 ? (totalDurationMinutes / maxDuration) : 0;
+        const finalX = Math.max(Math.round(normalizedTime * 750) + 50, 50);
+
+        // Scale Y (visits) to range 10-200 visits (increased minimum for better spacing)
+        const normalizedVisits = maxVisits > 0 ? (visitsCount / maxVisits) : 0;
+        const finalY = Math.max(Math.round(normalizedVisits * 190) + 10, 10);
+
+        // Scale Z (bubble size) based on average time per visit (minutes)
+        const avgMinutes = visitsCount > 0 ? Math.round(totalTimeMinutes / visitsCount) : 0;
+        const normalizedZ = maxAvgDurationMinutes > 0 ? (avgMinutes / maxAvgDurationMinutes) : 0;
+        const finalZ = Math.max(Math.round(normalizedZ * 30) + 15, 15); // Range: 15-45
+        
+        // Ensure the bubble size is proportional but not too large
+        // The z value should be between 15-45 to match our chart options
+        const clampedZ = Math.min(Math.max(finalZ, 15), 45);
+        
+        // Scale down X and Y to ensure bubbles have enough space
+        // Use smaller ranges to prevent bubbles from being cut off
+        const scaledX = Math.min(finalX, 800); // Cap at 800 to leave margin
+        const scaledY = Math.min(finalY, 200); // Cap at 200 to leave margin
+
+        const result = {
+          x: scaledX,
+          y: scaledY,
+          z: clampedZ,
+          name: cleanDomainName(domain.decryptedData?.url || domain._id)
+        };
+
+        console.log('🔍 BUBBLE DEBUG: Domain data:', domain);
+        console.log('🔍 BUBBLE DEBUG: Raw values - visits:', visits, 'duration:', duration);
+        console.log('🔍 BUBBLE DEBUG: Final values - finalX:', finalX, 'finalY:', finalY, 'finalZ:', finalZ);
+        console.log('🔍 BUBBLE DEBUG: Processed result:', result);
+        
+        return result;
+      });
+
+      console.log('🔍 BUBBLE DEBUG: Final bubbleChartData:', this.bubbleChartData);
+    } catch (error) {
+      console.error('🔍 BUBBLE DEBUG: Error in prepareBubbleChartData:', error);
+      // Fallback to test data on error
+      this.bubbleChartData = [
+        { x: 800, y: 20, z: 35, name: 'Test Site 1' },
+        { x: 600, y: 80, z: 40, name: 'Test Site 2' },
+        { x: 450, y: 45, z: 25, name: 'Test Site 3' },
+        { x: 900, y: 120, z: 45, name: 'Test Site 4' },
+        { x: 750, y: 95, z: 30, name: 'Test Site 5' }
+      ];
     }
   }
 
@@ -417,11 +572,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.periodChangeTimeout) {
       clearTimeout(this.periodChangeTimeout);
     }
-    
+
     // Встановлюємо новий таймаут
     this.periodChangeTimeout = setTimeout(async () => {
       // Оновлюємо графік тільки якщо період дійсно змінився
       if (this.selectedPeriod !== this.previousPeriod) {
+        console.log('🔍 BUBBLE DEBUG: Period changed from', this.previousPeriod, 'to', this.selectedPeriod);
         this.previousPeriod = this.selectedPeriod;
         await this.loadUserStats();
         this.cdr.markForCheck();
@@ -435,11 +591,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.deviceChangeTimeout) {
       clearTimeout(this.deviceChangeTimeout);
     }
-    
+
     // Встановлюємо новий таймаут
     this.deviceChangeTimeout = setTimeout(async () => {
       // Оновлюємо графік тільки якщо пристрій дійсно змінився
       if (this.selectedDevice !== this.previousDevice) {
+        console.log('🔍 BUBBLE DEBUG: Device changed from', this.previousDevice, 'to', this.selectedDevice);
         this.previousDevice = this.selectedDevice;
         await this.loadUserStats();
         this.cdr.markForCheck();
@@ -509,7 +666,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get activityHeatmapOptions() {
     console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', this.isDarkTheme);
     console.log('🔍 HEATMAP DEBUG: Current activityHeatmapData length:', this.activityHeatmapData.length);
-    
+
     return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
   }
 
@@ -525,9 +682,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'],
       dataLabels: {
         enabled: true,
-        formatter: function(val: number, opts: any) {
-          return opts.w.globals.seriesTotals[opts.seriesIndex] > 0 
-            ? Math.round(val) + '%' 
+        formatter: function (val: number, opts: any) {
+          return opts.w.globals.seriesTotals[opts.seriesIndex] > 0
+            ? Math.round(val) + '%'
             : '';
         },
         style: {
@@ -545,18 +702,220 @@ export class DashboardComponent implements OnInit, OnDestroy {
       tooltip: {
         theme: this.isDarkTheme ? 'dark' : 'light',
         y: {
-          formatter: function(value: number) {
+          formatter: function (value: number) {
             return formatDuration(value);
           }
         }
       },
       legend: {
-        position: 'bottom',
-        labels: {
-          colors: this.isDarkTheme ? '#f3eaff' : '#23272f'
+        show: true,
+        position: 'top',
+        horizontalAlign: 'center',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 6
         }
+      },
+      stroke: {
+        width: 2,
+        colors: ['#ffffff']
+      },
+    };
+  }
+
+  get bubbleChartOptions() {
+    console.log('🔍 BUBBLE DEBUG: bubbleChartOptions getter called');
+    console.log('🔍 BUBBLE DEBUG: Current userStats:', this.userStats);
+    console.log('🔍 BUBBLE DEBUG: Current bubbleChartData:', this.bubbleChartData);
+    const options = {
+      chart: {
+        type: 'bubble',
+        height: 450, // Increased from 400 to 450
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 150
+          },
+          dynamicAnimation: {
+            enabled: true,
+            speed: 350
+          }
+        },
+        // Ensure proper chart boundaries
+        redrawOnWindowResize: true,
+        redrawOnParentResize: true,
+        // Toolbar and interactions
+        toolbar: {
+          show: true,
+          tools: {
+            download: true,
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true
+          }
+        },
+        zoom: {
+          enabled: true,
+          type: 'xy',
+          autoScaleYaxis: true
+        }
+      },
+      title: {
+        text: this.translateService.instant('DASHBOARD.CHARTS.BUBBLE_CHART')
+      },
+      xaxis: {
+        title: {
+          text: this.translateService.instant('DASHBOARD.CHARTS.X_AXIS_TOTAL_TIME') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.X_AXIS_UNITS')
+        },
+        min: 0,
+        max: 1000, // Increased to provide more padding for bubbles
+        tickAmount: 6,
+        labels: {
+          style: {
+            fontSize: '12px'
+          }
+        },
+        tooltip: {
+          enabled: false
+        },
+        axisBorder: {
+          show: true,
+          color: '#78909c'
+        },
+        axisTicks: {
+          show: true,
+          color: '#78909c'
+        },
+        // Ensure proper spacing for bubbles
+        crosshairs: {
+          show: false
+        }
+      },
+      yaxis: {
+        title: {
+          text: this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_VISITS_COUNT') + ' ' + this.translateService.instant('DASHBOARD.CHARTS.Y_AXIS_UNITS')
+        },
+        min: 0,
+        max: 250, // Increased to provide more padding for bubbles
+        tickAmount: 6,
+        labels: {
+          style: {
+            fontSize: '12px'
+          }
+        },
+        axisBorder: {
+          show: true,
+          color: '#78909c'
+        },
+        axisTicks: {
+          show: true,
+          color: '#78909c'
+        },
+        // Ensure proper spacing for bubbles
+        crosshairs: {
+          show: false
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val: any, opts: any) {
+          try {
+            const point = opts?.w?.config?.series?.[opts.seriesIndex]?.data?.[opts.dataPointIndex];
+            return point?.z ?? '';
+          } catch {
+            return '';
+          }
+        },
+        style: {
+          fontSize: '12px',
+          fontWeight: 'bold',
+          colors: ['#ffffff']
+        },
+        background: {
+          enabled: true,
+          foreColor: '#000000',
+          borderRadius: 4,
+          padding: 4,
+          opacity: 0.9,
+          borderWidth: 1,
+          borderColor: '#ffffff'
+        },
+        offsetY: 0,
+        textAnchor: 'middle'
+      },
+      plotOptions: {
+        bubble: {
+          minBubbleRadius: 15,
+          maxBubbleRadius: 45,
+          zScaling: true
+        }
+      },
+      grid: {
+        padding: {
+          top: 10,
+          right: 16,
+          bottom: 26,
+          left: 26
+        },
+        show: true,
+        borderColor: '#e0e0e0',
+        strokeDashArray: 5,
+        position: 'back'
+      },
+      tooltip: {
+        enabled: true,
+        shared: false,
+        intersect: true,
+        followCursor: false,
+        custom: ({ seriesIndex, dataPointIndex, w }: any) => {
+          const data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+          const siteName = data?.name || '';
+          const totalMinutes = data?.x ?? 0;
+          const visits = data?.y ?? 0;
+          const avgMinutes = visits > 0 ? Math.round(totalMinutes / visits) : 0;
+          return `
+            <div class="bubble-tooltip">
+              <div class="title">${siteName}</div>
+              <div class="row"><span class="label">${this.translateService.instant('DASHBOARD.CHARTS.TOTAL_TIME')}</span><span class="value">${totalMinutes} ${this.translateService.instant('DASHBOARD.CHARTS.MINUTES')}</span></div>
+              <div class="row"><span class="label">${this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE')}</span><span class="value">${avgMinutes} ${this.translateService.instant('DASHBOARD.CHARTS.MINUTES')}</span></div>
+            </div>
+          `;
+        }
+      },
+      legend: {
+        show: true,
+        position: 'top',
+        horizontalAlign: 'center',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 6
+        },
+        onItemClick: {
+          toggleDataSeries: false
+        },
+        formatter: () => this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE')
+      },
+      colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+      stroke: {
+        width: 2,
+        colors: ['#ffffff']
       }
     };
+
+    console.log('🔍 BUBBLE DEBUG: bubbleChartOptions generated:', options);
+    return options;
   }
 
   // Перехід до налаштувань
@@ -593,7 +952,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.searchQuery = query;
     this.hasResults = false;
     this.searchResults = [];
-    
+
     if (query.trim().length >= 2) {
       this.performSearch(query);
     }
@@ -623,9 +982,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const url = domain.decryptedData?.url || domain._id;
           const title = domain.decryptedData?.title || '';
           const cleanUrl = cleanDomainName(url);
-          
-          return cleanUrl.toLowerCase().includes(searchTerm) || 
-                 title.toLowerCase().includes(searchTerm);
+
+          return cleanUrl.toLowerCase().includes(searchTerm) ||
+            title.toLowerCase().includes(searchTerm);
         })
         .map(domain => ({
           url: domain.decryptedData?.url || domain._id,
@@ -648,12 +1007,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Розширені фільтри
   onAdvancedFiltersChange(filters: FilterOptions) {
     console.log('onAdvancedFiltersChange викликано з фільтрами:', filters);
-    
+
     // Очищаємо попередній таймаут
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
     }
-    
+
     // Встановлюємо новий таймаут
     this.advancedFiltersTimeout = setTimeout(async () => {
       this.advancedFilters = filters;
@@ -665,15 +1024,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async onClearAdvancedFilters() {
     console.log('onClearAdvancedFilters викликано');
-    
+
     // Очищаємо таймаут
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
     }
-    
+
     // Встановлюємо діапазон в залежності від типу фільтрації
     const maxRange = this.advancedFilters.durationType === 'average' ? 60 : 180;
-    
+
     this.advancedFilters = {
       categories: [],
       durationRange: { min: 0, max: maxRange },
@@ -682,12 +1041,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       durationType: this.advancedFilters.durationType // Зберігаємо поточний тип
     };
     console.log('advancedFilters очищено:', this.advancedFilters);
-    
+
     // Повертаємо оригінальні дані
     if (this.userStats) {
       await this.prepareChartData();
     }
-    
+
     this.applyAdvancedFilters();
     await this.prepareChartData(); // Додаємо виклик для оновлення заголовка
   }
@@ -718,15 +1077,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Фільтр за часом проведеним на сайті (конвертуємо з хвилин в секунди)
     if (this.advancedFilters.durationRange.min > 0 || this.advancedFilters.durationRange.max < (this.advancedFilters.durationType === 'average' ? 60 : 180)) {
       console.log('Фільтруємо за часом проведеним на сайті:', this.advancedFilters.durationRange, 'тип:', this.advancedFilters.durationType);
-      
+
       // Конвертуємо хвилини в секунди для порівняння з даними
       const minSeconds = this.advancedFilters.durationRange.min * 60;
       const maxSeconds = this.advancedFilters.durationRange.max * 60;
-      
+
       filteredDomains = filteredDomains.filter(domain => {
         let durationValue: number;
         let durationTypeLabel: string;
-        
+
         if (this.advancedFilters.durationType === 'total') {
           // Фільтруємо по загальному часу
           durationValue = domain.totalDuration || 0;
@@ -735,20 +1094,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
           // Фільтруємо по середньому часу (загальний час / кількість відвідувань)
           const totalDuration = domain.totalDuration || 0;
           const visits = domain.visits || 0;
-          
+
           if (visits <= 0) {
             // Якщо немає відвідувань, середній час = 0
             durationValue = 0;
           } else {
             durationValue = totalDuration / visits;
           }
-          
+
           durationTypeLabel = 'середнього';
         }
-        
+
         const isInRange = durationValue >= minSeconds && durationValue <= maxSeconds;
         const durationInMinutes = Math.round(durationValue / 60);
-        
+
         // Детальне логування для діагностики
         console.log(`Домен ${domain._id}:`, {
           totalDuration: domain.totalDuration || 0,
@@ -760,7 +1119,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           maxSeconds: maxSeconds,
           isInRange: isInRange
         });
-        
+
         return isInRange;
       });
     }
@@ -768,17 +1127,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Фільтр за датою
     if (this.advancedFilters.dateRange.start || this.advancedFilters.dateRange.end) {
       console.log('Фільтруємо за діапазоном дат:', this.advancedFilters.dateRange);
-      
+
       // Симулюємо фільтрацію за датами
       // Оскільки у нас немає дат для кожного домену, ми будемо фільтрувати пропорційно
       const startDate = this.advancedFilters.dateRange.start;
       const endDate = this.advancedFilters.dateRange.end;
-      
+
       if (startDate && endDate) {
         // Розраховуємо скільки днів охоплює діапазон
         const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1; // +1 для включення кінцевої дати
         const totalDays = 30; // Припускаємо що загальний період 30 днів
-        
+
         // Перевіряємо чи діапазон має сенс
         const now = new Date();
         if (startDate > now) {
@@ -790,9 +1149,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         } else {
           // Коефіцієнт для зменшення даних пропорційно до вибраного діапазону
           const dateFilterRatio = Math.min(daysDiff / totalDays, 1);
-          
+
           console.log(`Фільтруємо дані за діапазоном ${daysDiff} днів з ${totalDays} (коефіцієнт: ${dateFilterRatio})`);
-          
+
           if (dateFilterRatio < 1) {
             filteredDomains = filteredDomains.map(domain => ({
               ...domain,
@@ -805,7 +1164,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       } else if (startDate) {
         // Якщо вибрана тільки початкова дата, фільтруємо від цієї дати
         const now = new Date();
-        
+
         // Якщо початкова дата в майбутньому, показуємо 0 даних
         if (startDate > now) {
           console.log(`Початкова дата ${startDate.toLocaleDateString()} в майбутньому, показуємо 0 даних`);
@@ -814,9 +1173,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const daysFromStart = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
           const totalDays = 30;
           const dateFilterRatio = Math.min(Math.max(daysFromStart / totalDays, 0), 1);
-          
+
           console.log(`Фільтруємо дані від ${startDate.toLocaleDateString()} (коефіцієнт: ${dateFilterRatio})`);
-          
+
           if (dateFilterRatio > 0) {
             filteredDomains = filteredDomains.map(domain => ({
               ...domain,
@@ -828,7 +1187,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       } else if (endDate) {
         // Якщо вибрана тільки кінцева дата, фільтруємо до цієї дати
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        
+
         // Якщо кінцева дата раніше за 30 днів тому, показуємо 0 даних
         if (endDate < thirtyDaysAgo) {
           console.log(`Кінцева дата ${endDate.toLocaleDateString()} занадто давно, показуємо 0 даних`);
@@ -837,9 +1196,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const daysToEnd = Math.ceil((endDate.getTime() - thirtyDaysAgo.getTime()) / (1000 * 60 * 60 * 24));
           const totalDays = 30;
           const dateFilterRatio = Math.min(Math.max(daysToEnd / totalDays, 0), 1);
-          
+
           console.log(`Фільтруємо дані до ${endDate.toLocaleDateString()} (коефіцієнт: ${dateFilterRatio})`);
-          
+
           if (dateFilterRatio > 0) {
             filteredDomains = filteredDomains.map(domain => ({
               ...domain,
@@ -854,18 +1213,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log(`Після фільтрації залишилося ${filteredDomains.length} доменів з ${this.userStats.topDomains.length}`);
 
     // Оновлюємо загальну статистику відповідно до фільтрів
-    if (this.advancedFilters.categories.length > 0 || 
-        this.advancedFilters.durationRange.min > 0 || 
-        this.advancedFilters.durationRange.max < 180 ||
-        this.advancedFilters.dateRange.start || 
-        this.advancedFilters.dateRange.end) {
-      
+    if (this.advancedFilters.categories.length > 0 ||
+      this.advancedFilters.durationRange.min > 0 ||
+      this.advancedFilters.durationRange.max < 180 ||
+      this.advancedFilters.dateRange.start ||
+      this.advancedFilters.dateRange.end) {
+
       // Розраховуємо нову статистику на основі відфільтрованих даних
       const totalVisits = filteredDomains.reduce((sum, domain) => sum + domain.visits, 0);
       const totalDuration = filteredDomains.reduce((sum, domain) => sum + domain.totalDuration, 0);
       const uniqueDomains = filteredDomains.length;
       const avgDuration = uniqueDomains > 0 ? totalDuration / uniqueDomains : 0;
-      
+
       // Оновлюємо статистику
       if (this.userStats) {
         this.userStats.stats = {
@@ -876,7 +1235,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           avgDuration: Math.round(avgDuration * 100) / 100
         };
       }
-      
+
       console.log('Оновлена статистика після фільтрації:', {
         totalVisits,
         uniqueDomains,
@@ -898,18 +1257,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private updateChartDataWithFilteredDomains(filteredDomains: any[]) {
     console.log('Оновлюємо дані для графіків з', filteredDomains.length, 'доменами');
-    
+
     // Підготовка даних для графіка активності
-    this.activityChartData = filteredDomains.map(domain => ({
-      x: domain.decryptedData?.url ? cleanDomainName(domain.decryptedData.url) : domain._id,
-      y: domain.visits
-    }));
-    
+    this.activityChartData = filteredDomains
+      .filter(domain => cleanDomainName(domain.decryptedData?.url || domain._id) !== 'google.com')
+      .map(domain => ({
+        x: domain.decryptedData?.url ? cleanDomainName(domain.decryptedData.url) : domain._id,
+        y: domain.visits
+      }));
+
     // Підготовка даних для топ доменів
-    this.topDomainsData = filteredDomains.slice(0, 10).map(domain => {
+    this.topDomainsData = filteredDomains
+      .filter(domain => cleanDomainName(domain.decryptedData?.url || domain._id) !== 'google.com')
+      .slice(0, 10).map(domain => {
       const name = domain.decryptedData?.url ? cleanDomainName(domain.decryptedData.url) : domain._id;
       const title = domain.decryptedData?.title || cleanDomainName(domain._id);
-      
+
       return {
         name,
         title,
@@ -917,7 +1280,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         duration: domain.totalDuration
       };
     });
-    
+
     console.log('Дані для графіків оновлені:', {
       activityChartData: this.activityChartData.length,
       topDomainsData: this.topDomainsData.length
@@ -927,29 +1290,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Метод для формування заголовка графіка на основі вибраного діапазону дат
   getChartTitle(): string {
     const cacheKey = `chartTitle_${this.selectedPeriod}_${JSON.stringify(this.advancedFilters.dateRange)}_${this.translateService.currentLang}`;
-    
+
     if (this.formatCache.has(cacheKey)) {
       return this.formatCache.get(cacheKey)!;
     }
-    
+
     let title: string;
-    
+
     if (this.advancedFilters.dateRange.start && this.advancedFilters.dateRange.end) {
       const startDate = this.advancedFilters.dateRange.start;
       const endDate = this.advancedFilters.dateRange.end;
-      
+
       // Форматуємо дати
       const formatDate = (date: Date) => {
-        return date.toLocaleDateString('uk-UA', { 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric' 
+        return date.toLocaleDateString('uk-UA', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
         });
       };
-      
+
       const startFormatted = formatDate(startDate);
       const endFormatted = formatDate(endDate);
-      
+
       // Якщо дати однакові, показуємо одну дату
       if (startDate.getTime() === endDate.getTime()) {
         title = `Активність за ${startFormatted}`;
@@ -958,32 +1321,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     } else if (this.advancedFilters.dateRange.start) {
       const startDate = this.advancedFilters.dateRange.start;
-      const startFormatted = startDate.toLocaleDateString('uk-UA', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
+      const startFormatted = startDate.toLocaleDateString('uk-UA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
       });
       title = `Активність з ${startFormatted}`;
     } else if (this.advancedFilters.dateRange.end) {
       const endDate = this.advancedFilters.dateRange.end;
-      const endFormatted = endDate.toLocaleDateString('uk-UA', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
+      const endFormatted = endDate.toLocaleDateString('uk-UA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
       });
       title = `Активність до ${endFormatted}`;
     } else {
       // Якщо діапазон дат не вибрано, використовуємо стандартний період
       title = `Активність за ${this.getPeriodLabel(this.selectedPeriod)}`;
     }
-    
+
     this.addToCache(cacheKey, title);
     return title;
   }
 
   get availableCategories(): string[] {
     if (!this.userStats?.topDomains) return [];
-    
+
     const categories = new Set<string>();
     this.userStats.topDomains.forEach(domain => {
       const url = domain.decryptedData?.url || domain._id;
@@ -992,7 +1355,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         categories.add(category);
       }
     });
-    
+
     return Array.from(categories).sort();
   }
 
