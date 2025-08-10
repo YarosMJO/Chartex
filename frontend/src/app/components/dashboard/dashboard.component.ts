@@ -681,7 +681,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get timeOfDayWeekHeatmapOptions() {
-    return this.heatmapService.getTimeOfDayWeekHeatmapOptions(this.isDarkTheme);
+    // Передаємо глобальний максимум для правильного форматування tooltip
+    const maxVal = this.timeOfDayWeekHeatmapData.reduce((max, series) => 
+      Math.max(max, ...series.data.map(d => d.y % 1000)), 0) * 999 || 1;
+    return this.heatmapService.getTimeOfDayWeekHeatmapOptions(this.isDarkTheme, maxVal);
   }
 
   get pieChartOptions() {

@@ -27,6 +27,19 @@ export class HeatmapService {
 
   constructor(private apiService: ApiService) {}
 
+  private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+    const match = hex.replace('#', '').match(/.{1,2}/g);
+    if (!match || match.length < 3) return null;
+    const [r, g, b] = match.map(v => parseInt(v.length === 1 ? v + v : v, 16));
+    return { r, g, b } as any;
+  }
+
+  private rgba(hex: string, alpha: number): string {
+    const rgb = this.hexToRgb(hex) || { r: 0, g: 0, b: 0 };
+    const a = Math.min(Math.max(alpha, 0), 1);
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
+  }
+
   /**
    * Підготовка даних для теплової карти активності
    */
@@ -185,6 +198,64 @@ export class HeatmapService {
   }
 
   /**
+   * Генерує тестові дані для теплової карти добової активності
+   * Використовується для демонстрації або коли реальні дані відсутні
+   */
+  private generateTestHeatmapData(
+    weeks: string[], 
+    hourLabels: string[], 
+    hoursToRemove: Set<string>,
+    weekPrefix: string
+  ): Record<string, Record<string, number>> {
+    const valueByHourWeek: Record<string, Record<string, number>> = {};
+    hourLabels.forEach(h => (valueByHourWeek[h] = {}));
+
+    // Тестовий профіль активності за годинами
+    const getTestValueForHour = (h: number): number => {
+      if (h < 6) return 0;            // Ніч
+      if (h < 9) return 600;          // Ранок ~10 хв
+      if (h < 13) return 2400;        // До обіду ~40 хв
+      if (h < 18) return 3600;        // Після обіду ~60 хв
+      if (h < 23) return 1800;        // Вечір ~30 хв
+      return 600;                     // Пізній вечір ~10 хв
+    };
+
+    // Допоміжні функції для детермінованої варіації
+    const stringHash = (s: string): number => {
+      let h = 2166136261 >>> 0; // FNV-1a базовий старт
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    };
+    const seededRand01 = (seed: number): number => {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
+    // Генеруємо тестові дані для кожного тижня
+    weeks.forEach(weekLabel => {
+      // Детермінований коефіцієнт для унікальності тижня (0.85..1.35)
+      const wSeed = stringHash(weekLabel);
+      const weekFactor = 0.85 + seededRand01(wSeed) * 0.5;
+      
+      // Підставляємо тестові значення для кожної години з невеликим годинним шумом (0.9..1.2)
+      hourLabels.forEach(hLabel => {
+        if (hoursToRemove.has(hLabel)) return; // Не заповнюємо ті години, які треба прибрати
+        const hourNum = parseInt(hLabel.slice(0, 2), 10);
+        const base = getTestValueForHour(hourNum);
+        const hSeed = stringHash(weekLabel + '|' + hLabel);
+        const hourFactor = 0.9 + seededRand01(hSeed) * 0.3;
+        const val = Math.round(base * weekFactor * hourFactor);
+        valueByHourWeek[hLabel][weekLabel] = val;
+      });
+    });
+
+    return valueByHourWeek;
+  }
+
+  /**
    * Готує теплову карту добової активності протягом тижнів
    * Y: години доби, X: тижні (W1..Wn), значення: сумарна тривалість (секунди)
    */
@@ -192,24 +263,13 @@ export class HeatmapService {
     selectedPeriod: string,
     selectedDevice: string
   ): Promise<HeatmapSeries[]> {
-    // Обчислюємо fromDate щоб мати нульову точку для індекса тижня
+    // Квартал відображаємо як 3 місяці по 4 тижні = 12 тижнів
+    const QUARTER_WEEKS = 12;
     const now = new Date();
-    let fromDate: Date;
-    switch (selectedPeriod) {
-      case '7d':
-        fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
-      case '30d':
-        fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); break;
-      case '90d':
-        fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); break;
-      case '1y':
-        fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); break;
-      default:
-        fromDate = new Date(0);
-    }
+    const fromDate = new Date(now.getTime() - QUARTER_WEEKS * 7 * 24 * 60 * 60 * 1000);
 
-    // Завантажуємо історію
-    let historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
+    // Завантажуємо історію за квартал незалежно від вибраного періоду
+    let historyItems = await this.loadHistoryForHeatmap('90d', selectedDevice);
     // Фільтрація дублюється з підготовки активності — виключаємо google.com, якщо є домен/URL
     historyItems = (historyItems || []).filter(item => {
       const host = (item?.domain || item?.url || '').toString();
@@ -226,6 +286,8 @@ export class HeatmapService {
     hourLabels.forEach(h => (valueByHourWeek[h] = {}));
 
     let maxWeekIndex = 1;
+    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
+    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
     const getItemDate = (it: any): Date | null => {
       const ts = (it?.timestamp ?? it?.time ?? it?.date ?? it?.startTime ?? it?.endTime ?? it?.visitedAt ?? it?.lastVisitTime ?? it?.visitTime ?? it?.createdAt ?? it?.updatedAt);
       if (!ts) return null;
@@ -257,37 +319,215 @@ export class HeatmapService {
       if (hour === null || hour < 0 || hour > 23) continue;
       const hourLabel = `${(hour as number).toString().padStart(2, '0')}:00`;
       const baseMs = fromDate.getTime();
-      const weekIndex = d ? (Math.floor((d.getTime() - baseMs) / MS_PER_WEEK) + 1) : 1;
+      let weekIndex = d ? (Math.floor((d.getTime() - baseMs) / MS_PER_WEEK) + 1) : 1;
+      // Обмежуємо індекс у межах кварталу
+      weekIndex = Math.max(1, Math.min(weekIndex, QUARTER_WEEKS));
       maxWeekIndex = Math.max(maxWeekIndex, weekIndex);
-      const weekLabel = `W${weekIndex}`;
+      const weekLabel = `${weekPrefix}${weekIndex}`;
       const duration = isNaN(it?.duration) ? 0 : Math.max(0, it.duration);
       valueByHourWeek[hourLabel][weekLabel] = (valueByHourWeek[hourLabel][weekLabel] || 0) + duration;
     }
 
-    // Формуємо осі X — список тижнів W1..Wn
-    const weeks: string[] = Array.from({ length: Math.max(1, maxWeekIndex) }, (_, i) => `W${i + 1}`);
+    // Формуємо осі X — 12 тижнів (3 місяці × 4 тижні)
+    const weeks: string[] = Array.from({ length: QUARTER_WEEKS }, (_, i) => `${weekPrefix}${i + 1}`);
+
+    // Визначимо години, де у ВСІХ тижнях активність відсутня (за реальними даними)
+    const hoursToRemove = new Set<string>();
+    hourLabels.forEach(hLabel => {
+      let anyActivity = false;
+      for (let wi = 1; wi <= QUARTER_WEEKS; wi++) {
+        const label = `${weekPrefix}${wi}`;
+        const v = valueByHourWeek[hLabel][label] || 0;
+        if (v > 0) { anyActivity = true; break; }
+      }
+      if (!anyActivity) hoursToRemove.add(hLabel);
+    });
+
+    // ВИКОРИСТОВУЄМО ТІЛЬКИ СПРАВЖНІ ДАНІ - не додаємо тестові значення
+
+    // Обчислимо глобальний максимум на основі справжніх даних
+    let globalMaxValue = 0;
+    hourLabels.forEach(hLabel => {
+      if (hoursToRemove.has(hLabel)) return;
+      weeks.forEach(w => {
+        globalMaxValue = Math.max(globalMaxValue, valueByHourWeek[hLabel][w] || 0);
+      });
+    });
+    if (globalMaxValue <= 0) globalMaxValue = 1;
+
+
+
+    // Палітра відтінків для 3 місяців кварталу - використовуємо максимально контрастні кольори
+    const monthBaseColors = ['#1e3a8a', '#14532d', '#991b1b'];
+
+    // Базовий колір за місячним кошиком (кожні 4 тижні — новий місяць)
+    const getMonthBaseColorByIndex = (zeroBasedWeekIndex: number): string => {
+      const bucket = Math.min(Math.floor(zeroBasedWeekIndex / 4), 2);
+      return monthBaseColors[bucket];
+    };
 
     // Перетворення у формат HeatmapSeries ApexCharts (інвертуємо, щоб 00:00 був вгорі)
-    const series: HeatmapSeries[] = [...hourLabels].reverse().map(hourLabel => ({
-      name: hourLabel,
-      data: weeks.map(w => ({ x: w, y: valueByHourWeek[hourLabel][w] || 0 }))
-    }));
+    const series: HeatmapSeries[] = [...hourLabels]
+      .filter(h => !hoursToRemove.has(h))
+      .reverse()
+      .map(hourLabel => ({
+        name: hourLabel,
+        data: weeks.map((w, i) => {
+          const val = valueByHourWeek[hourLabel][w] || 0;
+          // Кодуємо колір прямо у значенні: перші 4 тижні = 0-999, наступні 4 = 1000-1999, останні 4 = 2000-2999
+          const monthBucket = Math.min(Math.floor(i / 4), 2); // 0, 1, або 2
+          // Нормалізуємо значення для максимального контрасту
+          // Мінімальні значення стають майже прозорими, максимальні - майже чорними
+          const normalizedRatio = val / globalMaxValue;
+          let enhancedRatio;
+          if (normalizedRatio === 0) {
+            enhancedRatio = 0.02; // Мінімальні значення майже невидимі
+          } else if (normalizedRatio < 0.2) {
+            enhancedRatio = 0.02 + normalizedRatio * 0.3; // 0.02-0.08 для малих значень
+          } else if (normalizedRatio < 0.6) {
+            enhancedRatio = 0.08 + (normalizedRatio - 0.2) * 1.5; // 0.08-0.68 для середніх
+          } else {
+            enhancedRatio = 0.68 + (normalizedRatio - 0.6) * 0.8; // 0.68-1.0 для максимальних
+          }
+          
+          // Обмежуємо до діапазону 1-999 (уникаємо 0 для видимості)
+          const normalizedVal = Math.max(1, Math.round(enhancedRatio * 998) + 1);
+          const encodedVal = monthBucket * 1000 + normalizedVal;
+          return { x: w, y: encodedVal } as any;
+        })
+      }));
+
+    // Діагностика: перевіримо, що кольори потрапляють у точки
+    try {
+      const sampleRow = series[0];
+      const sampleCell: any = sampleRow?.data?.[0] || null;
+      // eslint-disable-next-line no-console
+      console.log('🔍 WEEK HEATMAP COLOR DEBUG:', {
+        seriesCount: series.length,
+        weeksCount: weeks.length,
+        sampleCell,
+      });
+    } catch {}
+
+    return series;
+  }
+
+  /**
+   * Готує теплову карту добової активності з тестовими даними
+   * Використовується для демонстрації функціоналу
+   */
+  async prepareTimeOfDayWeekHeatmapDataWithTest(
+    selectedPeriod: string,
+    selectedDevice: string
+  ): Promise<HeatmapSeries[]> {
+    // Квартал відображаємо як 3 місяці по 4 тижні = 12 тижнів
+    const QUARTER_WEEKS = 12;
+
+    // Визначаємо години (повний добовий діапазон 00..23)
+    const hours: number[] = Array.from({ length: 24 }, (_, i) => i);
+    const hourLabels: string[] = hours.map(h => `${h.toString().padStart(2, '0')}:00`);
+
+    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
+    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+
+    // Формуємо осі X — 12 тижнів (3 місяці × 4 тижні)
+    const weeks: string[] = Array.from({ length: QUARTER_WEEKS }, (_, i) => `${weekPrefix}${i + 1}`);
+
+    // Для тестових даних не видаляємо години (показуємо повний день)
+    const hoursToRemove = new Set<string>();
+
+    // Генеруємо тестові дані
+    const valueByHourWeek = this.generateTestHeatmapData(weeks, hourLabels, hoursToRemove, weekPrefix);
+
+    // Обчислимо глобальний максимум для тестових даних
+    let globalMaxValue = 0;
+    hourLabels.forEach(hLabel => {
+      if (hoursToRemove.has(hLabel)) return;
+      weeks.forEach(w => {
+        globalMaxValue = Math.max(globalMaxValue, valueByHourWeek[hLabel][w] || 0);
+      });
+    });
+    if (globalMaxValue <= 0) globalMaxValue = 1;
+
+    // Палітра відтінків для 3 місяців кварталу
+    const monthBaseColors = ['#1e3a8a', '#14532d', '#991b1b'];
+
+    // Перетворення у формат HeatmapSeries ApexCharts (інвертуємо, щоб 00:00 був вгорі)
+    const series: HeatmapSeries[] = [...hourLabels]
+      .filter(h => !hoursToRemove.has(h))
+      .reverse()
+      .map(hourLabel => ({
+        name: hourLabel,
+        data: weeks.map((w, i) => {
+          const val = valueByHourWeek[hourLabel][w] || 0;
+          // Кодуємо колір прямо у значенні: перші 4 тижні = 0-999, наступні 4 = 1000-1999, останні 4 = 2000-2999
+          const monthBucket = Math.min(Math.floor(i / 4), 2); // 0, 1, або 2
+          // Нормалізуємо значення для максимального контрасту
+          const normalizedRatio = val / globalMaxValue;
+          let enhancedRatio;
+          if (normalizedRatio === 0) {
+            enhancedRatio = 0.02; // Мінімальні значення майже невидимі
+          } else if (normalizedRatio < 0.2) {
+            enhancedRatio = 0.02 + normalizedRatio * 0.3; // 0.02-0.08 для малих значень
+          } else if (normalizedRatio < 0.6) {
+            enhancedRatio = 0.08 + (normalizedRatio - 0.2) * 1.5; // 0.08-0.68 для середніх
+          } else {
+            enhancedRatio = 0.68 + (normalizedRatio - 0.6) * 0.8; // 0.68-1.0 для максимальних
+          }
+          
+          // Обмежуємо до діапазону 1-999 (уникаємо 0 для видимості)
+          const normalizedVal = Math.max(1, Math.round(enhancedRatio * 998) + 1);
+          const encodedVal = monthBucket * 1000 + normalizedVal;
+          return { x: w, y: encodedVal } as any;
+        })
+      }));
 
     return series;
   }
 
   /** Опції для теплової карти добової активності за тижнями */
-  getTimeOfDayWeekHeatmapOptions(isDarkTheme: boolean): HeatmapOptions {
+  getTimeOfDayWeekHeatmapOptions(isDarkTheme: boolean, globalMaxValue = 1): HeatmapOptions {
     if (isDarkTheme) {
       return {
         chart: { type: 'heatmap', height: 340, foreColor: '#f3eaff', background: '#232136', toolbar: { show: true } },
         xaxis: { type: 'category', labels: { style: { colors: '#f3eaff' } } },
         yaxis: { labels: { style: { colors: '#f3eaff' } }, title: { text: '' } },
-        colors: ['#2a2042', '#6c4bb6', '#a259f7', '#d4a5ff'],
+        colors: ['#1e3a8a', '#14532d', '#991b1b'],
         dataLabels: { enabled: false },
         grid: { borderColor: '#3a2e5c', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
-        tooltip: { enabled: true, theme: 'dark', y: { formatter: (v: any) => formatDuration(v) } },
-        plotOptions: { heatmap: { radius: 2, enableShades: true, shadeIntensity: 0.7, useFillColorAsStroke: false } },
+        tooltip: { enabled: true, theme: 'dark', y: { formatter: (v: any) => {
+          const normalizedVal = Math.floor(v % 1000);
+          const tooltipRatio = normalizedVal / 999;
+          // Зворотне перетворення для нової контрастної шкали
+          let originalRatio;
+          if (tooltipRatio <= 0.02) {
+            originalRatio = 0;
+          } else if (tooltipRatio < 0.08) {
+            originalRatio = (tooltipRatio - 0.02) / 0.3;
+          } else if (tooltipRatio < 0.68) {
+            originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
+          } else {
+            originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+          }
+          const originalVal = Math.round(originalRatio * globalMaxValue);
+          return formatDuration(originalVal);
+        } } },
+        plotOptions: { 
+          heatmap: { 
+            radius: 2, 
+            enableShades: true, 
+            shadeIntensity: 1.0, 
+            useFillColorAsStroke: false, 
+            distributed: false,
+            colorScale: {
+              ranges: [
+                { from: 0, to: 999, color: '#1e3a8a', name: 'Місяць 1' },
+                { from: 1000, to: 1999, color: '#14532d', name: 'Місяць 2' },
+                { from: 2000, to: 2999, color: '#991b1b', name: 'Місяць 3' }
+              ]
+            }
+          } 
+        },
         legend: { show: false }
       } as any;
     }
@@ -295,11 +535,42 @@ export class HeatmapService {
       chart: { type: 'heatmap', height: 340, toolbar: { show: true } },
       xaxis: { type: 'category' },
       yaxis: { labels: { show: true }, title: { text: '' } },
-      colors: ['#f8f9fa', '#e3f2fd', '#2196f3', '#1976d2'],
+      colors: ['#1e3a8a', '#14532d', '#991b1b'],
       dataLabels: { enabled: false },
       grid: { borderColor: '#e0e0e0', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
-      tooltip: { enabled: true, theme: 'light', y: { formatter: (v: any) => formatDuration(v) } },
-      plotOptions: { heatmap: { radius: 2, enableShades: true, shadeIntensity: 0.7, useFillColorAsStroke: false } },
+      tooltip: { enabled: true, theme: 'light', y: { formatter: (v: any) => {
+        const normalizedVal = Math.floor(v % 1000);
+        const tooltipRatio = normalizedVal / 999;
+        // Зворотне перетворення для нової контрастної шкали
+        let originalRatio;
+        if (tooltipRatio <= 0.02) {
+          originalRatio = 0;
+        } else if (tooltipRatio < 0.08) {
+          originalRatio = (tooltipRatio - 0.02) / 0.3;
+        } else if (tooltipRatio < 0.68) {
+          originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
+        } else {
+          originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+        }
+        const originalVal = Math.round(originalRatio * globalMaxValue);
+        return formatDuration(originalVal);
+      } } },
+      plotOptions: { 
+        heatmap: { 
+          radius: 2, 
+          enableShades: true, 
+          shadeIntensity: 1.0, 
+          useFillColorAsStroke: false, 
+          distributed: false,
+          colorScale: {
+            ranges: [
+              { from: 0, to: 999, color: '#1e3a8a', name: 'Місяць 1' },
+              { from: 1000, to: 1999, color: '#14532d', name: 'Місяць 2' },
+              { from: 2000, to: 2999, color: '#991b1b', name: 'Місяць 3' }
+            ]
+          }
+        } 
+      },
       legend: { show: false }
     } as any;
   }

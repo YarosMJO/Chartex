@@ -353,7 +353,7 @@
   ::ng-deep .apexcharts-legend {
     order: 2;
     margin-top: auto;   /* push legend to bottom */
-    padding: 8px 10px 4px 10px; /* more usable width for text */
+    padding: 8px 12px 12px 12px; /* small bottom spacing for nicer look */
     display: grid !important;                      /* enforce 2 rows layout */
     grid-template-columns: repeat(3, max-content);  /* columns sized to content */
     justify-content: center;                        /* center whole grid */
