@@ -315,10 +315,77 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center; /* vertical centering of content */
+  align-items: center; /* horizontal centering */
+  min-height: 420px; /* increase card to allow larger pie */
 
   @media (max-width: 1200px) {
     grid-column: span 1;
     grid-row: auto;
+  }
+}
+
+.pie-chart-card mat-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* keep chart vertically centered */
+  padding-bottom: 0;
+}
+
+.pie-chart-card apx-chart {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px; /* match increased chart height */
+}
+
+.pie-chart-card {
+  /* Control ApexCharts layout inside to pin legend to bottom */
+  ::ng-deep .apexcharts-inner {
+    order: 1;
+    align-self: center; /* center the pie itself */
+    flex: 1 1 auto;     /* take remaining space above legend */
+    transform: translateY(8px);
+  }
+  ::ng-deep .apexcharts-legend {
+    order: 2;
+    margin-top: auto;   /* push legend to bottom */
+    padding: 8px 10px 4px 10px; /* more usable width for text */
+    display: grid !important;                      /* enforce 2 rows layout */
+    grid-template-columns: repeat(3, max-content);  /* columns sized to content */
+    justify-content: center;                        /* center whole grid */
+    justify-items: start;                           /* align content inside cells */
+    align-items: center;
+    row-gap: 12px;
+    column-gap: 48px;                               /* visible gap between items */
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible; /* avoid clipping long labels */
+  }
+  ::ng-deep .apexcharts-legend .apexcharts-legend-series {
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    min-width: 0;           /* allow shrinking within cell */
+    max-width: none;        /* do not clamp to cell width */
+    white-space: normal;    /* allow wrapping to avoid overlap */
+    line-height: 1.25;
+    padding-right: 16px;    /* extra spacing after text before next icon */
+    overflow: visible;      /* ensure multi-line text is not cut */
+  }
+  ::ng-deep .apexcharts-legend .apexcharts-legend-marker {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important; /* ensure round marker for all items */
+    margin-right: 8px !important;  /* spacing between icon and text */
+    margin-left: 10px !important;  /* slightly larger buffer before next icon */
+    flex: 0 0 auto;
+  }
+  ::ng-deep .apexcharts-legend .apexcharts-legend-text {
+    margin-left: 0 !important;
   }
 }
 

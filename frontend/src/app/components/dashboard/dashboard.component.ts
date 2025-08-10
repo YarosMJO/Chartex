@@ -688,7 +688,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return {
       chart: {
         type: 'pie',
-        height: 250,
+            height: 380,
         foreColor: this.isDarkTheme ? '#f3eaff' : '#23272f',
         background: this.isDarkTheme ? '#232136' : '#fff'
       },
@@ -728,14 +728,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
         floating: false,
         fontSize: '14px',
         fontFamily: 'inherit',
+        width: '100%',
+        itemMargin: {
+          horizontal: 8,
+          vertical: 6
+        },
+        onItemClick: {
+          toggleDataSeries: true
+        },
+        formatter: (seriesName: string, opts: any) => seriesName,
         markers: {
           width: 10,
           height: 10,
           radius: 5
         },
-        itemMargin: {
-          horizontal: 8,
-          vertical: 6
+        labels: {
+          colors: undefined
         }
       },
       stroke: {
