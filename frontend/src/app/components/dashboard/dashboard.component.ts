@@ -82,6 +82,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   deviceStatsData: { name: string; visits: number; duration: number }[] = [];
   activityHeatmapData: HeatmapSeries[] = [];
+  timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   categoryDistributionData: number[] = [];
   bubbleChartData: { x: number; y: number; z: number; name: string }[] = [];
 
@@ -344,6 +345,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // Підготовка даних для теплової карти
       this.activityHeatmapData = await this.prepareActivityHeatmapData();
+
+      // Підготовка даних для теплової карти добової активності за тижнями
+      this.timeOfDayWeekHeatmapData = await this.heatmapService.prepareTimeOfDayWeekHeatmapData(
+        this.selectedPeriod,
+        this.selectedDevice
+      );
 
       // Підготовка даних для кругової діаграми
       this.prepareCategoryDistributionData();
@@ -671,6 +678,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('🔍 HEATMAP DEBUG: Current activityHeatmapData length:', this.activityHeatmapData.length);
 
     return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
+  }
+
+  get timeOfDayWeekHeatmapOptions() {
+    return this.heatmapService.getTimeOfDayWeekHeatmapOptions(this.isDarkTheme);
   }
 
   get pieChartOptions() {

@@ -21,6 +21,8 @@ export class ChartsSectionComponent implements OnInit, OnChanges {
   @Input() activityChartOptions: any = {};
   @Input() activityHeatmapData: HeatmapSeries[] = [];
   @Input() activityHeatmapOptions: any = {};
+  @Input() timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
+  @Input() timeOfDayWeekHeatmapOptions: any = {};
   @Input() categoryDistributionData: number[] = [];
   @Input() pieChartOptions: any = {};
   @Input() bubbleChartData: { x: number; y: number; z: number; name: string }[] = [];

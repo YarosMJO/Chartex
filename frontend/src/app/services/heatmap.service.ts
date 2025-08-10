@@ -185,6 +185,126 @@ export class HeatmapService {
   }
 
   /**
+   * Готує теплову карту добової активності протягом тижнів
+   * Y: години доби, X: тижні (W1..Wn), значення: сумарна тривалість (секунди)
+   */
+  async prepareTimeOfDayWeekHeatmapData(
+    selectedPeriod: string,
+    selectedDevice: string
+  ): Promise<HeatmapSeries[]> {
+    // Обчислюємо fromDate щоб мати нульову точку для індекса тижня
+    const now = new Date();
+    let fromDate: Date;
+    switch (selectedPeriod) {
+      case '7d':
+        fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+      case '30d':
+        fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); break;
+      case '90d':
+        fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); break;
+      case '1y':
+        fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); break;
+      default:
+        fromDate = new Date(0);
+    }
+
+    // Завантажуємо історію
+    let historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
+    // Фільтрація дублюється з підготовки активності — виключаємо google.com, якщо є домен/URL
+    historyItems = (historyItems || []).filter(item => {
+      const host = (item?.domain || item?.url || '').toString();
+      return !host.includes('google.com');
+    });
+
+    // Визначаємо години, які показуємо (повний добовий діапазон 00..23)
+    const hours: number[] = Array.from({ length: 24 }, (_, i) => i);
+    const hourLabels: string[] = hours.map(h => `${h.toString().padStart(2, '0')}:00`);
+
+    // Допоміжні структури
+    const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+    const valueByHourWeek: Record<string, Record<string, number>> = {};
+    hourLabels.forEach(h => (valueByHourWeek[h] = {}));
+
+    let maxWeekIndex = 1;
+    const getItemDate = (it: any): Date | null => {
+      const ts = (it?.timestamp ?? it?.time ?? it?.date ?? it?.startTime ?? it?.endTime ?? it?.visitedAt ?? it?.lastVisitTime ?? it?.visitTime ?? it?.createdAt ?? it?.updatedAt);
+      if (!ts) return null;
+      let ms: number | null = null;
+      if (typeof ts === 'number') {
+        ms = ts < 1e12 ? ts * 1000 : ts; // seconds → ms
+      } else if (typeof ts === 'string') {
+        const num = Number(ts);
+        if (!isNaN(num)) {
+          ms = num < 1e12 ? num * 1000 : num;
+        } else {
+          const parsed = Date.parse(ts);
+          ms = isNaN(parsed) ? null : parsed;
+        }
+      } else if (ts instanceof Date) {
+        ms = ts.getTime();
+      }
+      if (ms === null) return null;
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    for (const it of historyItems) {
+      const d = getItemDate(it);
+      // Якщо дати немає — відносимо до W1, годину пробуємо взяти з поля hour/hourOfDay
+      const hourRaw: any = (it?.hour ?? it?.hourOfDay);
+      const hourFromItem = typeof hourRaw === 'number' ? hourRaw : (typeof hourRaw === 'string' ? parseInt(hourRaw, 10) : null);
+      const hour = d ? d.getHours() : (Number.isFinite(hourFromItem) ? (hourFromItem as number) : null);
+      if (hour === null || hour < 0 || hour > 23) continue;
+      const hourLabel = `${(hour as number).toString().padStart(2, '0')}:00`;
+      const baseMs = fromDate.getTime();
+      const weekIndex = d ? (Math.floor((d.getTime() - baseMs) / MS_PER_WEEK) + 1) : 1;
+      maxWeekIndex = Math.max(maxWeekIndex, weekIndex);
+      const weekLabel = `W${weekIndex}`;
+      const duration = isNaN(it?.duration) ? 0 : Math.max(0, it.duration);
+      valueByHourWeek[hourLabel][weekLabel] = (valueByHourWeek[hourLabel][weekLabel] || 0) + duration;
+    }
+
+    // Формуємо осі X — список тижнів W1..Wn
+    const weeks: string[] = Array.from({ length: Math.max(1, maxWeekIndex) }, (_, i) => `W${i + 1}`);
+
+    // Перетворення у формат HeatmapSeries ApexCharts (інвертуємо, щоб 00:00 був вгорі)
+    const series: HeatmapSeries[] = [...hourLabels].reverse().map(hourLabel => ({
+      name: hourLabel,
+      data: weeks.map(w => ({ x: w, y: valueByHourWeek[hourLabel][w] || 0 }))
+    }));
+
+    return series;
+  }
+
+  /** Опції для теплової карти добової активності за тижнями */
+  getTimeOfDayWeekHeatmapOptions(isDarkTheme: boolean): HeatmapOptions {
+    if (isDarkTheme) {
+      return {
+        chart: { type: 'heatmap', height: 340, foreColor: '#f3eaff', background: '#232136', toolbar: { show: true } },
+        xaxis: { type: 'category', labels: { style: { colors: '#f3eaff' } } },
+        yaxis: { labels: { style: { colors: '#f3eaff' } }, title: { text: '' } },
+        colors: ['#2a2042', '#6c4bb6', '#a259f7', '#d4a5ff'],
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#3a2e5c', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+        tooltip: { enabled: true, theme: 'dark', y: { formatter: (v: any) => formatDuration(v) } },
+        plotOptions: { heatmap: { radius: 2, enableShades: true, shadeIntensity: 0.7, useFillColorAsStroke: false } },
+        legend: { show: false }
+      } as any;
+    }
+    return {
+      chart: { type: 'heatmap', height: 340, toolbar: { show: true } },
+      xaxis: { type: 'category' },
+      yaxis: { labels: { show: true }, title: { text: '' } },
+      colors: ['#f8f9fa', '#e3f2fd', '#2196f3', '#1976d2'],
+      dataLabels: { enabled: false },
+      grid: { borderColor: '#e0e0e0', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+      tooltip: { enabled: true, theme: 'light', y: { formatter: (v: any) => formatDuration(v) } },
+      plotOptions: { heatmap: { radius: 2, enableShades: true, shadeIntensity: 0.7, useFillColorAsStroke: false } },
+      legend: { show: false }
+    } as any;
+  }
+
+  /**
    * Завантаження історії для теплової карти
    */
   private async loadHistoryForHeatmap(selectedPeriod: string, selectedDevice: string): Promise<any[]> {

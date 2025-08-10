@@ -296,6 +296,19 @@
   }
 }
 
+.weekly-heatmap-card {
+  grid-column: 1; // place before pie chart on the left
+  grid-row: 3;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 1200px) {
+    grid-column: span 1;
+    grid-row: auto;
+  }
+}
+
 .pie-chart-card {
   grid-column: 2; // Occupies the second column (1/3 width)
   grid-row: 3; // Occupies the second row (under heatmap)
