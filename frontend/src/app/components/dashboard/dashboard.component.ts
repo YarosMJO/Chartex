@@ -695,7 +695,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         foreColor: this.isDarkTheme ? '#f3eaff' : '#23272f',
         background: this.isDarkTheme ? '#232136' : '#fff'
       },
-      labels: ['Соціальні мережі', 'Робота', 'Розваги', 'Новини', 'Покупки', 'Інше'],
+      labels: ['Соц. мережі', 'Робота', 'Розваги', 'Новини', 'Покупки', 'Інше'],
       colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'],
       dataLabels: {
         enabled: true,
