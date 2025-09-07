@@ -1,0 +1,18 @@
+<mat-card class="chart-card pie-chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'DASHBOARD.CHARTS.CATEGORY_DISTRIBUTION' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <apx-chart
+      [series]="categoryDistributionData"
+      [chart]="pieChartOptions.chart"
+      [labels]="pieChartOptions.labels"
+      [colors]="pieChartOptions.colors"
+      [dataLabels]="pieChartOptions.dataLabels"
+      [plotOptions]="pieChartOptions.plotOptions"
+      [tooltip]="pieChartOptions.tooltip"
+      [legend]="pieChartOptions.legend"
+      [noData]="{ text: 'Немає даних для відображення' }">
+    </apx-chart>
+  </mat-card-content>
+</mat-card>

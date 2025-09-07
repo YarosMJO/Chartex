@@ -1,0 +1,19 @@
+<mat-card class="chart-card weekly-heatmap-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'DASHBOARD.CHARTS.TIME_OF_DAY_BY_WEEKS' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <apx-chart
+      [series]="timeOfDayWeekHeatmapData"
+      [chart]="timeOfDayWeekHeatmapOptions.chart"
+      [xaxis]="timeOfDayWeekHeatmapOptions.xaxis"
+      [yaxis]="timeOfDayWeekHeatmapOptions.yaxis"
+      [dataLabels]="timeOfDayWeekHeatmapOptions.dataLabels"
+      [grid]="timeOfDayWeekHeatmapOptions.grid"
+      [tooltip]="timeOfDayWeekHeatmapOptions.tooltip"
+      [plotOptions]="timeOfDayWeekHeatmapOptions.plotOptions"
+      [legend]="timeOfDayWeekHeatmapOptions.legend"
+      [noData]="{ text: 'Немає даних для відображення' }">
+    </apx-chart>
+  </mat-card-content>
+</mat-card>

@@ -1,137 +1,37 @@
 <div class="charts-grid">
-  <mat-card class="chart-card main-chart-card">
-    <mat-card-header>
-      <mat-card-title>{{ selectedPeriod }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <apx-chart
-        [series]="getActivitySeries()"
-        [chart]="activityChartOptions.chart"
-        [xaxis]="activityChartOptions.xaxis"
-        [yaxis]="activityChartOptions.yaxis"
-        [colors]="activityChartOptions.colors"
-        [fill]="activityChartOptions.fill"
-        [stroke]="activityChartOptions.stroke"
-        [dataLabels]="activityChartOptions.dataLabels"
-        [grid]="activityChartOptions.grid"
-        [tooltip]="activityChartOptions.tooltip"
-        [legend]="activityChartOptions.legend"
-        [noData]="{ text: 'Немає даних для відображення' }"
-        (chartReady)="onActivityChartReady($event)">
-      </apx-chart>
-    </mat-card-content>
-  </mat-card>
+  <!-- Графік активності -->
+  <app-activity-chart
+    [activityChartData]="activityChartData"
+    [selectedPeriod]="selectedPeriod"
+    [activityChartOptions]="activityChartOptions">
+  </app-activity-chart>
   
   <!-- Добова активність по тижнях -->
-  <mat-card class="chart-card weekly-heatmap-card">
-    <mat-card-header>
-      <mat-card-title>{{ 'DASHBOARD.CHARTS.TIME_OF_DAY_BY_WEEKS' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <apx-chart
-        [series]="timeOfDayWeekHeatmapData"
-        [chart]="timeOfDayWeekHeatmapOptions.chart"
-        [xaxis]="timeOfDayWeekHeatmapOptions.xaxis"
-        [yaxis]="timeOfDayWeekHeatmapOptions.yaxis"
-        [dataLabels]="timeOfDayWeekHeatmapOptions.dataLabels"
-        [grid]="timeOfDayWeekHeatmapOptions.grid"
-        [tooltip]="timeOfDayWeekHeatmapOptions.tooltip"
-        [plotOptions]="timeOfDayWeekHeatmapOptions.plotOptions"
-        [legend]="timeOfDayWeekHeatmapOptions.legend"
-        [noData]="{ text: 'Немає даних для відображення' }">
-      </apx-chart>
-    </mat-card-content>
-  </mat-card>
+  <app-time-heatmap
+    [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
+    [timeOfDayWeekHeatmapOptions]="timeOfDayWeekHeatmapOptions">
+  </app-time-heatmap>
 
   <!-- Теплова карта активності за часом доби -->
-  <mat-card class="chart-card heatmap-card">
-    <mat-card-header>
-      <mat-card-title>{{ 'DASHBOARD.CHARTS.ACTIVITY_HEATMAP' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <apx-chart
-        [series]="activityHeatmapData"
-        [chart]="activityHeatmapOptions.chart"
-        [xaxis]="activityHeatmapOptions.xaxis"
-        [yaxis]="activityHeatmapOptions.yaxis"
-        [colors]="activityHeatmapOptions.colors"
-        [dataLabels]="activityHeatmapOptions.dataLabels"
-        [grid]="activityHeatmapOptions.grid"
-        [tooltip]="activityHeatmapOptions.tooltip"
-        [plotOptions]="activityHeatmapOptions.plotOptions"
-        [noData]="{ text: 'Немає даних для відображення' }">
-      </apx-chart>
-    </mat-card-content>
-  </mat-card>
+  <app-activity-heatmap
+    [activityHeatmapData]="activityHeatmapData"
+    [activityHeatmapOptions]="activityHeatmapOptions">
+  </app-activity-heatmap>
   
   <!-- Кругова діаграма розподілу часу за категоріями -->
-  <mat-card class="chart-card pie-chart-card">
-    <mat-card-header>
-      <mat-card-title>{{ 'DASHBOARD.CHARTS.CATEGORY_DISTRIBUTION' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <apx-chart
-        [series]="categoryDistributionData"
-        [chart]="pieChartOptions.chart"
-        [labels]="pieChartOptions.labels"
-        [colors]="pieChartOptions.colors"
-        [dataLabels]="pieChartOptions.dataLabels"
-        [plotOptions]="pieChartOptions.plotOptions"
-        [tooltip]="pieChartOptions.tooltip"
-        [legend]="pieChartOptions.legend"
-        [noData]="{ text: 'Немає даних для відображення' }">
-      </apx-chart>
-    </mat-card-content>
-  </mat-card>
+  <app-pie-chart
+    [categoryDistributionData]="categoryDistributionData"
+    [pieChartOptions]="pieChartOptions">
+  </app-pie-chart>
   
   <!-- Бульбашкова діаграма -->
-  <mat-card class="chart-card bubble-chart-card">
-    <mat-card-header>
-      <mat-card-title>{{ 'DASHBOARD.CHARTS.BUBBLE_CHART' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <apx-chart
-        [series]="getBubbleChartSeries()"
-        [chart]="bubbleChartOptions.chart"
-        [xaxis]="bubbleChartOptions.xaxis"
-        [yaxis]="bubbleChartOptions.yaxis"
-        [colors]="bubbleChartOptions.colors"
-        [dataLabels]="bubbleChartOptions.dataLabels"
-        [grid]="bubbleChartOptions.grid"
-        [plotOptions]="bubbleChartOptions.plotOptions"
-        [tooltip]="bubbleChartOptions.tooltip"
-        [noData]="{ text: 'Немає даних для відображення' }"
-        (chartReady)="onChartReady($event)">
-      </apx-chart>
-    </mat-card-content>
-  </mat-card>
+  <app-bubble-chart
+    [bubbleChartData]="bubbleChartData"
+    [bubbleChartOptions]="bubbleChartOptions">
+  </app-bubble-chart>
   
-  <mat-card class="chart-card top-sites-card">
-    <mat-card-header>
-      <mat-card-title class="top-sites-title">{{ 'DASHBOARD.CHARTS.TOP_SITES' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="top-domains-list">
-        <div *ngFor="let domain of topDomainsData; let i = index; trackBy: trackByDomain" class="domain-item">
-          <div class="domain-rank">{{ i + 1 }}</div>
-          <div class="domain-info">
-            <div class="domain-name" [title]="domain.name">
-              {{ domain.title || cleanDomainName(domain.name) }}
-            </div>
-            <div class="domain-url" *ngIf="domain.name !== domain.title">
-              {{ cleanDomainName(domain.name) }}
-            </div>
-            <div class="domain-stats">
-              {{ domain.visits }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }}
-              <span *ngIf="domain.duration > 0"> • {{ formatDuration(domain.duration) }}</span>
-              <span *ngIf="domain.averageDuration > 0"> • сер: {{ formatDuration(Math.round(domain.averageDuration)) }}</span>
-              <span *ngIf="domain.originalCount > 1" class="aggregated-count" [title]="'Агреговано з ' + domain.originalCount + ' доменів'">
-                ({{ domain.originalCount }})
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  <!-- Топ сайтів -->
+  <app-top-sites
+    [topDomainsData]="topDomainsData">
+  </app-top-sites>
 </div> 

@@ -1,0 +1,20 @@
+<mat-card class="chart-card bubble-chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'DASHBOARD.CHARTS.BUBBLE_CHART' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <apx-chart
+      [series]="getBubbleChartSeries()"
+      [chart]="bubbleChartOptions.chart"
+      [xaxis]="bubbleChartOptions.xaxis"
+      [yaxis]="bubbleChartOptions.yaxis"
+      [colors]="bubbleChartOptions.colors"
+      [dataLabels]="bubbleChartOptions.dataLabels"
+      [grid]="bubbleChartOptions.grid"
+      [plotOptions]="bubbleChartOptions.plotOptions"
+      [tooltip]="bubbleChartOptions.tooltip"
+      [noData]="{ text: 'Немає даних для відображення' }"
+      (chartReady)="onChartReady($event)">
+    </apx-chart>
+  </mat-card-content>
+</mat-card>

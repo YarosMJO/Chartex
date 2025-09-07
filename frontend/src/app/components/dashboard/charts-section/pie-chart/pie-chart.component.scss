@@ -1,0 +1,153 @@
+.pie-chart-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertical centering of content */
+  align-items: center; /* horizontal centering */
+  min-height: 420px; /* increase card to allow larger pie */
+
+  @media (max-width: 1200px) {
+    min-height: 360px; /* reduce min height on medium screens */
+  }
+
+  @media (max-width: 900px) {
+    min-height: 320px; /* further reduce for smaller screens */
+  }
+
+  @media (max-width: 768px) {
+    min-height: 280px; /* ensure enough space for chart + legend */
+  }
+
+  @media (max-width: 480px) {
+    min-height: 260px; /* ensure enough space for chart + legend */
+  }
+
+  @media (max-width: 400px) {
+    min-height: 280px; /* increase for very small screens */
+  }
+}
+
+.pie-chart-card mat-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* distribute space between chart and legend */
+  padding-bottom: 8px; /* ensure space for legend */
+  overflow: visible; /* prevent cutting off legend */
+}
+
+.pie-chart-card apx-chart {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; /* prevent legend clipping */
+  min-height: 380px; /* match increased chart height */
+  
+  /* Ensure the chart container adapts properly */
+  ::ng-deep .apexcharts-canvas-container {
+    overflow: visible !important;
+  }
+  
+  ::ng-deep .apexcharts-canvas {
+    overflow: visible !important;
+  }
+  
+  @media (max-width: 1200px) {
+    min-height: 320px;
+  }
+  
+  @media (max-width: 900px) {
+    min-height: 280px;
+  }
+  
+  @media (max-width: 768px) {
+    min-height: 280px; /* ensure enough space for chart + legend */
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 260px; /* ensure enough space for chart + legend */
+  }
+  
+  @media (max-width: 400px) {
+    min-height: 280px; /* increase for very small screens */
+  }
+}
+
+.pie-chart-card {
+  /* Control ApexCharts layout inside to pin legend to bottom */
+  ::ng-deep .apexcharts-inner {
+    order: 1;
+    align-self: center; /* center the pie itself */
+    flex: 1 1 auto;     /* take remaining space above legend */
+    min-height: 0;      /* allow shrinking */
+    overflow: visible;  /* prevent clipping */
+  }
+  ::ng-deep .apexcharts-legend {
+    order: 2;
+    flex: 0 0 auto;     /* don't grow or shrink, fixed size */
+    margin-top: 8px;    /* consistent spacing from chart */
+    padding: 8px 12px 12px 12px; /* small bottom spacing for nicer look */
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr); /* exactly 3 columns */
+    grid-template-rows: repeat(2, auto); /* exactly 2 rows */
+    justify-items: center;
+    align-items: center;
+    gap: 12px 8px; /* row-gap column-gap */
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible; /* ensure all text is visible */
+    max-width: 100%;
+    position: relative; /* ensure proper positioning */
+    z-index: 10;       /* above other elements */
+    
+    /* Responsive adjustments for smaller screens */
+    
+    @media (max-width: 1200px) {
+      display: none !important; /* Приховуємо легенду на екранах менше 1200px */
+    }
+    
+  }
+  ::ng-deep .apexcharts-legend .apexcharts-legend-series {
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: inherit;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+  
+  ::ng-deep .apexcharts-legend .apexcharts-legend-series .apexcharts-legend-marker {
+    margin: 0 !important;
+    flex-shrink: 0;
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    display: inline-block;
+  }
+  
+  ::ng-deep .apexcharts-legend .apexcharts-legend-series .apexcharts-legend-text {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    color: inherit !important;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+}

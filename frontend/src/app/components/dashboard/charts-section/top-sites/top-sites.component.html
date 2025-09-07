@@ -1,0 +1,28 @@
+<mat-card class="chart-card top-sites-card">
+  <mat-card-header>
+    <mat-card-title class="top-sites-title">{{ 'DASHBOARD.CHARTS.TOP_SITES' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="top-domains-list">
+      <div *ngFor="let domain of topDomainsData; let i = index; trackBy: trackByDomain" class="domain-item">
+        <div class="domain-rank">{{ i + 1 }}</div>
+        <div class="domain-info">
+          <div class="domain-name" [title]="domain.name">
+            {{ domain.title || cleanDomainName(domain.name) }}
+          </div>
+          <div class="domain-url" *ngIf="domain.name !== domain.title">
+            {{ cleanDomainName(domain.name) }}
+          </div>
+          <div class="domain-stats">
+            {{ domain.visits }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }}
+            <span *ngIf="domain.duration > 0"> • {{ formatDuration(domain.duration) }}</span>
+            <span *ngIf="domain.averageDuration > 0"> • сер: {{ formatDuration(Math.round(domain.averageDuration)) }}</span>
+            <span *ngIf="domain.originalCount > 1" class="aggregated-count" [title]="'Агреговано з ' + domain.originalCount + ' доменів'">
+              ({{ domain.originalCount }})
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

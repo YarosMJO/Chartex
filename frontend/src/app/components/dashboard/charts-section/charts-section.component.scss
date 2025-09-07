@@ -1,21 +1,35 @@
 .charts-grid {
   display: grid;
   grid-template-columns: 2fr 1fr; // Main chart 2/3, right column 1/3
-  grid-template-rows: 1fr auto auto auto; // Row 1 (1fr), Row 2 (auto), Row 3 (auto), Row 4 (auto)
+  grid-template-rows: 1fr auto auto; // Row 1 (1fr), Row 2 (auto), Row 3 (auto)
   gap: 20px;
   margin-bottom: 20px;
   min-height: calc(100vh - 400px); // Враховуємо header, stats-cards та інші елементи
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden; // Prevent components from overflowing
 
-  @media (max-width: 1200px) {
-    grid-template-columns: 2fr 1fr; // This media query might need adjustment for smaller screens
-    grid-template-rows: auto;
-    min-height: auto;
+  @media (max-width: 1400px) {
+    grid-template-columns: 1.5fr 1fr; // Slightly more balanced on large screens
+    gap: 16px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr; // Equal columns on medium screens
+    grid-template-rows: auto auto auto;
+    min-height: auto;
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
     min-height: auto;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 12px;
   }
 }
 
@@ -24,9 +38,24 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0; // Allow flex items to shrink below their content size
   
   mat-card-title {
     font-weight: 600; // ensure chart titles are semi-bold
+  }
+
+  mat-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    min-width: 0; // Allow content to shrink
+    overflow: hidden; // Prevent content overflow
   }
 
   &:hover {
@@ -35,638 +64,131 @@
   }
 }
 
-.main-chart-card {
+// Grid positioning for new components
+::ng-deep app-activity-chart {
   grid-column: 1; // Occupies the first column (2/3 width)
   grid-row: 1; // Occupies the first row (1fr height)
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
-    grid-column: span 1;
-    grid-row: span 1;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 
-.main-chart-card mat-card-content {
-  flex: 1;
+::ng-deep app-bubble-chart {
+  grid-column: 1; // Occupies the first column
+  grid-row: 2; // Occupies the second row (under main chart)
   display: flex;
   flex-direction: column;
-}
-
-.main-chart-card apx-chart {
-  flex: 1;
-  min-height: 0;
-}
-
-.heatmap-card mat-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.heatmap-card apx-chart {
-  flex: 1;
-  min-height: 0;
-}
-
-.pie-chart-card mat-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.pie-chart-card apx-chart {
-  flex: 1;
-  min-height: 0;
-}
-
-.bubble-chart-card {
-  grid-column: 1; // Occupies the second column (1/3 width)
-  grid-row: 2; // Occupies the third row (under pie chart)
   height: 100%;
-  min-height: 500px; // Increased from 450px to 500px
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
-    grid-column: span 1;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
     grid-row: auto;
   }
 }
 
-.bubble-chart-card mat-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.bubble-chart-card apx-chart {
-  flex: 1;
-  min-height: 400px; // Increased from 350px to 400px
-  
-  // Ensure bubble chart renders properly
-  ::ng-deep .apexcharts-bubble {
-    opacity: 0.8;
-    stroke-width: 1;
-    stroke: rgba(255, 255, 255, 0.3);
-  }
-  
-  ::ng-deep .apexcharts-bubble:hover {
-    opacity: 1;
-    stroke-width: 2;
-  }
-  
-  // Ensure data labels are properly positioned within chart bounds
-  ::ng-deep .apexcharts-data-labels {
-    text-anchor: middle;
-    dominant-baseline: middle;
-    pointer-events: none;
-  }
-  
-  // Ensure chart container has proper padding and overflow handling
-  ::ng-deep .apexcharts-canvas {
-    margin: 0; // remove extra outer gap around axes
-    overflow: visible;
-  }
-  
-  // Ensure grid lines don't interfere with bubble positioning
-  ::ng-deep .apexcharts-gridline {
-    opacity: 0.3;
-  }
-  
-  // Ensure any internal ApexCharts titles match weight
-  ::ng-deep .apexcharts-title-text {
-    font-weight: 600 !important;
-  }
-  
-  // Ensure axis labels are properly positioned
-  ::ng-deep .apexcharts-xaxis-label,
-  ::ng-deep .apexcharts-yaxis-label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-  
-  // Ensure bubbles stay within chart area
-  ::ng-deep .apexcharts-bubble-series {
-    clip-path: none;
-  }
-  
-  // Ensure chart area has proper boundaries
-  ::ng-deep .apexcharts-plot-area {
-    overflow: visible;
-  }
-  
-  // Ensure tooltips don't get cut off
-  ::ng-deep .apexcharts-tooltip {
-    z-index: 1000;
-    pointer-events: auto;
-  }
-
-  // Styled tooltip matching dashboard look
-  ::ng-deep .bubble-tooltip {
-    background: #ffffff !important;
-    color: #23272f !important;
-    border: 1px solid #e6e6eb !important;
-    border-radius: 10px !important;
-    padding: 10px 12px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-    min-width: 220px !important;
-  }
-  
-  // Remove ApexCharts default tooltip styling but keep our custom tooltip
-  ::ng-deep .apexcharts-tooltip {
-    border: none !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-  
-  // Remove any outer border or shadow from ApexCharts tooltip container
-  ::ng-deep .apexcharts-tooltip.apexcharts-theme-light {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-  
-  // Remove any additional ApexCharts tooltip wrapper styling
-  ::ng-deep .apexcharts-tooltip-series-group {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-  
-  // Remove borders from ApexCharts elements but preserve our custom tooltip
-  ::ng-deep .apexcharts-tooltip *:not(.bubble-tooltip) {
-    border: none !important;
-    box-shadow: none !important;
-  }
-  ::ng-deep .bubble-tooltip .title {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-  ::ng-deep .bubble-tooltip .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 12px;
-    line-height: 1.4;
-    padding: 2px 0;
-  }
-  ::ng-deep .bubble-tooltip .label {
-    color: #6b7280; // gray-500
-  }
-  ::ng-deep .bubble-tooltip .value {
-    font-weight: 600;
-    color: #111827; // gray-900
-  }
-  
-  // Additional bubble positioning controls
-  ::ng-deep .apexcharts-bubble-series .apexcharts-bubble {
-    vector-effect: non-scaling-stroke;
-  }
-  
-  // Ensure chart container doesn't clip bubbles
-  ::ng-deep .apexcharts-inner {
-    overflow: visible;
-  }
-  
-  // Ensure responsive behavior
-  ::ng-deep .apexcharts-canvas-container {
-    overflow: visible;
-  }
-  
-  // Ensure proper spacing for bubble labels
-  ::ng-deep .apexcharts-data-labels-group {
-    pointer-events: none;
-  }
-  
-  // Prevent automatic scaling that might cut off bubbles
-  ::ng-deep .apexcharts-svg {
-    overflow: visible;
-  }
-  
-  // Ensure chart margins are respected
-  ::ng-deep .apexcharts-chart {
-    margin: 0;
-    padding: 0;
-  }
-  
-  // Ensure bubble series doesn't get clipped
-  ::ng-deep .apexcharts-series.apexcharts-bubble-series {
-    clip-path: none !important;
-  }
-  
-  // Prevent automatic chart scaling
-  ::ng-deep .apexcharts-canvas {
-    transform: none !important;
-  }
-  
-  // Ensure chart maintains fixed dimensions
-  ::ng-deep .apexcharts-svg {
-    width: 100% !important;
-    height: 100% !important;
-  }
-  
-  // Ensure proper chart container sizing
-  ::ng-deep .apexcharts-canvas-container {
-    width: 100% !important;
-    height: 100% !important;
-  }
-  
-  // Remove inner padding that created a gap between axes and plot area
-  ::ng-deep .apexcharts-plot-area {
-    padding: 0;
-  }
-  
-  // Ensure bubbles are properly contained within chart area
-  ::ng-deep .apexcharts-bubble-series {
-    transform-origin: center;
-  }
-  
-  // Prevent bubbles from being cut off at chart edges
-  ::ng-deep .apexcharts-chart {
-    overflow: visible;
-  }
-}
-
-.top-sites-card {
+::ng-deep app-top-sites {
   grid-column: 2; // Occupies the second column (1/3 width)
-  grid-row: 2; // Occupies the fourth row (under bubble chart)
-  height: auto; // grows until list reaches its max-height
+  grid-row: 2; // Occupies the second row (under heatmap)
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
-    grid-column: span 1;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
     grid-row: auto;
   }
 }
 
-.top-sites-card mat-card-content {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; // list will scroll within
-}
-
-.heatmap-card {
+::ng-deep app-activity-heatmap {
   grid-column: 2; // Occupies the second column (1/3 width)
   grid-row: 1; // Occupies the first row
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
-    grid-column: span 1;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
     grid-row: auto;
   }
 }
 
-.weekly-heatmap-card {
+::ng-deep app-time-heatmap {
   grid-column: 1; // place before pie chart on the left
   grid-row: 3;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 1200px) {
-    grid-column: span 1;
-    grid-row: auto;
-  }
-}
-
-.pie-chart-card {
-  grid-column: 2; // Occupies the second column (1/3 width)
-  grid-row: 3; // Occupies the second row (under heatmap)
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* vertical centering of content */
-  align-items: center; /* horizontal centering */
-  min-height: 420px; /* increase card to allow larger pie */
-
-  @media (max-width: 1200px) {
-    grid-column: span 1;
-    grid-row: auto;
-    min-height: 360px; /* reduce min height on medium screens */
-  }
-  
-  @media (max-width: 900px) {
-    min-height: 320px; /* further reduce for smaller screens */
-  }
-  
-  @media (max-width: 768px) {
-    min-height: 300px; /* increase for mobile to fit legend */
-  }
-  
-  @media (max-width: 480px) {
-    min-height: 280px; /* ensure enough space for legend on small screens */
-  }
-  
-  @media (max-width: 400px) {
-    min-height: 300px; /* increase for very small screens to fit both legend rows */
-  }
-}
-
-.pie-chart-card mat-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* distribute space between chart and legend */
-  padding-bottom: 8px; /* ensure space for legend */
-  overflow: visible; /* prevent cutting off legend */
-}
-
-.pie-chart-card apx-chart {
-  flex: 1 1 auto;
   width: 100%;
-  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+
+  @media (max-width: 1200px) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+::ng-deep app-pie-chart {
+  grid-column: 2; // Occupies the second column (1/3 width)
+  grid-row: 3; // Occupies the third row (under heatmap)
   display: flex;
   flex-direction: column;
-  overflow: visible; /* prevent legend clipping */
-  min-height: 380px; /* match increased chart height */
-  
-  /* Ensure the chart container adapts properly */
-  ::ng-deep .apexcharts-canvas-container {
-    overflow: visible !important;
-  }
-  
-  ::ng-deep .apexcharts-canvas {
-    overflow: visible !important;
-  }
-  
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+
   @media (max-width: 1200px) {
-    min-height: 320px;
+    grid-column: 2;
+    grid-row: 3;
   }
-  
+
   @media (max-width: 900px) {
-    min-height: 280px;
+    grid-column: 1;
+    grid-row: auto;
   }
-  
-  @media (max-width: 768px) {
-    min-height: 280px; /* ensure enough space for chart + legend */
-  }
-  
-  @media (max-width: 480px) {
-    min-height: 260px; /* ensure enough space for chart + legend */
-  }
-  
-  @media (max-width: 400px) {
-    min-height: 280px; /* increase for very small screens */
-  }
-}
-
-.pie-chart-card {
-  /* Control ApexCharts layout inside to pin legend to bottom */
-  ::ng-deep .apexcharts-inner {
-    order: 1;
-    align-self: center; /* center the pie itself */
-    flex: 1 1 auto;     /* take remaining space above legend */
-    min-height: 0;      /* allow shrinking */
-    overflow: visible;  /* prevent clipping */
-  }
-  ::ng-deep .apexcharts-legend {
-    order: 2;
-    flex: 0 0 auto;     /* don't grow or shrink, fixed size */
-    margin-top: 8px;    /* consistent spacing from chart */
-    padding: 8px 12px 12px 12px; /* small bottom spacing for nicer look */
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr); /* exactly 3 columns */
-    grid-template-rows: repeat(2, auto); /* exactly 2 rows */
-    justify-items: center;
-    align-items: center;
-    gap: 12px 8px; /* row-gap column-gap */
-    width: 100%;
-    box-sizing: border-box;
-    overflow: visible; /* ensure all text is visible */
-    max-width: 100%;
-    position: relative; /* ensure proper positioning */
-    z-index: 10;       /* above other elements */
-    
-    /* Responsive adjustments for smaller screens */
-    
-    @media (max-width: 1200px) {
-      display: none !important; /* Приховуємо легенду на екранах менше 1200px */
-    }
-    
-  }
-  ::ng-deep .apexcharts-legend .apexcharts-legend-series {
-    margin: 0 !important;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;    /* prevent text wrapping */
-    line-height: 1.2;       /* tighter line height */
-    overflow: visible;      /* ensure all text is visible */
-    width: 100%;            /* take full width of grid cell */
-    max-width: 100%;        /* allow full width */
-    min-height: 20px;       /* ensure minimum clickable area */
-    
-    /* Responsive font sizes to ensure text fits */
-    @media (max-width: 1200px) {
-      font-size: 13px;
-      min-height: 18px;
-    }
-    
-    @media (max-width: 900px) {
-      font-size: 12px;
-      min-height: 16px;
-    }
-    
-    @media (max-width: 768px) {
-      font-size: 11px;
-      min-height: 15px;
-    }
-    
-    @media (max-width: 600px) {
-      font-size: 10px;
-      min-height: 14px;
-    }
-    
-    @media (max-width: 480px) {
-      font-size: 9px;
-      min-height: 13px;
-      line-height: 1.1;
-    }
-    
-    @media (max-width: 400px) {
-      font-size: 8px;
-      min-height: 12px;
-      line-height: 1.0;
-    }
-  }
-  ::ng-deep .apexcharts-legend .apexcharts-legend-marker {
-    width: 10px !important;
-    height: 10px !important;
-    border-radius: 50% !important; /* ensure round marker for all items */
-    margin-right: 6px !important;  /* spacing between icon and text */
-    margin-left: 0 !important;     /* no left margin */
-    flex: 0 0 auto;
-    
-    /* Responsive adjustments for markers - scale proportionally with text */
-    @media (max-width: 900px) {
-      width: 9px !important;
-      height: 9px !important;
-      margin-right: 5px !important;
-    }
-    
-    @media (max-width: 768px) {
-      width: 8px !important;
-      height: 8px !important;
-      margin-right: 4px !important;
-    }
-    
-    @media (max-width: 600px) {
-      width: 7px !important;
-      height: 7px !important;
-      margin-right: 3px !important;
-    }
-    
-    @media (max-width: 480px) {
-      width: 6px !important;
-      height: 6px !important;
-      margin-right: 2px !important;
-    }
-    
-    @media (max-width: 400px) {
-      width: 5px !important;
-      height: 5px !important;
-      margin-right: 2px !important;
-    }
-  }
-  ::ng-deep .apexcharts-legend .apexcharts-legend-text {
-    margin-left: 0 !important;
-    overflow: visible !important;      /* ensure all text is visible */
-    text-overflow: clip !important;    /* no ellipsis - show full text */
-    white-space: nowrap !important;    /* prevent wrapping */
-    flex: 1 1 auto;
-    min-width: 0;
-    
-    /* Text should inherit font-size from parent series element */
-  }
-}
-
-
-
-::ng-deep .apexcharts-series {
-  &.apexcharts-heatmap-series {
-    @media (max-width: 1200px) {
-      text-orientation: mixed;
-      writing-mode: sideways-rl;
-    }
-  }
-}
-
-
-.top-sites-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-left: 10px;
-}
-
-.top-domains-list {
-  overflow-y: auto;
-  max-height: 420px; // desktop cap
-}
-
-@media (max-width: 1200px) {
-  .top-domains-list {
-    max-height: 360px;
-  }
-}
-
-@media (max-width: 768px) {
-  .top-domains-list {
-    max-height: 300px;
-  }
-}
-
-.domain-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-right: 10px;
-  padding: 12px 10px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s ease;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background-color: #f8f9fa;
-  }
-}
-
-.domain-rank {
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.domain-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.domain-name {
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.domain-url {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-all;
-}
-
-.domain-stats {
-  font-size: 12px;
-  color: #666;
-  
-  .aggregated-count {
-    color: #999;
-    font-style: italic;
-    cursor: help;
-    opacity: 0.8;
-  }
-}
-
-/* Scrollbar Styling */
-.top-domains-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.top-domains-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.top-domains-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.top-domains-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
 }
 
 /* === ТЕМИ ДЛЯ CHARTS SECTION === */
@@ -677,7 +199,7 @@
 
 ::ng-deep body.theme-dark .chart-card {
   background: #232136 !important;
-  color: #f3eaff !important;
+  color: #f3eaff;
   box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55);
   border: 1.5px solid #6c4bb6;
 }
@@ -686,66 +208,7 @@
   color: #f3eaff !important;
 }
 
-::ng-deep body.theme-dark .domain-item {
-  background: #232136;
-  border-bottom: 1px solid #2a2042;
-}
-
-::ng-deep body.theme-dark .domain-item .domain-name {
-  color: #f3eaff !important;
-}
-
-::ng-deep body.theme-dark .domain-item .domain-url,
-::ng-deep body.theme-dark .domain-item .domain-stats {
-  color: #b6a6d9 !important;
-}
-
-::ng-deep body.theme-dark .domain-item:hover,
-::ng-deep body.theme-dark .domain-item.active {
-  background: #3a2e5c !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-}
-
-::ng-deep body.theme-dark .domain-item:hover .domain-name,
-::ng-deep body.theme-dark .domain-item:hover .domain-url,
-::ng-deep body.theme-dark .domain-item:hover .domain-stats {
-  color: #fff !important;
-}
-
 ::ng-deep body.theme-dark .mat-card-title,
 ::ng-deep body.theme-dark .mat-card-header {
   color: #f3eaff !important;
-}
-
-// ApexCharts темна тема
-::ng-deep body.theme-dark .apexcharts-tooltip {
-  background: transparent !important;
-  color: #fff !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-  ::ng-deep body.theme-dark .bubble-tooltip {
-    background: #2a2042 !important;
-    color: #f3eaff !important;
-    border: 1px solid #3a2e5c !important;
-    border-radius: 10px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
-  }
-  ::ng-deep body.theme-dark .bubble-tooltip .label {
-    color: #b6a6d9;
-  }
-  ::ng-deep body.theme-dark .bubble-tooltip .value {
-    color: #ffffff;
-  }
-
-::ng-deep body.theme-dark .apexcharts-xaxis-label,
-::ng-deep body.theme-dark .apexcharts-yaxis-label {
-  fill: #f3eaff !important;
-  color: #f3eaff !important;
-}
-
-::ng-deep body.theme-dark .apexcharts-gridline {
-  stroke: #3a2e5c !important;
 }
