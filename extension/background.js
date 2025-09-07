@@ -409,8 +409,26 @@ class HistoryCollector {
       // Обчислення duration: використовуємо більш надійний метод
       let duration = 0;
       if (historyItem.duration && historyItem.duration > 0) {
-        // Якщо Chrome надав duration, використовуємо його
-        duration = historyItem.duration;
+        // Chrome API може повертати duration в мілісекундах, потрібно конвертувати в секунди
+        // Якщо значення більше 1000, це ймовірно мілісекунди
+        if (historyItem.duration > 1000) {
+          duration = Math.round(historyItem.duration / 1000); // Конвертуємо мс в секунди
+          console.log('🔍 DURATION DEBUG: Converted from milliseconds:', {
+            originalMs: historyItem.duration,
+            convertedSeconds: duration
+          });
+        } else {
+          duration = historyItem.duration; // Вже в секундах
+        }
+        
+        // Обмежуємо максимальний час 1 годиною (3600 сек) для одного відвідування
+        if (duration > 3600) {
+          console.log('🔍 DURATION DEBUG: Duration too large, capping at 1 hour:', {
+            originalDuration: duration,
+            cappedDuration: 3600
+          });
+          duration = 3600;
+        }
       } else {
         // Інакше використовуємо приблизний час на основі типу переходу
         // Це приблизний час, який користувач провів на сторінці
@@ -422,10 +440,11 @@ class HistoryCollector {
         }
       }
       
-      console.log('Обчислений duration для запису:', {
+      console.log('🔍 DURATION DEBUG: Final calculated duration:', {
         url: historyItem.url,
         originalDuration: historyItem.duration,
-        calculatedDuration: duration,
+        finalDuration: duration,
+        durationMinutes: Math.round(duration / 60 * 100) / 100,
         transition: historyItem.transition
       });
       
@@ -554,6 +573,7 @@ class HistoryCollector {
     // Відправити залишкові записи
     this.flushBatch();
   }
+  
 }
 
 // Ініціалізація об'єктів
@@ -827,6 +847,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       historyCollector.stop();
       sendResponse({ success: true });
       break;
+      
       
     case 'getStatus':
       (async () => {

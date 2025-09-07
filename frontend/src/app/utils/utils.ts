@@ -113,12 +113,58 @@ export const cleanDomainName = (domain: string): string => {
   cleaned = cleaned.split('?')[0];
   cleaned = cleaned.split('#')[0];
   
-  return cleaned.toLowerCase();
+  // Видаляємо доменні закінчення (.com, .org, .net тощо)
+  const tlds = [
+    '.com', '.org', '.net', '.edu', '.gov', '.mil', '.int',
+    '.co.uk', '.com.ua', '.ua', '.ru', '.de', '.fr', '.it', '.es', '.pl',
+    '.io', '.ai', '.me', '.tv', '.cc', '.ly', '.be', '.sh', '.so',
+    '.app', '.dev', '.tech', '.info', '.biz', '.name', '.pro',
+    '.eu', '.us', '.ca', '.au', '.jp', '.cn', '.in', '.br',
+    '.ms', '.gs', '.tk', '.ml', '.ga', '.cf', '.mcas'
+  ];
+  
+  // Сортуємо за довжиною (спочатку довші, щоб .co.uk працювало правильно)
+  const sortedTlds = tlds.sort((a, b) => b.length - a.length);
+  
+  let result = cleaned.toLowerCase();
+  
+  // Розбиваємо домен на частини по крапках
+  let parts = result.split('.');
+  
+  // Видаляємо доменні закінчення з кінця та з середини
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const partWithDot = '.' + parts[i];
+    if (tlds.includes(partWithDot)) {
+      parts.splice(i, 1);
+    }
+  }
+  
+  // Також перевіряємо складні домени типу .co.uk
+  for (let i = parts.length - 2; i >= 0; i--) {
+    if (i + 1 < parts.length) {
+      const combinedTld = '.' + parts[i] + '.' + parts[i + 1];
+      if (tlds.includes(combinedTld)) {
+        parts.splice(i, 2);
+        break;
+      }
+    }
+  }
+  
+  // Збираємо всі залишені значущі частини назад через крапку
+  result = parts.length > 0 ? parts.join('.') : cleaned;
+  
+  return result;
 };
 
 // Категорізація сайтів
 export const categorizeWebsite = (domain: string): string => {
   const cleanDomain = cleanDomainName(domain);
+  
+  // Функція для перевірки відповідності очищеного домену
+  const matchesDomain = (targetDomain: string): boolean => {
+    const cleanTarget = cleanDomainName(targetDomain);
+    return cleanDomain === cleanTarget || cleanDomain.includes(cleanTarget) || cleanTarget.includes(cleanDomain);
+  };
   
   // Пошукові системи - виключаємо з аналітики
   const searchEngines = [
@@ -128,7 +174,7 @@ export const categorizeWebsite = (domain: string): string => {
   ];
   
   // Якщо це пошукова система - не категорізуємо
-  if (searchEngines.some(d => cleanDomain.includes(d))) {
+  if (searchEngines.some(d => matchesDomain(d))) {
     return 'search_engine';
   }
   
@@ -201,13 +247,13 @@ export const categorizeWebsite = (domain: string): string => {
     'digg.com', 'stumbleupon.com', 'delicious.com', 'pinterest.com'
   ];
   
-  if (socialDomains.some(d => cleanDomain.includes(d))) return 'social';
-  if (newsDomains.some(d => cleanDomain.includes(d))) return 'news';
-  if (workDomains.some(d => cleanDomain.includes(d))) return 'work';
-  if (educationDomains.some(d => cleanDomain.includes(d))) return 'education';
-  if (entertainmentDomains.some(d => cleanDomain.includes(d))) return 'entertainment';
-  if (shoppingDomains.some(d => cleanDomain.includes(d))) return 'shopping';
-  if (technologyDomains.some(d => cleanDomain.includes(d))) return 'technology';
+  if (socialDomains.some(d => matchesDomain(d))) return 'social';
+  if (newsDomains.some(d => matchesDomain(d))) return 'news';
+  if (workDomains.some(d => matchesDomain(d))) return 'work';
+  if (educationDomains.some(d => matchesDomain(d))) return 'education';
+  if (entertainmentDomains.some(d => matchesDomain(d))) return 'entertainment';
+  if (shoppingDomains.some(d => matchesDomain(d))) return 'shopping';
+  if (technologyDomains.some(d => matchesDomain(d))) return 'technology';
   
   return 'other';
 };

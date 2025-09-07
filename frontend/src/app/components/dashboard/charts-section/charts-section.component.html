@@ -5,7 +5,7 @@
     </mat-card-header>
     <mat-card-content>
       <apx-chart
-        [series]="[{ name: 'Відвідування', data: activityChartData }]"
+        [series]="getActivitySeries()"
         [chart]="activityChartOptions.chart"
         [xaxis]="activityChartOptions.xaxis"
         [yaxis]="activityChartOptions.yaxis"
@@ -14,7 +14,10 @@
         [stroke]="activityChartOptions.stroke"
         [dataLabels]="activityChartOptions.dataLabels"
         [grid]="activityChartOptions.grid"
-        [tooltip]="activityChartOptions.tooltip">
+        [tooltip]="activityChartOptions.tooltip"
+        [legend]="activityChartOptions.legend"
+        [noData]="{ text: 'Немає даних для відображення' }"
+        (chartReady)="onActivityChartReady($event)">
       </apx-chart>
     </mat-card-content>
   </mat-card>
@@ -88,7 +91,7 @@
     </mat-card-header>
     <mat-card-content>
       <apx-chart
-        [series]="[{ name: 'Сайти', data: formattedBubbleChartData }]"
+        [series]="getBubbleChartSeries()"
         [chart]="bubbleChartOptions.chart"
         [xaxis]="bubbleChartOptions.xaxis"
         [yaxis]="bubbleChartOptions.yaxis"
@@ -121,6 +124,10 @@
             <div class="domain-stats">
               {{ domain.visits }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }}
               <span *ngIf="domain.duration > 0"> • {{ formatDuration(domain.duration) }}</span>
+              <span *ngIf="domain.averageDuration > 0"> • сер: {{ formatDuration(Math.round(domain.averageDuration)) }}</span>
+              <span *ngIf="domain.originalCount > 1" class="aggregated-count" [title]="'Агреговано з ' + domain.originalCount + ' доменів'">
+                ({{ domain.originalCount }})
+              </span>
             </div>
           </div>
         </div>

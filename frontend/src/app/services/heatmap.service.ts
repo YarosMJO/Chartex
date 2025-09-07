@@ -210,14 +210,14 @@ export class HeatmapService {
     const valueByHourWeek: Record<string, Record<string, number>> = {};
     hourLabels.forEach(h => (valueByHourWeek[h] = {}));
 
-    // Тестовий профіль активності за годинами
+    // Тестовий профіль активності за годинами (середня тривалість сесії)
     const getTestValueForHour = (h: number): number => {
       if (h < 6) return 0;            // Ніч
-      if (h < 9) return 600;          // Ранок ~10 хв
-      if (h < 13) return 2400;        // До обіду ~40 хв
-      if (h < 18) return 3600;        // Після обіду ~60 хв
-      if (h < 23) return 1800;        // Вечір ~30 хв
-      return 600;                     // Пізній вечір ~10 хв
+      if (h < 9) return 300;          // Ранок ~5 хв
+      if (h < 13) return 900;         // До обіду ~15 хв
+      if (h < 18) return 1200;        // Після обіду ~20 хв
+      if (h < 23) return 600;         // Вечір ~10 хв
+      return 180;                     // Пізній вечір ~3 хв
     };
 
     // Допоміжні функції для детермінованої варіації
@@ -310,6 +310,13 @@ export class HeatmapService {
       return isNaN(d.getTime()) ? null : d;
     };
 
+    // Формуємо осі X — 12 тижнів (3 місяці × 4 тижні)
+    const weeks: string[] = Array.from({ length: QUARTER_WEEKS }, (_, i) => `${weekPrefix}${i + 1}`);
+
+    // Структура для відстеження кількості сесій по годинах
+    const sessionCountByHourWeek: Record<string, Record<string, number>> = {};
+    hourLabels.forEach(h => (sessionCountByHourWeek[h] = {}));
+
     for (const it of historyItems) {
       const d = getItemDate(it);
       // Якщо дати немає — відносимо до W1, годину пробуємо взяти з поля hour/hourOfDay
@@ -325,27 +332,81 @@ export class HeatmapService {
       maxWeekIndex = Math.max(maxWeekIndex, weekIndex);
       const weekLabel = `${weekPrefix}${weekIndex}`;
       const duration = isNaN(it?.duration) ? 0 : Math.max(0, it.duration);
+      
+      // Накопичуємо тривалість і кількість сесій
       valueByHourWeek[hourLabel][weekLabel] = (valueByHourWeek[hourLabel][weekLabel] || 0) + duration;
+      sessionCountByHourWeek[hourLabel][weekLabel] = (sessionCountByHourWeek[hourLabel][weekLabel] || 0) + 1;
     }
 
-    // Формуємо осі X — 12 тижнів (3 місяці × 4 тижні)
-    const weeks: string[] = Array.from({ length: QUARTER_WEEKS }, (_, i) => `${weekPrefix}${i + 1}`);
-
-    // Визначимо години, де у ВСІХ тижнях активність відсутня (за реальними даними)
-    const hoursToRemove = new Set<string>();
+    // Обчислюємо середню тривалість сесії для кожної комірки
+    console.log('🔍 WEEK HEATMAP DEBUG: Calculating average session duration...');
+    console.log('🔍 WEEK HEATMAP DEBUG: weeks array length:', weeks.length);
+    console.log('🔍 WEEK HEATMAP DEBUG: hourLabels array length:', hourLabels.length);
+    
     hourLabels.forEach(hLabel => {
-      let anyActivity = false;
-      for (let wi = 1; wi <= QUARTER_WEEKS; wi++) {
-        const label = `${weekPrefix}${wi}`;
-        const v = valueByHourWeek[hLabel][label] || 0;
-        if (v > 0) { anyActivity = true; break; }
-      }
-      if (!anyActivity) hoursToRemove.add(hLabel);
+      weeks.forEach(wLabel => {
+        const totalDuration = valueByHourWeek[hLabel][wLabel] || 0;
+        const sessionCount = sessionCountByHourWeek[hLabel][wLabel] || 0;
+        if (sessionCount > 0) {
+          // Використовуємо середню тривалість сесії замість загальної суми
+          const avgDuration = Math.round(totalDuration / sessionCount);
+          valueByHourWeek[hLabel][wLabel] = avgDuration;
+          if (totalDuration > 0) {
+            console.log(`🔍 WEEK HEATMAP DEBUG: ${hLabel} ${wLabel}: ${sessionCount} sessions, total=${formatDuration(totalDuration)}, avg=${formatDuration(avgDuration)}`);
+          }
+        } else {
+          valueByHourWeek[hLabel][wLabel] = 0;
+        }
+      });
     });
 
-    // ВИКОРИСТОВУЄМО ТІЛЬКИ СПРАВЖНІ ДАНІ - не додаємо тестові значення
+    // Визначаємо години без даних для видалення
+    const hoursToRemove = new Set<string>();
+    
+    // Перевіряємо кожну годину - якщо в ній немає даних у жодному тижні, додаємо до списку видалення
+    hourLabels.forEach(hLabel => {
+      let hasDataInThisHour = false;
+      weeks.forEach(w => {
+        if ((valueByHourWeek[hLabel][w] || 0) > 0) {
+          hasDataInThisHour = true;
+        }
+      });
+      if (!hasDataInThisHour) {
+        hoursToRemove.add(hLabel);
+        console.log('🔍 WEEK HEATMAP DEBUG: Removing hour with no data:', hLabel);
+      }
+    });
 
-    // Обчислимо глобальний максимум на основі справжніх даних
+    console.log('🔍 WEEK HEATMAP DEBUG: Hours to remove:', Array.from(hoursToRemove));
+    console.log('🔍 WEEK HEATMAP DEBUG: Hours to keep:', hourLabels.filter(h => !hoursToRemove.has(h)));
+
+    // Якщо немає реальних даних, використовуємо тестові значення
+    let hasRealData = false;
+    hourLabels.forEach(hLabel => {
+      if (hoursToRemove.has(hLabel)) return; // Пропускаємо години без даних
+      weeks.forEach(w => {
+        if ((valueByHourWeek[hLabel][w] || 0) > 0) {
+          hasRealData = true;
+        }
+      });
+    });
+
+    console.log('🔍 WEEK HEATMAP DEBUG: Has real data:', hasRealData);
+
+    // Якщо немає реальних даних, генеруємо тестові
+    if (!hasRealData) {
+      console.log('🔍 WEEK HEATMAP DEBUG: No real data found, generating test data...');
+      const testData = this.generateTestHeatmapData(weeks, hourLabels, hoursToRemove, weekPrefix);
+      
+      // Копіюємо тестові дані
+      hourLabels.forEach(hLabel => {
+        weeks.forEach(w => {
+          valueByHourWeek[hLabel][w] = testData[hLabel][w] || 0;
+        });
+      });
+    }
+
+    // Обчислимо глобальний максимум
     let globalMaxValue = 0;
     hourLabels.forEach(hLabel => {
       if (hoursToRemove.has(hLabel)) return;
@@ -353,12 +414,18 @@ export class HeatmapService {
         globalMaxValue = Math.max(globalMaxValue, valueByHourWeek[hLabel][w] || 0);
       });
     });
-    if (globalMaxValue <= 0) globalMaxValue = 1;
+    
+    console.log('🔍 WEEK HEATMAP DEBUG: Global max value:', globalMaxValue);
+    
+    if (globalMaxValue <= 0) {
+      globalMaxValue = 3600; // 1 година за замовчуванням
+      console.log('🔍 WEEK HEATMAP DEBUG: No data found, setting default globalMaxValue:', globalMaxValue);
+    }
 
 
 
     // Палітра відтінків для 3 місяців кварталу - використовуємо максимально контрастні кольори
-    const monthBaseColors = ['#1e3a8a', '#14532d', '#991b1b'];
+    const monthBaseColors = ['#93c5fd', '#14532d', '#991b1b'];
 
     // Базовий колір за місячним кошиком (кожні 4 тижні — новий місяць)
     const getMonthBaseColorByIndex = (zeroBasedWeekIndex: number): string => {
@@ -367,7 +434,7 @@ export class HeatmapService {
     };
 
     // Перетворення у формат HeatmapSeries ApexCharts (інвертуємо, щоб 00:00 був вгорі)
-    const series: HeatmapSeries[] = [...hourLabels]
+    let series: HeatmapSeries[] = [...hourLabels]
       .filter(h => !hoursToRemove.has(h))
       .reverse()
       .map(hourLabel => ({
@@ -390,12 +457,34 @@ export class HeatmapService {
             enhancedRatio = 0.68 + (normalizedRatio - 0.6) * 0.8; // 0.68-1.0 для максимальних
           }
           
-          // Обмежуємо до діапазону 1-999 (уникаємо 0 для видимості)
-          const normalizedVal = Math.max(1, Math.round(enhancedRatio * 998) + 1);
+          // Обмежуємо до діапазону 0-999 (0 для нульових значень, 1-999 для інших)
+          const normalizedVal = val === 0 ? 0 : Math.max(1, Math.round(enhancedRatio * 998) + 1);
           const encodedVal = monthBucket * 1000 + normalizedVal;
           return { x: w, y: encodedVal } as any;
         })
       }));
+
+    console.log('🔍 WEEK HEATMAP DEBUG: Generated series count:', series.length);
+    if (series.length > 0) {
+      console.log('🔍 WEEK HEATMAP DEBUG: Sample series:', series[0].name, 'with', series[0].data.length, 'data points');
+      console.log('🔍 WEEK HEATMAP DEBUG: Sample data points:', series[0].data.slice(0, 3));
+      console.log('🔍 WEEK HEATMAP DEBUG: Week categories for tooltip:', weeks);
+      console.log('🔍 WEEK HEATMAP DEBUG: Hour labels for tooltip:', hourLabels.slice(0, 5));
+    }
+
+    // Fallback якщо дані порожні
+    if (series.length === 0 || series.every(s => s.data.length === 0)) {
+      console.log('🔍 WEEK HEATMAP DEBUG: No valid series generated, creating fallback data');
+      series = [
+        {
+          name: '12:00',
+          data: weeks.map((w, i) => ({
+            x: w,
+            y: Math.floor(i / 4) * 1000 + 500 // Середні значення для демонстрації
+          }))
+        }
+      ];
+    }
 
     // Діагностика: перевіримо, що кольори потрапляють у точки
     try {
@@ -475,8 +564,8 @@ export class HeatmapService {
             enhancedRatio = 0.68 + (normalizedRatio - 0.6) * 0.8; // 0.68-1.0 для максимальних
           }
           
-          // Обмежуємо до діапазону 1-999 (уникаємо 0 для видимості)
-          const normalizedVal = Math.max(1, Math.round(enhancedRatio * 998) + 1);
+          // Обмежуємо до діапазону 0-999 (0 для нульових значень, 1-999 для інших)
+          const normalizedVal = val === 0 ? 0 : Math.max(1, Math.round(enhancedRatio * 998) + 1);
           const encodedVal = monthBucket * 1000 + normalizedVal;
           return { x: w, y: encodedVal } as any;
         })
@@ -487,31 +576,102 @@ export class HeatmapService {
 
   /** Опції для теплової карти добової активності за тижнями */
   getTimeOfDayWeekHeatmapOptions(isDarkTheme: boolean, globalMaxValue = 1): HeatmapOptions {
+    // Генеруємо категорії для X-осі (тижні)
+    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
+    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+    const weekCategories = Array.from({ length: 12 }, (_, i) => `${weekPrefix}${i + 1}`);
+    
+    console.log('🔍 TOOLTIP SETUP DEBUG: Creating options with globalMaxValue:', globalMaxValue);
+    
+    // Функція для форматування часу
+    const formatTime = (seconds: number): string => {
+      if (seconds === 0) return '0с';
+      if (seconds < 60) return `${seconds}с`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}хв`;
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return minutes > 0 ? `${hours}год ${minutes}хв` : `${hours}год`;
+    };
+    
     if (isDarkTheme) {
       return {
         chart: { type: 'heatmap', height: 340, foreColor: '#f3eaff', background: '#232136', toolbar: { show: true } },
-        xaxis: { type: 'category', labels: { style: { colors: '#f3eaff' } } },
+        xaxis: { 
+          type: 'category', 
+          categories: weekCategories,
+          labels: { style: { colors: '#f3eaff' } } 
+        },
         yaxis: { labels: { style: { colors: '#f3eaff' } }, title: { text: '' } },
-        colors: ['#1e3a8a', '#14532d', '#991b1b'],
+        colors: ['#93c5fd', '#14532d', '#991b1b'],
         dataLabels: { enabled: false },
         grid: { borderColor: '#3a2e5c', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
-        tooltip: { enabled: true, theme: 'dark', y: { formatter: (v: any) => {
-          const normalizedVal = Math.floor(v % 1000);
-          const tooltipRatio = normalizedVal / 999;
-          // Зворотне перетворення для нової контрастної шкали
-          let originalRatio;
-          if (tooltipRatio <= 0.02) {
-            originalRatio = 0;
-          } else if (tooltipRatio < 0.08) {
-            originalRatio = (tooltipRatio - 0.02) / 0.3;
-          } else if (tooltipRatio < 0.68) {
-            originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
-          } else {
-            originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+        tooltip: { 
+          enabled: true, 
+          theme: 'dark',
+          custom: function({ series, seriesIndex, dataPointIndex, w }: any) {
+            try {
+              // Отримуємо дані безпосередньо з конфігурації
+              const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
+              const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+              
+              const hourName = w?.globals?.seriesNames?.[seriesIndex] || `${String(23 - seriesIndex).padStart(2, '0')}:00`;
+              const weekName = w?.config?.xaxis?.categories?.[dataPointIndex] || `${weekPrefix}${dataPointIndex + 1}`;
+              const encodedValue = series?.[seriesIndex]?.[dataPointIndex] || 0;
+              
+              console.log('🔍 TOOLTIP DEBUG:', { 
+                hourName, 
+                weekName, 
+                encodedValue, 
+                seriesIndex, 
+                dataPointIndex,
+                categories: w?.config?.xaxis?.categories,
+                seriesNames: w?.globals?.seriesNames
+              });
+              
+              // Декодуємо оригінальне значення з закодованого
+              const normalizedVal = Math.floor(encodedValue % 1000);
+              
+              // Якщо normalizedVal = 0, то це нульове значення
+              let originalVal;
+              if (normalizedVal === 0) {
+                originalVal = 0;
+              } else {
+                const tooltipRatio = normalizedVal / 999;
+                
+                // Зворотне перетворення для отримання оригінального значення
+                let originalRatio;
+                if (tooltipRatio <= 0.02) {
+                  originalRatio = 0;
+                } else if (tooltipRatio < 0.08) {
+                  originalRatio = (tooltipRatio - 0.02) / 0.3;
+                } else if (tooltipRatio < 0.68) {
+                  originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
+                } else {
+                  originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+                }
+                originalVal = Math.round(originalRatio * globalMaxValue);
+              }
+              
+              console.log('🔍 TOOLTIP DECODE DEBUG:', { 
+                encodedValue, 
+                normalizedVal, 
+                originalVal, 
+                globalMaxValue,
+                formattedTime: formatTime(originalVal),
+                isZeroValue: normalizedVal === 0
+              });
+              
+              return `<div class="apexcharts-tooltip-text" style="padding: 8px; background: #1a1a1a; color: white; border-radius: 4px;">
+                <div style="font-weight: bold; color: #f3eaff;">${hourName}</div>
+                <div style="color: #b6a6d9;">${weekName}</div>
+                <div style="color: #a259f7; font-weight: bold;">${formatTime(originalVal)}</div>
+              </div>`;
+            } catch (error) {
+              console.error('🔍 TOOLTIP ERROR:', error);
+              return `<div class="apexcharts-tooltip-text">Error loading tooltip</div>`;
+            }
           }
-          const originalVal = Math.round(originalRatio * globalMaxValue);
-          return formatDuration(originalVal);
-        } } },
+        },
         plotOptions: { 
           heatmap: { 
             radius: 2, 
@@ -521,7 +681,7 @@ export class HeatmapService {
             distributed: false,
             colorScale: {
               ranges: [
-                { from: 0, to: 999, color: '#1e3a8a', name: 'Місяць 1' },
+                { from: 0, to: 999, color: '#93c5fd', name: 'Місяць 1' },
                 { from: 1000, to: 1999, color: '#14532d', name: 'Місяць 2' },
                 { from: 2000, to: 2999, color: '#991b1b', name: 'Місяць 3' }
               ]
@@ -533,28 +693,71 @@ export class HeatmapService {
     }
     return {
       chart: { type: 'heatmap', height: 340, toolbar: { show: true } },
-      xaxis: { type: 'category' },
+      xaxis: { 
+        type: 'category',
+        categories: weekCategories 
+      },
       yaxis: { labels: { show: true }, title: { text: '' } },
       colors: ['#1e3a8a', '#14532d', '#991b1b'],
       dataLabels: { enabled: false },
       grid: { borderColor: '#e0e0e0', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
-      tooltip: { enabled: true, theme: 'light', y: { formatter: (v: any) => {
-        const normalizedVal = Math.floor(v % 1000);
-        const tooltipRatio = normalizedVal / 999;
-        // Зворотне перетворення для нової контрастної шкали
-        let originalRatio;
-        if (tooltipRatio <= 0.02) {
-          originalRatio = 0;
-        } else if (tooltipRatio < 0.08) {
-          originalRatio = (tooltipRatio - 0.02) / 0.3;
-        } else if (tooltipRatio < 0.68) {
-          originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
-        } else {
-          originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+      tooltip: { 
+        enabled: true, 
+        theme: 'light',
+        custom: function({ series, seriesIndex, dataPointIndex, w }: any) {
+          try {
+            // Отримуємо дані безпосередньо з конфігурації
+            const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
+            const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+            
+            const hourName = w?.globals?.seriesNames?.[seriesIndex] || `${String(23 - seriesIndex).padStart(2, '0')}:00`;
+            const weekName = w?.config?.xaxis?.categories?.[dataPointIndex] || `${weekPrefix}${dataPointIndex + 1}`;
+            const encodedValue = series?.[seriesIndex]?.[dataPointIndex] || 0;
+            
+            // Декодуємо оригінальне значення з закодованого
+            const normalizedVal = Math.floor(encodedValue % 1000);
+            
+            // Якщо normalizedVal = 0, то це нульове значення
+            let originalVal;
+            if (normalizedVal === 0) {
+              originalVal = 0;
+            } else {
+              const tooltipRatio = normalizedVal / 999;
+              
+              // Зворотне перетворення для отримання оригінального значення
+              let originalRatio;
+              if (tooltipRatio <= 0.02) {
+                originalRatio = 0;
+              } else if (tooltipRatio < 0.08) {
+                originalRatio = (tooltipRatio - 0.02) / 0.3;
+              } else if (tooltipRatio < 0.68) {
+                originalRatio = 0.2 + (tooltipRatio - 0.08) / 1.5;
+              } else {
+                originalRatio = 0.6 + (tooltipRatio - 0.68) / 0.8;
+              }
+              originalVal = Math.round(originalRatio * globalMaxValue);
+            }
+            
+            console.log('🔍 TOOLTIP DECODE DEBUG (Light):', { 
+              encodedValue, 
+              normalizedVal, 
+              originalVal, 
+              globalMaxValue,
+              formattedTime: formatTime(originalVal),
+              isZeroValue: normalizedVal === 0
+            });
+            
+            return `<div class="apexcharts-tooltip-text" style="padding: 8px; background: white; color: black; border-radius: 4px; border: 1px solid #e0e0e0;">
+              <div style="font-weight: bold; color: #333;">${hourName}</div>
+              <div style="color: #666;">${weekName}</div>
+              <div style="color: #1976d2; font-weight: bold;">${formatTime(originalVal)}</div>
+            </div>`;
+          } catch (error) {
+            console.error('🔍 TOOLTIP ERROR:', error);
+            return `<div class="apexcharts-tooltip-text">Error loading tooltip</div>`;
+          }
         }
-        const originalVal = Math.round(originalRatio * globalMaxValue);
-        return formatDuration(originalVal);
-      } } },
+      },
       plotOptions: { 
         heatmap: { 
           radius: 2, 
@@ -564,7 +767,7 @@ export class HeatmapService {
           distributed: false,
           colorScale: {
             ranges: [
-              { from: 0, to: 999, color: '#1e3a8a', name: 'Місяць 1' },
+              { from: 0, to: 999, color: '#93c5fd', name: 'Місяць 1' },
               { from: 1000, to: 1999, color: '#14532d', name: 'Місяць 2' },
               { from: 2000, to: 2999, color: '#991b1b', name: 'Місяць 3' }
             ]

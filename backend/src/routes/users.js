@@ -208,7 +208,9 @@ router.get('/stats', authenticateToken, async (req, res) => {
     console.log('Приклади топ доменів:', topDomains.slice(0, 3).map(domain => ({
       _id: domain._id,
       visits: domain.visits,
-      totalDuration: domain.totalDuration
+      totalDuration: domain.totalDuration,
+      totalDurationHours: Math.round(domain.totalDuration / 3600 * 100) / 100,
+      avgDurationPerVisit: Math.round(domain.totalDuration / domain.visits)
     })));
     
     console.log('Результат статистики:', {

@@ -165,13 +165,41 @@
 
   // Styled tooltip matching dashboard look
   ::ng-deep .bubble-tooltip {
-    background: #ffffff;
-    color: #23272f;
-    border: 1px solid #e6e6eb;
-    border-radius: 10px;
-    padding: 10px 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    min-width: 220px;
+    background: #ffffff !important;
+    color: #23272f !important;
+    border: 1px solid #e6e6eb !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    min-width: 220px !important;
+  }
+  
+  // Remove ApexCharts default tooltip styling but keep our custom tooltip
+  ::ng-deep .apexcharts-tooltip {
+    border: none !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  
+  // Remove any outer border or shadow from ApexCharts tooltip container
+  ::ng-deep .apexcharts-tooltip.apexcharts-theme-light {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  
+  // Remove any additional ApexCharts tooltip wrapper styling
+  ::ng-deep .apexcharts-tooltip-series-group {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  
+  // Remove borders from ApexCharts elements but preserve our custom tooltip
+  ::ng-deep .apexcharts-tooltip *:not(.bubble-tooltip) {
+    border: none !important;
+    box-shadow: none !important;
   }
   ::ng-deep .bubble-tooltip .title {
     font-weight: 600;
@@ -418,38 +446,11 @@
     z-index: 10;       /* above other elements */
     
     /* Responsive adjustments for smaller screens */
+    
     @media (max-width: 1200px) {
-      gap: 10px 6px;
-      padding: 6px 8px 8px 8px;
-      margin-top: 6px;
+      display: none !important; /* Приховуємо легенду на екранах менше 1200px */
     }
     
-    @media (max-width: 900px) {
-      gap: 8px 4px;
-      padding: 4px 6px 6px 6px;
-      margin-top: 4px;
-    }
-    
-    @media (max-width: 768px) {
-      gap: 6px 2px;
-      padding: 4px 2px 6px 2px;
-      margin-top: 4px;
-      min-height: 50px; /* ensure minimum height */
-    }
-    
-    @media (max-width: 480px) {
-      gap: 4px 1px;
-      padding: 2px 1px 4px 1px;
-      margin-top: 2px;
-      min-height: 45px;
-    }
-    
-    @media (max-width: 400px) {
-      gap: 6px 1px; /* increase row gap to ensure both rows are visible */
-      padding: 4px 1px 6px 1px; /* add more bottom padding */
-      min-height: 50px; /* ensure minimum height for legend */
-      margin-top: 2px;
-    }
   }
   ::ng-deep .apexcharts-legend .apexcharts-legend-series {
     margin: 0 !important;
@@ -640,6 +641,13 @@
 .domain-stats {
   font-size: 12px;
   color: #666;
+  
+  .aggregated-count {
+    color: #999;
+    font-style: italic;
+    cursor: help;
+    opacity: 0.8;
+  }
 }
 
 /* Scrollbar Styling */
@@ -712,16 +720,18 @@
 
 // ApexCharts темна тема
 ::ng-deep body.theme-dark .apexcharts-tooltip {
-  background: #2a2042 !important;
+  background: transparent !important;
   color: #fff !important;
-  border-color: #6c4bb6 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
   ::ng-deep body.theme-dark .bubble-tooltip {
-    background: #2a2042;
-    color: #f3eaff;
-    border: 1px solid #3a2e5c;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    background: #2a2042 !important;
+    color: #f3eaff !important;
+    border: 1px solid #3a2e5c !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
   }
   ::ng-deep body.theme-dark .bubble-tooltip .label {
     color: #b6a6d9;

@@ -18,6 +18,16 @@
             <mat-icon>settings</mat-icon>
             <span>{{ 'DASHBOARD.SETTINGS' | translate }}</span>
           </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="analyzeDurationData()">
+            <mat-icon>analytics</mat-icon>
+            <span>Аналіз даних duration</span>
+          </button>
+          <button mat-menu-item (click)="fixDurationData()">
+            <mat-icon>build</mat-icon>
+            <span>Виправити duration</span>
+          </button>
+          <mat-divider></mat-divider>
           <button mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
             <span>{{ 'DASHBOARD.LOGOUT' | translate }}</span>
