@@ -33,6 +33,15 @@ export class TopSitesComponent implements OnInit, OnChanges {
   formatDuration = formatDuration;
   cleanDomainName = cleanDomainName;
 
+  // Безпечна функція для округлення
+  safeRound = (value: number): number => {
+    if (typeof Math !== 'undefined' && typeof Math.round === 'function') {
+      return Math.round(value);
+    }
+    // Fallback якщо Math недоступний
+    return Math.floor(value + 0.5);
+  };
+
   private logDebugInfo(method: string) {
     console.log(`🔍 TOP SITES DEBUG: ${method} called`, {
       dataLength: this.topDomainsData.length

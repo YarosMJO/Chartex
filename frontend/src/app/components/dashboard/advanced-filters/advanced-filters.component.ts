@@ -114,35 +114,51 @@ export class AdvancedFiltersComponent implements OnDestroy {
     console.log('AdvancedFiltersComponent: onDurationOptionChange викликано з option:', option);
     this.selectedDurationOption = option;
     
-    const durationOption = this.durationOptions.find(d => d.value === option);
+    const durationOption = this.adjustedDurationOptions.find(d => d.value === option);
     if (durationOption) {
       console.log('AdvancedFiltersComponent: встановлюємо діапазон для опції:', durationOption.range);
-      this.updateFilters({ 
-        ...this.filters, 
-        durationRange: durationOption.range 
-      });
+      
+      // Якщо вибирається "custom", встановлюємо розумні значення за замовчуванням
+      if (option === 'custom') {
+        const maxRange = this.filters.durationType === 'average' ? 60 : 180;
+        const defaultRange = { min: 0, max: maxRange };
+        console.log('AdvancedFiltersComponent: встановлюємо кастомний діапазон за замовчуванням:', defaultRange);
+        this.updateFilters({ 
+          ...this.filters, 
+          durationRange: defaultRange 
+        });
+      } else {
+        this.updateFilters({ 
+          ...this.filters, 
+          durationRange: durationOption.range 
+        });
+      }
     }
   }
 
     private updateSelectedDurationOption() {
     const { min, max } = this.filters.durationRange;
 
-    // Перевіряємо чи це "all" опція (0-180)
-    if (min === 0 && max === 180) {
+    // Перевіряємо чи це "all" опція (0-180 для total, 0-60 для average)
+    const maxRange = this.filters.durationType === 'average' ? 60 : 180;
+    if (min === 0 && max === maxRange) {
       this.selectedDurationOption = 'all';
     } else {
-      const matchingOption = this.durationOptions.find(option =>
+      // Шукаємо точне співпадіння з попередньо визначеними опціями
+      const matchingOption = this.adjustedDurationOptions.find(option =>
         option.range.min === min && option.range.max === max
       );
       if (matchingOption) {
         this.selectedDurationOption = matchingOption.value;
       } else {
+        // Якщо немає точного співпадіння, це кастомний діапазон
         this.selectedDurationOption = 'custom';
       }
     }
   }
 
   onMinDurationChange(value: string | number) {
+    const maxRange = this.filters.durationType === 'average' ? 60 : 180;
     const newMin = Math.max(0, Math.min(Number(value), this.filters.durationRange.max));
     
     if (newMin !== this.filters.durationRange.min) {
@@ -160,7 +176,8 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onMaxDurationChange(value: string | number) {
-    const newMax = Math.max(this.filters.durationRange.min, Math.min(Number(value), 180));
+    const maxRange = this.filters.durationType === 'average' ? 60 : 180;
+    const newMax = Math.max(this.filters.durationRange.min, Math.min(Number(value), maxRange));
     
     if (newMax !== this.filters.durationRange.max) {
       console.log('AdvancedFiltersComponent: змінюємо максимальний час з', this.filters.durationRange.max, 'на', newMax);
@@ -326,7 +343,7 @@ export class AdvancedFiltersComponent implements OnDestroy {
       durationRange: { min: 0, max: maxRange }
     };
     
-    // Скидаємо вибрану опцію
+    // Скидаємо вибрану опцію на "all"
     this.selectedDurationOption = 'all';
     
     this.updateFilters(newFilters);
