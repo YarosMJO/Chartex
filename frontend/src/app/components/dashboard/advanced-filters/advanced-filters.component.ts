@@ -59,6 +59,9 @@ export class AdvancedFiltersComponent implements OnDestroy {
   // Дебаунсинг для дат
   private dateInputTimeout: any = null;
   private dateChangeTimeout: any = null;
+  
+  // Флаг для запобігання циклічним оновленням
+  private isUpdatingDurationType: boolean = false;
 
   // Попередньо визначені категорії
   predefinedCategories = [
@@ -152,6 +155,10 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onMinDurationChange(value: string | number) {
+    if (this.isUpdatingDurationType) {
+      return; // Пропускаємо оновлення під час зміни типу
+    }
+    
     const maxRange = this.filters.durationType === 'average' ? 60 : 180;
     const newMin = Math.max(0, Math.min(Number(value), this.filters.durationRange.max));
     
@@ -168,6 +175,10 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onMaxDurationChange(value: string | number) {
+    if (this.isUpdatingDurationType) {
+      return; // Пропускаємо оновлення під час зміни типу
+    }
+    
     const maxRange = this.filters.durationType === 'average' ? 60 : 180;
     const newMax = Math.max(this.filters.durationRange.min, Math.min(Number(value), maxRange));
     
@@ -305,6 +316,9 @@ export class AdvancedFiltersComponent implements OnDestroy {
 
   // Додаємо метод для зміни типу фільтрації часу
   onDurationTypeChange(type: 'total' | 'average') {
+    // Встановлюємо флаг для запобігання циклічним оновленням
+    this.isUpdatingDurationType = true;
+    
     // Оновлюємо діапазон в залежності від типу
     const maxRange = type === 'average' ? 60 : 180;
     const newFilters = { 
@@ -317,6 +331,11 @@ export class AdvancedFiltersComponent implements OnDestroy {
     this.selectedDurationOption = 'all';
     
     this.updateFilters(newFilters);
+    
+    // Скидаємо флаг після невеликої затримки
+    setTimeout(() => {
+      this.isUpdatingDurationType = false;
+    }, 100);
   }
 
   ngOnDestroy(): void {

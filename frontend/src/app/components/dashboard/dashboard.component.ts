@@ -460,51 +460,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Підготовка даних для графіка активності з відфільтрованих даних
   private prepareActivityChartDataFromFiltered(filteredDomains: any[]): void {
-    
     if (!filteredDomains || filteredDomains.length === 0) {
       this.activityChartData = [];
       return;
     }
 
     try {
-      // Групуємо дані по днях тижня
-      const dayStats = new Map<string, { visits: number; duration: number }>();
+      // Групуємо домени за очищеними назвами та сумуємо відвідування
+      const domainMap = new Map<string, number>();
       
-      // Ініціалізуємо всі дні тижня
-      const daysOfWeek = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
-      daysOfWeek.forEach(day => {
-        dayStats.set(day, { visits: 0, duration: 0 });
-      });
-
-      // Обробляємо відфільтровані домени
       filteredDomains.forEach(domain => {
-        if (domain.decryptedData) {
-          // Симулюємо розподіл по днях тижня на основі загальної активності
-          const totalVisits = domain.visits || 0;
-          const totalDuration = domain.totalDuration || 0;
-          
-          // Розподіляємо по днях тижня (припускаємо рівномірний розподіл)
-          const visitsPerDay = totalVisits / 7;
-          const durationPerDay = totalDuration / 7;
-          
-          daysOfWeek.forEach(day => {
-            const currentStats = dayStats.get(day)!;
-            dayStats.set(day, {
-              visits: currentStats.visits + visitsPerDay,
-              duration: currentStats.duration + durationPerDay
-            });
-          });
+        const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
+        const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
+        
+        if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
+          const cleanName = domainName.trim();
+          const currentVisits = domainMap.get(cleanName) || 0;
+          domainMap.set(cleanName, currentVisits + visits);
         }
       });
 
-      // Конвертуємо в масив для графіка
-      this.activityChartData = daysOfWeek.map(day => {
-        const stats = dayStats.get(day)!;
-        return {
-          x: day,
-          y: this.safeRound(stats.visits)
-        };
-      });
+      // Конвертуємо Map в масив, сортуємо за кількістю відвідувань та беремо топ-10
+      const rawData = Array.from(domainMap.entries())
+        .map(([domainName, visits]) => ({
+          x: domainName,
+          y: visits
+        }))
+        .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
+        .slice(0, 10); // Беремо топ-10
+
+      // Фільтруємо тільки домени з відвідуваннями > 0
+      this.activityChartData = rawData.filter(item => item.y > 0);
+      
+      // Валідація фінальних даних
+      const isValidData = this.activityChartData.every(item => 
+        item && 
+        typeof item.x === 'string' && 
+        item.x.length > 0 &&
+        typeof item.y === 'number' && 
+        item.y >= 0
+      );
+      
+      // Якщо немає даних з відвідуваннями або дані невалідні, створюємо порожній масив
+      if (this.activityChartData.length === 0 || !isValidData) {
+        this.activityChartData = [];
+      }
 
     } catch (error) {
       this.activityChartData = [];
@@ -1519,11 +1519,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       durationType: this.advancedFilters.durationType // Зберігаємо поточний тип
     };
 
-    // Повертаємо оригінальні дані
-    if (this.userStats) {
-      await this.prepareChartData();
-    }
-
+    // Застосовуємо фільтри (які тепер очищені) замість повернення до оригінальних даних
     await this.applyAdvancedFilters();
     this.cdr.markForCheck();
   }
@@ -1660,13 +1656,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Оновлюємо загальну статистику відповідно до фільтрів
     if (this.advancedFilters.categories.length > 0 ||
       this.advancedFilters.durationRange.min > 0 ||
-      this.advancedFilters.durationRange.max < 180 ||
+      this.advancedFilters.durationRange.max < (this.advancedFilters.durationType === 'average' ? 60 : 180) ||
       this.advancedFilters.dateRange.start ||
       this.advancedFilters.dateRange.end) {
 
       // Розраховуємо нову статистику на основі відфільтрованих даних
-      const totalVisits = filteredDomains.reduce((sum, domain) => sum + domain.visits, 0);
-      const totalDuration = filteredDomains.reduce((sum, domain) => sum + domain.totalDuration, 0);
+      const totalVisits = filteredDomains.reduce((sum, domain) => sum + (domain.visits || 0), 0);
+      const totalDuration = filteredDomains.reduce((sum, domain) => sum + (domain.totalDuration || 0), 0);
       const uniqueDomains = filteredDomains.length;
       const avgDuration = uniqueDomains > 0 ? totalDuration / uniqueDomains : 0;
 
@@ -1689,6 +1685,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     // Оновлюємо дані для всіх графіків
+    await this.updateAllChartData(filteredDomains);
+    
+    this.cdr.markForCheck();
+  }
+
+  private async updateAllChartData(filteredDomains: any[]) {
+    // Оновлюємо дані для всіх графіків
     this.updateChartDataWithFilteredDomains(filteredDomains);
     
     // Оновлюємо дані для кругової діаграми на основі відфільтрованих даних
@@ -1702,8 +1705,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     // Оновлюємо дані для графіка активності (activity chart)
     this.prepareActivityChartDataFromFiltered(filteredDomains);
-    
-    this.cdr.markForCheck();
   }
 
   private updateChartDataWithFilteredDomains(filteredDomains: any[]) {
