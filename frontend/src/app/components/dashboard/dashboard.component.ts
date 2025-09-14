@@ -85,6 +85,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private periodChangeTimeout: any = null;
   private deviceChangeTimeout: any = null;
   private advancedFiltersTimeout: any = null;
+  
+  // Event handlers for chart cleanup
+  private scrollHandler?: (e: Event) => void;
+  private touchHandler?: (e: Event) => void;
+  private chartCleanup?: () => void;
 
   // Дані для графіків
   activityChartData: { x: string; y: number }[] = [];
@@ -204,6 +209,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
+    }
+    
+    // Cleanup chart event listeners
+    if (this.chartCleanup) {
+      this.chartCleanup();
     }
     
     // Очищаємо слухачі подій
@@ -1149,23 +1159,64 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // Ensure proper chart boundaries
         redrawOnWindowResize: true,
         redrawOnParentResize: true,
+        // Fix passive event listener issue
+        events: {
+          mounted: (chartContext: any, config: any) => {
+            // Disable passive event listeners to allow preventDefault
+            if (chartContext && chartContext.wrapperEl) {
+              const wrapper = chartContext.wrapperEl;
+              
+              // Remove existing event listeners first
+              const removeEventListeners = () => {
+                wrapper.removeEventListener('wheel', this.scrollHandler);
+                wrapper.removeEventListener('touchstart', this.touchHandler);
+                wrapper.removeEventListener('touchmove', this.touchHandler);
+              };
+              
+              // Store handlers as class properties for proper cleanup
+              this.scrollHandler = (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              };
+              
+              this.touchHandler = (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              };
+              
+              // Add non-passive event listeners
+              wrapper.addEventListener('wheel', this.scrollHandler, { passive: false, capture: true });
+              wrapper.addEventListener('touchstart', this.touchHandler, { passive: false, capture: true });
+              wrapper.addEventListener('touchmove', this.touchHandler, { passive: false, capture: true });
+              
+              // Store cleanup function
+              this.chartCleanup = removeEventListeners;
+            }
+          },
+          destroyed: () => {
+            // Cleanup event listeners when chart is destroyed
+            if (this.chartCleanup) {
+              this.chartCleanup();
+            }
+          }
+        },
         // Toolbar and interactions
         toolbar: {
           show: true,
           tools: {
             download: true,
-            selection: true,
-            zoom: true,
-            zoomin: true,
-            zoomout: true,
-            pan: true,
-            reset: true
+            selection: false,
+            zoom: false,
+            zoomin: false,
+            zoomout: false,
+            pan: false,
+            reset: false
           }
         },
         zoom: {
-          enabled: true,
-          type: 'xy',
-          autoScaleYaxis: true
+          enabled: false
         }
       },
       title: {
