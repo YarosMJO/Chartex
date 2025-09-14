@@ -36,8 +36,8 @@
     [selectedPeriod]="selectedPeriod"
     [selectedDevice]="selectedDevice"
     [devices]="activeDevices"
-    (periodChange)="onPeriodChange()"
-    (deviceChange)="onDeviceChange()">
+    (periodChange)="onPeriodChange($event)"
+    (deviceChange)="onDeviceChange($event)">
   </app-filters-section>
 
   <!-- Пошук -->

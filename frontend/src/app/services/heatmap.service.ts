@@ -239,8 +239,8 @@ export class HeatmapService {
     const now = new Date();
     const fromDate = new Date(now.getTime() - QUARTER_WEEKS * 7 * 24 * 60 * 60 * 1000);
 
-    // Завантажуємо історію за квартал незалежно від вибраного періоду
-    let historyItems = await this.loadHistoryForHeatmap('90d', selectedDevice);
+    // Завантажуємо історію за вибраний період
+    let historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
     // Фільтрація дублюється з підготовки активності — виключаємо google.com, якщо є домен/URL
     historyItems = (historyItems || []).filter(item => {
       const host = (item?.domain || item?.url || '').toString();
@@ -804,9 +804,7 @@ export class HeatmapService {
         params.deviceId = selectedDevice;
       }
       
-      
       const historyResponse = await this.apiService.getHistoryWithDecryptedData(params);
-      
       
       return historyResponse.items || [];
     } catch (error) {

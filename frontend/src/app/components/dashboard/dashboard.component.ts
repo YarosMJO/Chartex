@@ -827,7 +827,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
   // Зміна періоду
-  async onPeriodChange() {
+  async onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
+    // Перевіряємо, чи період дійсно змінився
+    if (newPeriod === this.previousPeriod) {
+      return; // Нічого не робимо, якщо період не змінився
+    }
+    
+    // Оновлюємо selectedPeriod
+    this.selectedPeriod = newPeriod;
+    
     // Очищаємо попередній таймаут
     if (this.periodChangeTimeout) {
       clearTimeout(this.periodChangeTimeout);
@@ -835,17 +843,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Встановлюємо новий таймаут
     this.periodChangeTimeout = setTimeout(async () => {
-      // Оновлюємо графік тільки якщо період дійсно змінився
-      if (this.selectedPeriod !== this.previousPeriod) {
-        this.previousPeriod = this.selectedPeriod;
-        await this.loadUserStats();
-        this.cdr.markForCheck();
-      }
+      // Оновлюємо попередній період
+      this.previousPeriod = this.selectedPeriod;
+      await this.loadUserStats();
+      this.cdr.markForCheck();
     }, 300); // Затримка 300мс
   }
 
   // Зміна пристрою
-  async onDeviceChange() {
+  async onDeviceChange(newDevice: string) {
+    // Перевіряємо, чи пристрій дійсно змінився
+    if (newDevice === this.previousDevice) {
+      return; // Нічого не робимо, якщо пристрій не змінився
+    }
+    
+    // Оновлюємо selectedDevice
+    this.selectedDevice = newDevice;
+    
     // Очищаємо попередній таймаут
     if (this.deviceChangeTimeout) {
       clearTimeout(this.deviceChangeTimeout);
@@ -853,12 +867,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Встановлюємо новий таймаут
     this.deviceChangeTimeout = setTimeout(async () => {
-      // Оновлюємо графік тільки якщо пристрій дійсно змінився
-      if (this.selectedDevice !== this.previousDevice) {
-        this.previousDevice = this.selectedDevice;
-        await this.loadUserStats();
-        this.cdr.markForCheck();
-      }
+      // Оновлюємо попередній пристрій
+      this.previousDevice = this.selectedDevice;
+      await this.loadUserStats();
+      this.cdr.markForCheck();
     }, 300); // Затримка 300мс
   }
 

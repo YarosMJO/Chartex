@@ -402,7 +402,15 @@ export class ApiService {
     sortOrder?: 'asc' | 'desc';
   } = {}): Promise<PaginatedResponse<HistoryItem>> {
     const headers = await this.getHeaders();
-    const httpParams = new URLSearchParams(params as any);
+    const httpParams = new URLSearchParams();
+    
+    // Додаємо параметри вручну для правильної обробки
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        httpParams.append(key, value.toString());
+      }
+    });
+    
     const url = `${this.API_BASE_URL}/history?${httpParams.toString()}`;
     
     const response = await this.http.get<PaginatedResponse<HistoryItem>>(
@@ -420,7 +428,14 @@ export class ApiService {
     groupBy?: 'day' | 'hour' | 'domain';
   } = {}): Promise<any[]> {
     const headers = await this.getHeaders();
-    const httpParams = new URLSearchParams(params as any);
+    const httpParams = new URLSearchParams();
+    
+    // Додаємо параметри вручну для правильної обробки
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        httpParams.append(key, value.toString());
+      }
+    });
     
     return this.http.get<any[]>(
       `${this.API_BASE_URL}/history/stats?${httpParams.toString()}`,

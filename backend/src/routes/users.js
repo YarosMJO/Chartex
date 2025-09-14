@@ -131,9 +131,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
     const userId = req.user.uid;
     const { period = '30d', deviceId, from, to } = req.query; // 7d, 30d, 90d, 1y, all
     
-    // Логування для діагностики
-    console.log('API /users/stats - параметри:', { period, deviceId, from, to });
-    
     let dateFilter = {};
     
     // Пріоритет: якщо передані from/to, використовуємо їх, інакше period
@@ -141,11 +138,9 @@ router.get('/stats', authenticateToken, async (req, res) => {
       dateFilter.visitTime = {};
       if (from) dateFilter.visitTime.$gte = new Date(from);
       if (to) dateFilter.visitTime.$lte = new Date(to);
-      console.log('Використовуємо from/to фільтр:', dateFilter.visitTime);
     } else if (period !== 'all') {
       const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
       dateFilter.visitTime = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
-      console.log('Використовуємо period фільтр:', dateFilter.visitTime);
     }
     
     // Додаємо фільтр по пристрою, якщо вказано
@@ -160,8 +155,10 @@ router.get('/stats', authenticateToken, async (req, res) => {
     // Перевіримо кілька записів для діагностики
     const sampleRecords = await HistoryItem.find({ userId, ...dateFilter, ...deviceFilter }).limit(5);
     
+    const matchQuery = { userId, ...dateFilter, ...deviceFilter };
+    
     const stats = await HistoryItem.aggregate([
-      { $match: { userId, ...dateFilter, ...deviceFilter } },
+      { $match: matchQuery },
       {
         $group: {
           _id: null,
