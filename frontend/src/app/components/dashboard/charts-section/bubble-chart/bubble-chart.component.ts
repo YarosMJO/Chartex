@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
   styleUrls: ['./bubble-chart.component.scss'],
   standalone: true,
   imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, NgApexchartsModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.Default
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BubbleChartComponent implements OnChanges {
   @Input() bubbleChartData: {

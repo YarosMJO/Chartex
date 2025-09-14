@@ -28,7 +28,7 @@ import { TopSitesComponent } from './top-sites/top-sites.component';
     BubbleChartComponent,
     TopSitesComponent
   ],
-  changeDetection: ChangeDetectionStrategy.Default
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChartsSectionComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
