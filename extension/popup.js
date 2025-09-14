@@ -304,7 +304,6 @@ class PopupManager {
       }
       
       const response = await this.sendMessage({ action: 'getStatus' });
-      console.log('POPUP: getStatus response', response);
       this.status.isCollecting = !!response.isCollecting;
       this.status.hasUser = !!response.hasUser;
       this.status.userEmail = response.userEmail || null;

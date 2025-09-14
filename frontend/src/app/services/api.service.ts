@@ -224,14 +224,17 @@ export class ApiService {
         requestParams.deviceId = params.deviceId;
       }
       
-      
       let historyResponse = await this.getHistoryWithDecryptedData(requestParams);
-      
       
       if (!historyResponse.items || historyResponse.items.length === 0) {
         // Fallback до старого методу
         try {
-          const fallbackStats = await this.getUserStats(params);
+          const fallbackParams = {
+            ...params,
+            from: fromDate.toISOString(),
+            to: now.toISOString()
+          };
+          const fallbackStats = await this.getUserStats(fallbackParams);
           return fallbackStats;
         } catch (fallbackError) {
           // Повертаємо порожню статистику як останній fallback
@@ -315,7 +318,33 @@ export class ApiService {
     } catch (error) {
       // Fallback до звичайної статистики
       try {
-        const fallbackStats = await this.getUserStats(params);
+        // Розраховуємо дати для періоду
+        const now = new Date();
+        let fromDate: Date;
+        
+        switch (params.period) {
+          case '7d':
+            fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30d':
+            fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90d':
+            fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          case '1y':
+            fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            fromDate = new Date(0); // Всі дані
+        }
+        
+        const fallbackParams = {
+          ...params,
+          from: fromDate.toISOString(),
+          to: now.toISOString()
+        };
+        const fallbackStats = await this.getUserStats(fallbackParams);
         return fallbackStats;
       } catch (fallbackError) {
         // Повертаємо порожню статистику як останній fallback
@@ -539,12 +568,23 @@ export class ApiService {
   async getUserStats(params: {
     period?: '7d' | '30d' | '90d' | '1y' | 'all';
     deviceId?: string;
+    from?: string;
+    to?: string;
   } = {}): Promise<HistoryStats> {
     const headers = await this.getHeaders();
-    const httpParams = new URLSearchParams(params as any);
+    const httpParams = new URLSearchParams();
+    
+    // Додаємо всі параметри, включаючи from/to
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        httpParams.append(key, value.toString());
+      }
+    });
+    
+    const url = `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`;
     
     const response = await this.http.get<HistoryStats>(
-      `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`,
+      url,
       { headers }
     ).toPromise();
     

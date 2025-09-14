@@ -1399,10 +1399,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Перемикання масштабу bubble chart
   toggleBubbleChartScale() {
-    console.log('Перемикання масштабу з', this.bubbleChartScaleMode);
     this.bubbleChartScaleMode = this.bubbleChartScaleMode === 'normal' ? 'zoomed' : 'normal';
-    console.log('Новий режим масштабу:', this.bubbleChartScaleMode);
-    console.log('X max:', this.getXAxisMax(), 'Y max:', this.getYAxisMax());
     this.cdr.markForCheck();
   }
 
@@ -1886,22 +1883,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private getXAxisMax(): number {
     if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
       const defaultMax = this.bubbleChartScaleMode === 'zoomed' ? 50 : 100;
-      console.log('Немає даних для X-осі, повертаємо:', defaultMax);
       return defaultMax; // Значення за замовчуванням
     }
     
     const maxVisits = Math.max(...this.bubbleChartData.map(d => d.x));
-    console.log('Максимальні відвідування:', maxVisits, 'Режим:', this.bubbleChartScaleMode);
     
     if (this.bubbleChartScaleMode === 'zoomed') {
       // Для збільшеного масштабу обмежуємо максимальне значення
       const result = Math.min(maxVisits * 1.5, 200);
-      console.log('Збільшений масштаб X:', result);
       return result;
     } else {
       // Додаємо 20% відступу для кращого відображення
       const result = Math.max(maxVisits * 1.2, 50);
-      console.log('Звичайний масштаб X:', result);
       return result;
     }
   }
@@ -1910,23 +1903,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private getYAxisMax(): number {
     if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
       const defaultMax = this.bubbleChartScaleMode === 'zoomed' ? 30 : 60;
-      console.log('Немає даних для Y-осі, повертаємо:', defaultMax);
       return defaultMax; // Значення за замовчуванням у хвилинах
     }
     
     // Використовуємо rawTotalMinutes для загального часу
     const maxTotalTime = Math.max(...this.bubbleChartData.map(d => d.rawTotalMinutes || 0));
-    console.log('Максимальний загальний час:', maxTotalTime, 'Режим:', this.bubbleChartScaleMode);
     
     if (this.bubbleChartScaleMode === 'zoomed') {
       // Для збільшеного масштабу обмежуємо максимальне значення
       const result = Math.min(maxTotalTime * 1.5, 120);
-      console.log('Збільшений масштаб Y:', result);
       return result;
     } else {
       // Додаємо 20% відступу для кращого відображення, мінімум 60 хвилин
       const result = Math.max(maxTotalTime * 1.2, 60);
-      console.log('Звичайний масштаб Y:', result);
       return result;
     }
   }

@@ -56,15 +56,11 @@ export class ChartsSectionComponent implements OnChanges {
 
   constructor(private cdr: ChangeDetectorRef) { }
 
-
-
   ngOnChanges() {
-    console.log('Charts section змінився, bubbleChartScaleMode:', this.bubbleChartScaleMode);
     this.cdr.markForCheck();
   }
 
   onBubbleChartScaleToggle() {
-    console.log('Подія масштабу отримана в charts-section');
     this.bubbleChartScaleToggle.emit();
   }
 } 

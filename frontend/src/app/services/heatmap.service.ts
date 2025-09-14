@@ -358,8 +358,6 @@ export class HeatmapService {
     hasRealData = false;
     // Якщо немає реальних даних, доповнюємо реалістичними випадковими даними
     if (!hasRealData) {
-      console.log('Generating realistic random data for heatmap...');
-      
       // Генеруємо реалістичні дані для кожного тижня
       weeks.forEach((weekLabel, weekIndex) => {
         hourLabels.forEach(hourLabel => {
@@ -438,8 +436,6 @@ export class HeatmapService {
           valueByHourWeek[hourLabel][weekLabel] = finalActivity;
         });
       });
-      
-      console.log('Realistic random data generated for', weeks.length, 'weeks');
     }
 
     // Обчислимо глобальний максимум

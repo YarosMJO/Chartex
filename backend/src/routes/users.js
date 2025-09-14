@@ -129,12 +129,23 @@ router.post('/clear-data', authenticateToken, async (req, res) => {
 router.get('/stats', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.uid;
-    const { period = '30d', deviceId } = req.query; // 7d, 30d, 90d, 1y, all
+    const { period = '30d', deviceId, from, to } = req.query; // 7d, 30d, 90d, 1y, all
+    
+    // Логування для діагностики
+    console.log('API /users/stats - параметри:', { period, deviceId, from, to });
     
     let dateFilter = {};
-    if (period !== 'all') {
+    
+    // Пріоритет: якщо передані from/to, використовуємо їх, інакше period
+    if (from || to) {
+      dateFilter.visitTime = {};
+      if (from) dateFilter.visitTime.$gte = new Date(from);
+      if (to) dateFilter.visitTime.$lte = new Date(to);
+      console.log('Використовуємо from/to фільтр:', dateFilter.visitTime);
+    } else if (period !== 'all') {
       const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
       dateFilter.visitTime = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
+      console.log('Використовуємо period фільтр:', dateFilter.visitTime);
     }
     
     // Додаємо фільтр по пристрою, якщо вказано

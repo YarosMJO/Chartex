@@ -31,7 +31,6 @@ export class BubbleChartComponent implements OnChanges {
   constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
-    console.log('Bubble chart змінився, scaleMode:', this.scaleMode);
     this.cdr.markForCheck();
   }
 
@@ -47,7 +46,6 @@ export class BubbleChartComponent implements OnChanges {
   }
 
   toggleScale() {
-    console.log('Кнопка масштабу натиснута, поточний режим:', this.scaleMode);
     this.scaleToggle.emit();
   }
 

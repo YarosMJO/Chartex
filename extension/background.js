@@ -307,9 +307,6 @@ class HistoryCollector {
       for (const item of historyItems) {
         await this.processHistoryItem(item);
         processedCount++;
-        if (processedCount % 100 === 0) {
-          console.log(`Оброблено ${processedCount}/${historyItems.length} записів`);
-        }
       }
       // Відправити накопичені записи
       await this.flushBatch();
