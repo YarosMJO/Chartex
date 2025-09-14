@@ -3,20 +3,22 @@
     <mat-card-title>{{ selectedPeriod }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <apx-chart
-      [series]="getActivitySeries()"
-      [chart]="activityChartOptions.chart"
-      [xaxis]="activityChartOptions.xaxis"
-      [yaxis]="activityChartOptions.yaxis"
-      [colors]="activityChartOptions.colors"
-      [fill]="activityChartOptions.fill"
-      [stroke]="activityChartOptions.stroke"
-      [dataLabels]="activityChartOptions.dataLabels"
-      [grid]="activityChartOptions.grid"
-      [tooltip]="activityChartOptions.tooltip"
-      [legend]="activityChartOptions.legend"
-      [noData]="{ text: 'Немає даних для відображення' }"
-      (chartReady)="onActivityChartReady($event)">
-    </apx-chart>
+    <div class="chart-container">
+      <apx-chart
+        [series]="getActivitySeries()"
+        [chart]="activityChartOptions.chart"
+        [xaxis]="activityChartOptions.xaxis"
+        [yaxis]="activityChartOptions.yaxis"
+        [colors]="activityChartOptions.colors"
+        [fill]="activityChartOptions.fill"
+        [stroke]="activityChartOptions.stroke"
+        [dataLabels]="activityChartOptions.dataLabels"
+        [grid]="activityChartOptions.grid"
+        [tooltip]="activityChartOptions.tooltip"
+        [legend]="activityChartOptions.legend"
+        [noData]="{ text: 'Немає даних для відображення' }"
+        (chartReady)="onActivityChartReady($event)">
+      </apx-chart>
+    </div>
   </mat-card-content>
 </mat-card>

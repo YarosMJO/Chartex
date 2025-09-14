@@ -147,6 +147,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) { }
 
+
   ngOnInit() {
     // Ініціалізуємо мову з localStorage
     const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
@@ -912,13 +913,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
         zoom: {
           enabled: true,
+          type: 'x',
+          autoScaleYaxis: true
+        },
+        pan: {
+          enabled: true,
           type: 'x'
         },
         animations: {
           enabled: true,
           easing: 'easeinout',
           speed: 800
-        }
+        },
       },
       xaxis: { 
         type: 'category',
@@ -1159,64 +1165,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // Ensure proper chart boundaries
         redrawOnWindowResize: true,
         redrawOnParentResize: true,
-        // Fix passive event listener issue
-        events: {
-          mounted: (chartContext: any, config: any) => {
-            // Disable passive event listeners to allow preventDefault
-            if (chartContext && chartContext.wrapperEl) {
-              const wrapper = chartContext.wrapperEl;
-              
-              // Remove existing event listeners first
-              const removeEventListeners = () => {
-                wrapper.removeEventListener('wheel', this.scrollHandler);
-                wrapper.removeEventListener('touchstart', this.touchHandler);
-                wrapper.removeEventListener('touchmove', this.touchHandler);
-              };
-              
-              // Store handlers as class properties for proper cleanup
-              this.scrollHandler = (e: Event) => {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-              };
-              
-              this.touchHandler = (e: Event) => {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-              };
-              
-              // Add non-passive event listeners
-              wrapper.addEventListener('wheel', this.scrollHandler, { passive: false, capture: true });
-              wrapper.addEventListener('touchstart', this.touchHandler, { passive: false, capture: true });
-              wrapper.addEventListener('touchmove', this.touchHandler, { passive: false, capture: true });
-              
-              // Store cleanup function
-              this.chartCleanup = removeEventListeners;
-            }
-          },
-          destroyed: () => {
-            // Cleanup event listeners when chart is destroyed
-            if (this.chartCleanup) {
-              this.chartCleanup();
-            }
-          }
-        },
         // Toolbar and interactions
         toolbar: {
           show: true,
           tools: {
             download: true,
-            selection: false,
-            zoom: false,
-            zoomin: false,
-            zoomout: false,
-            pan: false,
-            reset: false
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true
           }
         },
         zoom: {
-          enabled: false
+          enabled: true,
+          type: 'xy',
+          autoScaleYaxis: true
+        },
+        pan: {
+          enabled: true,
+          type: 'xy'
         }
       },
       title: {

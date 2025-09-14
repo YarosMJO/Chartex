@@ -28,6 +28,7 @@ if ('serviceWorker' in navigator && !window.location.protocol.startsWith('chrome
   });
 }
 
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),

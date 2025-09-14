@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -12,12 +12,20 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActivityChartComponent implements OnChanges {
+export class ActivityChartComponent implements OnChanges, OnDestroy {
   @Input() activityChartData: { x: string; y: number }[] = [];
   @Input() selectedPeriod: string = '';
   @Input() activityChartOptions: any = {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  private wheelHandler?: (e: Event) => void;
+  private touchStartHandler?: (e: Event) => void;
+  private touchMoveHandler?: (e: Event) => void;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private el: ElementRef,
+    private renderer: Renderer2
+  ) {}
 
   ngOnChanges() {
     if (this.activityChartData.length > 0) {
@@ -39,5 +47,9 @@ export class ActivityChartComponent implements OnChanges {
 
   onActivityChartReady(event: any) {
     // Chart ready event handled
+  }
+
+  ngOnDestroy() {
+    // Cleanup if needed
   }
 }

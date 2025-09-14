@@ -48,6 +48,47 @@ p, span, li, label, input, button { font-size: 1.02em; }
 /* Глобальні стилі для Chartex */
 .chartex-container {
   padding: 20px;
+}
+
+/* Запобігання passive event listener помилкам */
+.apexcharts-canvas,
+.apexcharts-svg,
+.apexcharts-zoomable,
+.apexcharts-zoomable-svg,
+.apexcharts-zoomable-canvas {
+  touch-action: pan-x pan-y !important;
+  overscroll-behavior: contain !important;
+  pointer-events: auto !important;
+}
+
+/* Додаткові стилі для графіків */
+.apx-chart {
+  touch-action: pan-x pan-y !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Специфічні стилі для ApexCharts */
+.apexcharts-zoomable-svg,
+.apexcharts-zoomable-canvas {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Запобігання passive event listener помилкам */
+.apexcharts-canvas,
+.apexcharts-svg,
+.apexcharts-zoomable {
+  touch-action: manipulation !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+.chartex-container {
   max-width: 1200px;
   margin: 0 auto;
 }
