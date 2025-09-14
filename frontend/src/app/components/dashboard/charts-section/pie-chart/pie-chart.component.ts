@@ -1,8 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgApexchartsModule } from 'ng-apexcharts';
 
 @Component({
   selector: 'app-pie-chart',
@@ -12,25 +12,13 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PieChartComponent implements OnInit, OnChanges {
+export class PieChartComponent implements OnChanges {
   @Input() categoryDistributionData: number[] = [];
   @Input() pieChartOptions: any = {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() {
-    this.logDebugInfo('ngOnInit');
-  }
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
-    this.logDebugInfo('ngOnChanges');
     this.cdr.markForCheck();
-  }
-
-  private logDebugInfo(method: string) {
-    console.log(`🔍 PIE CHART DEBUG: ${method} called`, {
-      dataLength: this.categoryDistributionData.length,
-      hasOptions: !!this.pieChartOptions
-    });
   }
 }

@@ -48,10 +48,7 @@ export class HeatmapService {
     selectedPeriod: string,
     selectedDevice: string
   ): Promise<HeatmapSeries[]> {
-    console.log('🔍 HEATMAP DEBUG: Starting prepareActivityHeatmapData');
-    
     if (!userStats?.topDomains) {
-      console.log('🔍 HEATMAP DEBUG: No userStats.topDomains, returning');
       return [];
     }
     
@@ -65,25 +62,20 @@ export class HeatmapService {
     
     try {
       // Отримуємо реальні дані з історії для аналізу активності
-      console.log('🔍 HEATMAP DEBUG: Loading history for heatmap...');
       let historyItems = await this.loadHistoryForHeatmap(selectedPeriod, selectedDevice);
       // Виключаємо google.com з теплової карти
       historyItems = (historyItems || []).filter(item => {
         const host = (item?.domain || item?.url || '').toString();
         return !host.includes('google.com');
       });
-      console.log('🔍 HEATMAP DEBUG: History items received:', historyItems?.length || 0);
       
       if (historyItems && historyItems.length > 0) {
-        console.log('🔍 HEATMAP DEBUG: Processing real history data...');
-        console.log('🔍 HEATMAP DEBUG: Sample history item:', historyItems[0]);
         
         // Використовуємо реальні дані з dayOfWeek та duration
         historyItems.forEach((item, index) => {
           const day = item.dayOfWeek || 0;
           const duration = item.duration || 0; // Використовуємо тривалість замість кількості відвідувань
           
-          console.log(`🔍 HEATMAP DEBUG: Item ${index}: dayOfWeek=${day}, duration=${duration}`);
           
           if (day >= 0 && day < 7) {
             // Перевіряємо, чи duration є валідним числом
@@ -92,9 +84,7 @@ export class HeatmapService {
           }
         });
         
-        console.log('🔍 HEATMAP DEBUG: Activity matrix after processing:', activityMatrix);
                         } else {
-                    console.log('🔍 HEATMAP DEBUG: No history items, using fallback model...');
                     // Fallback до приблизної моделі, якщо немає реальних даних
                     userStats?.topDomains?.forEach((domain: any) => {
           if (domain.visits > 0) {
@@ -103,7 +93,6 @@ export class HeatmapService {
             const validTotalDuration = isNaN(totalDuration) ? 0 : Math.max(0, totalDuration);
             const durationPerDay = Math.ceil(validTotalDuration / 7);
             
-            console.log(`🔍 HEATMAP DEBUG: Domain ${domain._id}: totalDuration=${totalDuration}, durationPerDay=${durationPerDay}`);
             
             for (let day = 0; day < 7; day++) {
               // Симулюємо розподіл активності для тривалості
@@ -121,7 +110,6 @@ export class HeatmapService {
           }
         });
         
-        console.log('🔍 HEATMAP DEBUG: Activity matrix after fallback processing:', activityMatrix);
       }
       
       // Конвертуємо матрицю в формат для ApexCharts heatmap
@@ -131,7 +119,6 @@ export class HeatmapService {
         const value = activityMatrix[day] || 0;
         // Перевіряємо, чи value є валідним числом
         const validValue = isNaN(value) ? 0 : Math.max(0, value);
-        console.log(`🔍 HEATMAP DEBUG: Day ${day} (${this.dayNames[day]}): value=${value}, validValue=${validValue}`);
         
         // Використовуємо правильний формат даних для ApexCharts heatmap
         heatmapData.push({
@@ -140,32 +127,17 @@ export class HeatmapService {
         });
       }
       
-      console.log('🔍 HEATMAP DEBUG: Final heatmapData:', heatmapData);
-      console.log('🔍 HEATMAP DEBUG: Data length:', heatmapData.length);
-      console.log('🔍 HEATMAP DEBUG: Sample data point:', heatmapData[0]);
       
       // Додаткова перевірка для ApexCharts
       if (heatmapData.length > 0) {
-        console.log('🔍 HEATMAP DEBUG: First data point structure:', {
-          x: heatmapData[0].x,
-          y: heatmapData[0].y,
-          type: typeof heatmapData[0].y
-        });
         
         // Перевіряємо всі точки даних
         heatmapData.forEach((point, index) => {
-          console.log(`🔍 HEATMAP DEBUG: Data point ${index}:`, {
-            x: point.x,
-            y: point.y,
-            valueType: typeof point.y,
-            isNaN: isNaN(point.y)
-          });
         });
       }
       
       // Тестовий дані для перевірки (тільки якщо немає реальних даних)
       if (heatmapData.length === 0) {
-        console.log('🔍 HEATMAP DEBUG: No data generated, creating test data...');
         return [
           {
             name: 'Тривалість',
@@ -183,7 +155,6 @@ export class HeatmapService {
       }
       
       // Повертаємо дані в правильному форматі для ApexCharts heatmap
-      console.log('🔍 HEATMAP DEBUG: Returning heatmap data in correct format...');
       return [
         {
           name: 'Тривалість',
@@ -339,9 +310,6 @@ export class HeatmapService {
     }
 
     // Обчислюємо середню тривалість сесії для кожної комірки
-    console.log('🔍 WEEK HEATMAP DEBUG: Calculating average session duration...');
-    console.log('🔍 WEEK HEATMAP DEBUG: weeks array length:', weeks.length);
-    console.log('🔍 WEEK HEATMAP DEBUG: hourLabels array length:', hourLabels.length);
     
     hourLabels.forEach(hLabel => {
       weeks.forEach(wLabel => {
@@ -352,7 +320,6 @@ export class HeatmapService {
           const avgDuration = Math.round(totalDuration / sessionCount);
           valueByHourWeek[hLabel][wLabel] = avgDuration;
           if (totalDuration > 0) {
-            console.log(`🔍 WEEK HEATMAP DEBUG: ${hLabel} ${wLabel}: ${sessionCount} sessions, total=${formatDuration(totalDuration)}, avg=${formatDuration(avgDuration)}`);
           }
         } else {
           valueByHourWeek[hLabel][wLabel] = 0;
@@ -373,12 +340,9 @@ export class HeatmapService {
       });
       if (!hasDataInThisHour) {
         hoursToRemove.add(hLabel);
-        console.log('🔍 WEEK HEATMAP DEBUG: Removing hour with no data:', hLabel);
       }
     });
 
-    console.log('🔍 WEEK HEATMAP DEBUG: Hours to remove:', Array.from(hoursToRemove));
-    console.log('🔍 WEEK HEATMAP DEBUG: Hours to keep:', hourLabels.filter(h => !hoursToRemove.has(h)));
 
     // Якщо немає реальних даних, використовуємо тестові значення
     let hasRealData = false;
@@ -391,11 +355,9 @@ export class HeatmapService {
       });
     });
 
-    console.log('🔍 WEEK HEATMAP DEBUG: Has real data:', hasRealData);
 
     // Якщо немає реальних даних, генеруємо тестові
     if (!hasRealData) {
-      console.log('🔍 WEEK HEATMAP DEBUG: No real data found, generating test data...');
       const testData = this.generateTestHeatmapData(weeks, hourLabels, hoursToRemove, weekPrefix);
       
       // Копіюємо тестові дані
@@ -415,11 +377,9 @@ export class HeatmapService {
       });
     });
     
-    console.log('🔍 WEEK HEATMAP DEBUG: Global max value:', globalMaxValue);
     
     if (globalMaxValue <= 0) {
       globalMaxValue = 3600; // 1 година за замовчуванням
-      console.log('🔍 WEEK HEATMAP DEBUG: No data found, setting default globalMaxValue:', globalMaxValue);
     }
 
 
@@ -464,17 +424,9 @@ export class HeatmapService {
         })
       }));
 
-    console.log('🔍 WEEK HEATMAP DEBUG: Generated series count:', series.length);
-    if (series.length > 0) {
-      console.log('🔍 WEEK HEATMAP DEBUG: Sample series:', series[0].name, 'with', series[0].data.length, 'data points');
-      console.log('🔍 WEEK HEATMAP DEBUG: Sample data points:', series[0].data.slice(0, 3));
-      console.log('🔍 WEEK HEATMAP DEBUG: Week categories for tooltip:', weeks);
-      console.log('🔍 WEEK HEATMAP DEBUG: Hour labels for tooltip:', hourLabels.slice(0, 5));
-    }
 
     // Fallback якщо дані порожні
     if (series.length === 0 || series.every(s => s.data.length === 0)) {
-      console.log('🔍 WEEK HEATMAP DEBUG: No valid series generated, creating fallback data');
       series = [
         {
           name: '12:00',
@@ -491,11 +443,6 @@ export class HeatmapService {
       const sampleRow = series[0];
       const sampleCell: any = sampleRow?.data?.[0] || null;
       // eslint-disable-next-line no-console
-      console.log('🔍 WEEK HEATMAP COLOR DEBUG:', {
-        seriesCount: series.length,
-        weeksCount: weeks.length,
-        sampleCell,
-      });
     } catch {}
 
     return series;
@@ -581,7 +528,6 @@ export class HeatmapService {
     const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
     const weekCategories = Array.from({ length: 12 }, (_, i) => `${weekPrefix}${i + 1}`);
     
-    console.log('🔍 TOOLTIP SETUP DEBUG: Creating options with globalMaxValue:', globalMaxValue);
     
     // Функція для форматування часу
     const formatTime = (seconds: number): string => {
@@ -618,15 +564,6 @@ export class HeatmapService {
               const weekName = w?.config?.xaxis?.categories?.[dataPointIndex] || `${weekPrefix}${dataPointIndex + 1}`;
               const encodedValue = series?.[seriesIndex]?.[dataPointIndex] || 0;
               
-              console.log('🔍 TOOLTIP DEBUG:', { 
-                hourName, 
-                weekName, 
-                encodedValue, 
-                seriesIndex, 
-                dataPointIndex,
-                categories: w?.config?.xaxis?.categories,
-                seriesNames: w?.globals?.seriesNames
-              });
               
               // Декодуємо оригінальне значення з закодованого
               const normalizedVal = Math.floor(encodedValue % 1000);
@@ -652,14 +589,6 @@ export class HeatmapService {
                 originalVal = Math.round(originalRatio * globalMaxValue);
               }
               
-              console.log('🔍 TOOLTIP DECODE DEBUG:', { 
-                encodedValue, 
-                normalizedVal, 
-                originalVal, 
-                globalMaxValue,
-                formattedTime: formatTime(originalVal),
-                isZeroValue: normalizedVal === 0
-              });
               
               return `<div class="apexcharts-tooltip-text" style="padding: 8px; background: #1a1a1a; color: white; border-radius: 4px;">
                 <div style="font-weight: bold; color: #f3eaff;">${hourName}</div>
@@ -667,7 +596,6 @@ export class HeatmapService {
                 <div style="color: #a259f7; font-weight: bold;">${formatTime(originalVal)}</div>
               </div>`;
             } catch (error) {
-              console.error('🔍 TOOLTIP ERROR:', error);
               return `<div class="apexcharts-tooltip-text">Error loading tooltip</div>`;
             }
           }
@@ -738,14 +666,6 @@ export class HeatmapService {
               originalVal = Math.round(originalRatio * globalMaxValue);
             }
             
-            console.log('🔍 TOOLTIP DECODE DEBUG (Light):', { 
-              encodedValue, 
-              normalizedVal, 
-              originalVal, 
-              globalMaxValue,
-              formattedTime: formatTime(originalVal),
-              isZeroValue: normalizedVal === 0
-            });
             
             return `<div class="apexcharts-tooltip-text" style="padding: 8px; background: white; color: black; border-radius: 4px; border: 1px solid #e0e0e0;">
               <div style="font-weight: bold; color: #333;">${hourName}</div>
@@ -753,7 +673,6 @@ export class HeatmapService {
               <div style="color: #1976d2; font-weight: bold;">${formatTime(originalVal)}</div>
             </div>`;
           } catch (error) {
-            console.error('🔍 TOOLTIP ERROR:', error);
             return `<div class="apexcharts-tooltip-text">Error loading tooltip</div>`;
           }
         }
@@ -782,9 +701,6 @@ export class HeatmapService {
    * Завантаження історії для теплової карти
    */
   private async loadHistoryForHeatmap(selectedPeriod: string, selectedDevice: string): Promise<any[]> {
-    console.log('🔍 HEATMAP DEBUG: Starting loadHistoryForHeatmap');
-    console.log('🔍 HEATMAP DEBUG: selectedPeriod:', selectedPeriod);
-    console.log('🔍 HEATMAP DEBUG: selectedDevice:', selectedDevice);
     
     try {
       // Розраховуємо дати для періоду
@@ -818,19 +734,9 @@ export class HeatmapService {
         params.deviceId = selectedDevice;
       }
       
-      console.log('🔍 HEATMAP DEBUG: API params:', params);
       
       const historyResponse = await this.apiService.getHistoryWithDecryptedData(params);
       
-      console.log('🔍 HEATMAP DEBUG: History response:', {
-        hasResponse: !!historyResponse,
-        itemsCount: historyResponse?.items?.length || 0,
-        pagination: historyResponse?.pagination
-      });
-      
-      if (historyResponse?.items && historyResponse.items.length > 0) {
-        console.log('🔍 HEATMAP DEBUG: Sample history item:', historyResponse.items[0]);
-      }
       
       return historyResponse.items || [];
     } catch (error) {
@@ -843,7 +749,6 @@ export class HeatmapService {
    * Генерація опцій для теплової карти
    */
   getActivityHeatmapOptions(isDarkTheme: boolean, isNarrowChart: boolean = false): HeatmapOptions {
-    console.log('🔍 HEATMAP DEBUG: Generating chart options, isDarkTheme:', isDarkTheme, 'isNarrowChart:', isNarrowChart);
     
     if (isDarkTheme) {
       return {

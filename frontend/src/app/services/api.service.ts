@@ -232,25 +232,9 @@ export class ApiService {
         requestParams.deviceId = params.deviceId;
       }
       
-      console.log('🔍 API DEBUG: Requesting history with params:', {
-        ...requestParams,
-        period: params.period,
-        fromDate: fromDate.toISOString(),
-        toDate: now.toISOString()
-      });
       
       let historyResponse = await this.getHistoryWithDecryptedData(requestParams);
       
-      console.log('🔍 API DEBUG: History response received:', {
-        totalItems: historyResponse.items?.length || 0,
-        pagination: historyResponse.pagination,
-        sampleItems: historyResponse.items?.slice(0, 3).map(item => ({
-          visitTime: item.visitTime,
-          duration: item.duration,
-          url: item.decryptedData?.url,
-          visits: item.visitCount
-        }))
-      });
       
       if (!historyResponse.items || historyResponse.items.length === 0) {
         // Fallback до старого методу
@@ -283,30 +267,15 @@ export class ApiService {
       let totalVisits = 0;
       let totalDuration = 0;
       
-      console.log('🔍 RAW DATA DEBUG: Processing items:', historyResponse.items.length);
       
       historyResponse.items.forEach((item, index) => {
         const visitCount = item.visitCount || 1;
         const duration = item.duration || 0;
         
-        console.log(`🔍 RAW ITEM ${index}:`, {
-          _id: item._id,
-          duration: duration,
-          durationType: typeof duration,
-          visitCount: visitCount,
-          visitCountType: typeof visitCount,
-          url: item.decryptedData?.url || 'no-url',
-          visitTime: item.visitTime
-        });
         
         totalVisits += visitCount;
         totalDuration += duration;
         
-        console.log(`🔍 RUNNING TOTALS after item ${index}:`, {
-          totalVisits,
-          totalDuration,
-          totalDurationHours: Math.round(totalDuration / 3600 * 100) / 100
-        });
         
         if (item.decryptedData?.url) {
           const domain = this.getDomainFromUrl(item.decryptedData.url);
@@ -336,34 +305,11 @@ export class ApiService {
         .sort((a, b) => b.visits - a.visits)
         .slice(0, 10); // Топ 10 доменів
       
-      console.log('🔍 API AGGREGATION DEBUG: Final topDomains after frontend aggregation:', topDomains.map(d => ({
-        domain: d._id,
-        visits: d.visits,
-        totalDuration: d.totalDuration,
-        totalDurationHours: Math.round(d.totalDuration / 3600 * 100) / 100,
-        avgDurationPerVisit: Math.round(d.totalDuration / d.visits),
-        url: d.decryptedData?.url
-      })));
       
       const uniqueDomains = domainStats.size;
       const avgDuration = uniqueDomains > 0 ? totalDuration / uniqueDomains : 0;
       
-      console.log('🔍 FINAL STATS DEBUG: Aggregated statistics:', {
-        totalVisits,
-        uniqueDomains,
-        totalDuration,
-        totalDurationHours: Math.round(totalDuration / 3600 * 100) / 100,
-        avgDuration,
-        topDomainsCount: topDomains.length
-      });
       
-      console.log('🔍 TOP DOMAINS DEBUG: Final top domains:', topDomains.map(d => ({
-        domain: d._id,
-        visits: d.visits,
-        totalDuration: d.totalDuration,
-        totalDurationHours: Math.round(d.totalDuration / 3600 * 100) / 100,
-        url: d.decryptedData?.url
-      })));
       
       return {
         period: params.period || '30d',
@@ -662,41 +608,4 @@ export class ApiService {
     ).toPromise() as Promise<{ success: boolean; deletedCount: number }>;
   }
 
-  // Діагностика даних duration
-  async analyzeDurationData(): Promise<{
-    success: boolean;
-    analysis: {
-      stats: any;
-      invalidRecords: any[];
-      suspiciousRecords: any[];
-      durationRanges: any[];
-    };
-  }> {
-    const headers = await this.getHeaders();
-    
-    return this.http.get<any>(
-      `${this.API_BASE_URL}/history/duration-analysis`,
-      { headers }
-    ).toPromise() as Promise<any>;
-  }
-
-  // Виправлення неправильних значень duration
-  async fixDurationData(): Promise<{
-    success: boolean;
-    fixedCount: number;
-    details: {
-      millisecondsFixed: number;
-      cappedFixed: number;
-      negativeFixed: number;
-    };
-    message: string;
-  }> {
-    const headers = await this.getHeaders();
-    
-    return this.http.post<any>(
-      `${this.API_BASE_URL}/history/fix-durations`,
-      {},
-      { headers }
-    ).toPromise() as Promise<any>;
-  }
 } 

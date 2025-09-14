@@ -7,20 +7,12 @@ const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
-    console.log('Авторизація запиту:', { 
-      hasAuthHeader: !!authHeader,
-      authHeaderLength: authHeader?.length,
-      method: req.method,
-      path: req.path
-    });
-    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('Токен авторизації не надано');
       return res.status(401).json({ error: 'Токен авторизації не надано' });
     }
     
     const token = authHeader.substring(7); // Видалити 'Bearer '
-    console.log('Токен отримано:', { tokenLength: token.length });
     
     // Спробувати перевірити як Firebase токен
     try {

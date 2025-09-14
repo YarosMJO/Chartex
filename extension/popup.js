@@ -45,8 +45,6 @@ class PopupManager {
     // Listen for storage changes to update language
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.chartex_language) {
-        console.log('Зміна мови в popup:', changes.chartex_language.newValue);
-        console.log('Поточні переклади перед оновленням:', Object.keys(this.translations));
         this.applyLanguage(changes.chartex_language.newValue);
       }
     });
@@ -58,59 +56,51 @@ class PopupManager {
       const result = await chrome.storage.local.get(['chartex_language']);
       const language = result.chartex_language || 'uk';
       
-      // Apply language to popup
-      this.applyLanguage(language);
+      // Apply language to popup and wait for translations to load
+      await this.applyLanguage(language);
       
     } catch (error) {
       console.error('Помилка завантаження мови:', error);
       // Fallback to Ukrainian
-      this.applyLanguage('uk');
+      await this.applyLanguage('uk');
     }
   }
   
-  applyLanguage(language) {
-    console.log('Застосування мови в popup:', language);
+  async applyLanguage(language) {
     // Load translation file based on language
     const translationFile = language === 'en' ? 'en.json' : 'uk.json';
     const translationUrl = chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`);
-    console.log('URL файлу перекладів:', translationUrl);
     
-    fetch(translationUrl)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(translations => {
-        this.translatePopup(translations);
-        // Update UI after translations are loaded
-        this.updateUI();
-      })
-      .catch(error => {
-        console.error('Помилка завантаження перекладів:', error);
-        // Try to load Ukrainian as fallback if current language is not Ukrainian
-        if (language !== 'uk') {
-          console.log('Спроба завантажити українську мову як fallback');
-          // Load Ukrainian translations directly without recursive call
+    try {
+      const response = await fetch(translationUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const translations = await response.json();
+      this.translatePopup(translations);
+      // Update UI after translations are loaded
+      this.updateUI();
+    } catch (error) {
+      console.error('Помилка завантаження перекладів:', error);
+      // Try to load Ukrainian as fallback if current language is not Ukrainian
+      if (language !== 'uk') {
+        try {
           const ukTranslationUrl = chrome.runtime.getURL('dashboard/assets/i18n/uk.json');
-          fetch(ukTranslationUrl)
-            .then(response => response.json())
-            .then(translations => {
-              this.translatePopup(translations);
-              this.updateUI();
-            })
-            .catch(fallbackError => {
-              console.error('Не вдалося завантажити переклади для української мови:', fallbackError);
-              // Set empty translations object to prevent errors
-              this.translations = {};
-            });
-        } else {
-          console.error('Не вдалося завантажити переклади для української мови');
+          const ukResponse = await fetch(ukTranslationUrl);
+          const ukTranslations = await ukResponse.json();
+          this.translatePopup(ukTranslations);
+          this.updateUI();
+        } catch (fallbackError) {
+          console.error('Не вдалося завантажити переклади для української мови:', fallbackError);
           // Set empty translations object to prevent errors
           this.translations = {};
         }
-      });
+      } else {
+        console.error('Не вдалося завантажити переклади для української мови');
+        // Set empty translations object to prevent errors
+        this.translations = {};
+      }
+    }
   }
   
   translatePopup(translations) {
@@ -119,8 +109,6 @@ class PopupManager {
       return;
     }
     
-    console.log('translatePopup викликано з перекладами:', Object.keys(translations));
-    console.log('POPUP_MESSAGES секція:', translations.POPUP_MESSAGES);
     this.translations = translations; // Store translations
     
     // Translate popup elements
@@ -176,23 +164,17 @@ class PopupManager {
       return null;
     }
     
-    console.log('getNestedTranslation викликано з ключем:', key, 'та перекладами:', Object.keys(translations));
     const keys = key.split('.');
     let value = translations;
     
     for (const k of keys) {
-      console.log('Шукаємо ключ:', k, 'в об\'єкті:', Object.keys(value || {}));
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
-        console.log('Знайдено значення:', value);
       } else {
-        console.log('Ключ не знайдено:', k);
-        console.log('Доступні ключі в поточному об\'єкті:', Object.keys(value || {}));
         return null;
       }
     }
     
-    console.log('Повертаємо фінальне значення:', value);
     return value;
   }
   
@@ -469,9 +451,7 @@ class PopupManager {
       this.elements.sessionCount.textContent = this.status.sessionCount || '-';
     }
     if (this.elements.lastSync) {
-      console.log('Оновлення lastSync з timestamp:', this.status.lastSync);
       const formattedText = this.formatLastSync(this.status.lastSync);
-      console.log('Форматований текст lastSync:', formattedText);
       this.elements.lastSync.textContent = formattedText;
     }
   }
@@ -534,7 +514,6 @@ class PopupManager {
   async testDataCollection() {
     try {
       this.setLoading(true);
-      console.log('Тестування збору даних...');
       
       const response = await this.sendMessage({ 
         action: 'testDataCollection',
@@ -547,16 +526,13 @@ class PopupManager {
       });
       
       if (response.success) {
-        console.log('Тест успішний:', response);
         const successMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_COMPLETED') : 'Тест завершено.';
         this.showSuccess(successMsg);
       } else {
-        console.error('Тест невдалий:', response.error);
-                  const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: response.error }) : `Помилка тесту: ${response.error}`;
+        const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: response.error }) : `Помилка тесту: ${response.error}`;
         this.showError(errorMsg);
       }
     } catch (error) {
-      console.error('Помилка тесту:', error);
       const errorMsg = this.translations ? this.getTranslation('POPUP_MESSAGES.TEST_ERROR', { error: error.message }) : `Помилка тесту: ${error.message}`;
       this.showError(errorMsg);
     } finally {
@@ -667,15 +643,12 @@ class PopupManager {
         this.elements.error.style.display = 'none';
       }, 3000);
     }
-    console.log('Popup Success:', message);
   }
   
   formatLastSync(timestamp) {
-    console.log('formatLastSync викликано з timestamp:', timestamp);
     
     if (!timestamp) {
       const neverText = this.translations ? this.getTranslation('POPUP_MESSAGES.NEVER') : 'Ніколи';
-      console.log('Повертаємо NEVER:', neverText);
       return neverText;
     }
     
@@ -683,42 +656,35 @@ class PopupManager {
     const now = new Date();
     const diff = now - date;
     
-    console.log('Розрахунок часу:', { date, now, diff, diffMinutes: Math.floor(diff / 60000) });
     
     if (diff < 60000) {
       const justNowText = this.translations ? this.getTranslation('POPUP_MESSAGES.JUST_NOW') : 'Щойно';
-      console.log('Повертаємо JUST_NOW:', justNowText);
       return justNowText;
     }
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000);
       const minutesText = this.translations ? this.getTranslation('POPUP_MESSAGES.MINUTES') : 'хв';
       const result = `${minutes} ${minutesText} тому`;
-      console.log('Повертаємо хвилини:', result);
       return result;
     }
     if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000);
       const hoursText = this.translations ? this.getTranslation('POPUP_MESSAGES.HOURS') : 'год';
       const result = `${hours} ${hoursText} тому`;
-      console.log('Повертаємо години:', result);
       return result;
     }
     
     const result = date.toLocaleDateString('uk-UA');
-    console.log('Повертаємо дату:', result);
     return result;
   }
 
   getTranslation(key, params = {}) {
     if (!this.translations) {
-      console.warn('Переклади не завантажені для ключа:', key);
       return key; // Return key when translations are not loaded
     }
     
     let translation = this.getNestedTranslation(this.translations, key);
     if (!translation) {
-      console.warn('Переклад не знайдено для ключа:', key, 'Доступні переклади:', Object.keys(this.translations));
       return key; // Return key when translation is not found
     }
 
@@ -728,7 +694,6 @@ class PopupManager {
       return acc.replace(regex, paramValue);
     }, translation);
     
-    console.log('Переклад для ключа', key, ':', result);
     return result;
   }
 }

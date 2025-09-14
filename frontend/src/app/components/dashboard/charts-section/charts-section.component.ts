@@ -17,9 +17,9 @@ import { TopSitesComponent } from './top-sites/top-sites.component';
   styleUrls: ['./charts-section.component.scss'],
   standalone: true,
   imports: [
-    CommonModule, 
-    MatCardModule, 
-    NgApexchartsModule, 
+    CommonModule,
+    MatCardModule,
+    NgApexchartsModule,
     TranslateModule,
     ActivityChartComponent,
     ActivityHeatmapComponent,
@@ -30,7 +30,7 @@ import { TopSitesComponent } from './top-sites/top-sites.component';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChartsSectionComponent implements OnInit, OnChanges {
+export class ChartsSectionComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   @Input() selectedPeriod: string = '';
@@ -41,10 +41,10 @@ export class ChartsSectionComponent implements OnInit, OnChanges {
   @Input() timeOfDayWeekHeatmapOptions: any = {};
   @Input() categoryDistributionData: number[] = [];
   @Input() pieChartOptions: any = {};
-  @Input() bubbleChartData: { 
-    x: number; 
-    y: number; 
-    z: number; 
+  @Input() bubbleChartData: {
+    x: number;
+    y: number;
+    z: number;
     name: string;
     rawTotalMinutes?: number;
     rawVisits?: number;
@@ -52,34 +52,11 @@ export class ChartsSectionComponent implements OnInit, OnChanges {
   }[] = [];
   @Input() bubbleChartOptions: any = {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef) { }
 
-  ngOnInit() {
-    this.logDebugInfo('ngOnInit');
-  }
+
 
   ngOnChanges() {
-    this.logDebugInfo('ngOnChanges');
     this.cdr.markForCheck();
   }
-
-  private logDebugInfo(context: string) {
-    console.log(`🔍 CHARTS DEBUG: ${context} - ChartsSectionComponent`);
-    console.log('🔍 CHARTS DEBUG: activityChartData length:', this.activityChartData.length);
-    console.log('🔍 CHARTS DEBUG: timeOfDayWeekHeatmapData length:', this.timeOfDayWeekHeatmapData.length);
-    
-    if (this.activityChartData.length > 0) {
-      console.log('🔍 CHARTS DEBUG: Sample activity values:', this.activityChartData.slice(0, 3));
-    }
-    
-    if (this.timeOfDayWeekHeatmapData.length > 0) {
-      console.log('🔍 CHARTS DEBUG: Sample heatmap series:', this.timeOfDayWeekHeatmapData[0].name);
-      console.log('🔍 CHARTS DEBUG: Sample heatmap data points:', this.timeOfDayWeekHeatmapData[0].data.slice(0, 3));
-      console.log('🔍 CHARTS DEBUG: Total heatmap series count:', this.timeOfDayWeekHeatmapData.length);
-    } else {
-      console.log('🔍 CHARTS DEBUG: No heatmap data available');
-    }
-  }
-
-
 } 

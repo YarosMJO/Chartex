@@ -1,8 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { HeatmapSeries } from '../../../../services/heatmap.service';
 
 @Component({
@@ -13,25 +13,13 @@ import { HeatmapSeries } from '../../../../services/heatmap.service';
   imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TimeHeatmapComponent implements OnInit, OnChanges {
+export class TimeHeatmapComponent implements OnChanges {
   @Input() timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   @Input() timeOfDayWeekHeatmapOptions: any = {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() {
-    this.logDebugInfo('ngOnInit');
-  }
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
-    this.logDebugInfo('ngOnChanges');
     this.cdr.markForCheck();
-  }
-
-  private logDebugInfo(method: string) {
-    console.log(`🔍 TIME HEATMAP DEBUG: ${method} called`, {
-      dataLength: this.timeOfDayWeekHeatmapData.length,
-      hasOptions: !!this.timeOfDayWeekHeatmapOptions
-    });
   }
 }

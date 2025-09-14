@@ -1,8 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { TranslateModule } from '@ngx-translate/core';
-import { formatDuration, cleanDomainName } from '../../../../utils/utils';
+import { cleanDomainName, formatDuration } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-top-sites',
@@ -12,17 +12,12 @@ import { formatDuration, cleanDomainName } from '../../../../utils/utils';
   imports: [CommonModule, MatCardModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TopSitesComponent implements OnInit, OnChanges {
+export class TopSitesComponent implements OnChanges {
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() {
-    this.logDebugInfo('ngOnInit');
-  }
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
-    this.logDebugInfo('ngOnChanges');
     this.cdr.markForCheck();
   }
 
@@ -41,10 +36,4 @@ export class TopSitesComponent implements OnInit, OnChanges {
     // Fallback якщо Math недоступний
     return Math.floor(value + 0.5);
   };
-
-  private logDebugInfo(method: string) {
-    console.log(`🔍 TOP SITES DEBUG: ${method} called`, {
-      dataLength: this.topDomainsData.length
-    });
-  }
 }

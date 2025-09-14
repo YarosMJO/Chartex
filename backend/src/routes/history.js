@@ -72,18 +72,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
   try {
     const { items } = req.body;
     
-    console.log('🔍 BACKEND DURATION DEBUG: Received batch request:', { 
-      userId: req.user.uid, 
-      itemsCount: items?.length,
-      firstItem: items?.[0],
-      durations: items?.slice(0, 5).map((item, index) => ({
-        index,
-        duration: item.duration,
-        durationHours: Math.round((item.duration || 0) / 3600 * 100) / 100,
-        url: item.encryptedData ? '[encrypted]' : 'no-data'
-      }))
-    });
-    
     if (!Array.isArray(items) || items.length === 0) {
       console.error('Невірний формат batch запиту');
       return res.status(400).json({ error: 'Необхідно передати масив записів' });
@@ -95,7 +83,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
       
       // Захист від неправильних значень duration
       if (duration > 3600) {
-        console.log('🔍 BACKEND DURATION FIX: Capping duration from', duration, 'to 3600 seconds');
         duration = 3600; // Максимум 1 година
       }
       
@@ -103,10 +90,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
       if (duration > 1000 && duration < 1000000) {
         const originalDuration = duration;
         duration = Math.round(duration / 1000);
-        console.log('🔍 BACKEND DURATION FIX: Converted from ms:', {
-          original: originalDuration,
-          converted: duration
-        });
       }
       
       return {
@@ -117,10 +100,7 @@ router.post('/batch', authenticateToken, async (req, res) => {
       };
     });
     
-    console.log('Підготовлені записи для збереження:', historyItems.length);
-    
     const result = await HistoryItem.insertMany(historyItems);
-    console.log('Успішно збережено записів:', result.length);
     
     res.json({ success: true, count: result.length });
   } catch (err) {
@@ -132,11 +112,7 @@ router.post('/batch', authenticateToken, async (req, res) => {
 // Очистити всі дані історії для поточного користувача
 router.delete('/clear-all', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 CLEAR DEBUG: Clearing all history for user:', req.user.uid);
-    
     const result = await HistoryItem.deleteMany({ userId: req.user.uid });
-    
-    console.log('🔍 CLEAR DEBUG: Deleted records:', result.deletedCount);
     
     res.json({ 
       success: true, 
@@ -152,7 +128,6 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
 // Діагностика даних duration
 router.get('/duration-analysis', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 DURATION ANALYSIS: Starting analysis for user:', req.user.uid);
     
     // Загальна статистика duration
     const durationStats = await HistoryItem.aggregate([
@@ -197,13 +172,6 @@ router.get('/duration-analysis', authenticateToken, async (req, res) => {
       }
     ]);
     
-    console.log('🔍 DURATION ANALYSIS: Results:', {
-      durationStats: durationStats[0],
-      invalidCount: invalidRecords.length,
-      suspiciousCount: suspiciousRecords.length,
-      ranges: durationRanges
-    });
-    
     res.json({
       success: true,
       analysis: {
@@ -232,15 +200,11 @@ router.get('/duration-analysis', authenticateToken, async (req, res) => {
 // Виправити неправильні значення duration в існуючих даних
 router.post('/fix-durations', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 DURATION FIX: Starting duration fix for user:', req.user.uid);
-    
     // Спочатку виправляємо мілісекунди (duration > 100000, але < 10000000)
     const millisecondsRecords = await HistoryItem.find({ 
       userId: req.user.uid,
       duration: { $gt: 100000, $lt: 10000000 }
     });
-    
-    console.log('🔍 DURATION FIX: Found milliseconds records:', millisecondsRecords.length);
     
     let msFixedCount = 0;
     for (const record of millisecondsRecords) {
@@ -254,11 +218,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
       );
       
       msFixedCount++;
-      console.log('🔍 DURATION FIX: Fixed milliseconds record:', {
-        id: record._id,
-        oldDuration: record.duration,
-        newDuration: finalDuration
-      });
     }
     
     // Потім виправляємо дуже великі значення (> 3600 секунд)
@@ -266,8 +225,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
       userId: req.user.uid,
       duration: { $gt: 3600 }
     });
-    
-    console.log('🔍 DURATION FIX: Found invalid records after ms fix:', invalidRecords.length);
     
     let cappedCount = 0;
     for (const record of invalidRecords) {
@@ -285,11 +242,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
       );
       
       cappedCount++;
-      console.log('🔍 DURATION FIX: Capped record:', {
-        id: record._id,
-        oldDuration: record.duration,
-        newDuration: newDuration
-      });
     }
     
     // Виправляємо від'ємні значення
@@ -297,8 +249,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
       userId: req.user.uid,
       duration: { $lt: 0 }
     });
-    
-    console.log('🔍 DURATION FIX: Found negative records:', negativeRecords.length);
     
     let negativeFixedCount = 0;
     for (const record of negativeRecords) {
@@ -310,13 +260,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
     }
     
     const totalFixedCount = msFixedCount + cappedCount + negativeFixedCount;
-    
-    console.log('🔍 DURATION FIX: Summary:', {
-      millisecondsFixed: msFixedCount,
-      cappedFixed: cappedCount,
-      negativeFixed: negativeFixedCount,
-      totalFixed: totalFixedCount
-    });
     
     res.json({ 
       success: true, 

@@ -101,28 +101,22 @@ export class AdvancedFiltersComponent implements OnDestroy {
   selectedDurationOption: string = 'all';
 
   onCategoryChange(category: string, checked: boolean) {
-    console.log('AdvancedFiltersComponent: onCategoryChange викликано з category:', category, 'checked:', checked);
     const newCategories = checked 
       ? [...this.filters.categories, category]
       : this.filters.categories.filter(c => c !== category);
     
-    console.log('AdvancedFiltersComponent: нові категорії:', newCategories);
     this.updateFilters({ ...this.filters, categories: newCategories });
   }
 
   onDurationOptionChange(option: string) {
-    console.log('AdvancedFiltersComponent: onDurationOptionChange викликано з option:', option);
     this.selectedDurationOption = option;
     
     const durationOption = this.adjustedDurationOptions.find(d => d.value === option);
     if (durationOption) {
-      console.log('AdvancedFiltersComponent: встановлюємо діапазон для опції:', durationOption.range);
-      
       // Якщо вибирається "custom", встановлюємо розумні значення за замовчуванням
       if (option === 'custom') {
         const maxRange = this.filters.durationType === 'average' ? 60 : 180;
         const defaultRange = { min: 0, max: maxRange };
-        console.log('AdvancedFiltersComponent: встановлюємо кастомний діапазон за замовчуванням:', defaultRange);
         this.updateFilters({ 
           ...this.filters, 
           durationRange: defaultRange 
@@ -162,8 +156,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
     const newMin = Math.max(0, Math.min(Number(value), this.filters.durationRange.max));
     
     if (newMin !== this.filters.durationRange.min) {
-      console.log('AdvancedFiltersComponent: змінюємо мінімальний час з', this.filters.durationRange.min, 'на', newMin);
-      
       // Якщо мінімальне значення перевищує максимальне, збільшуємо максимальне
       if (newMin > this.filters.durationRange.max) {
         this.filters.durationRange.max = newMin;
@@ -180,8 +172,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
     const newMax = Math.max(this.filters.durationRange.min, Math.min(Number(value), maxRange));
     
     if (newMax !== this.filters.durationRange.max) {
-      console.log('AdvancedFiltersComponent: змінюємо максимальний час з', this.filters.durationRange.max, 'на', newMax);
-      
       // Якщо максимальне значення менше мінімального, зменшуємо мінімальне
       if (newMax < this.filters.durationRange.min) {
         this.filters.durationRange.min = newMax;
@@ -194,8 +184,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onDateRangeChange(type: 'start' | 'end', date: Date | null) {
-    console.log('AdvancedFiltersComponent: onDateRangeChange викликано з type:', type, 'date:', date);
-    
     // Очищаємо попередній таймаут
     if (this.dateChangeTimeout) {
       clearTimeout(this.dateChangeTimeout);
@@ -208,7 +196,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
       const dateChanged = this.hasDateChanged(currentDate, date);
       
       if (dateChanged) {
-        console.log('AdvancedFiltersComponent: дата дійсно змінилася, оновлюємо фільтри');
         this.updateFilters({ 
           ...this.filters, 
           dateRange: { 
@@ -216,8 +203,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
             [type]: date 
           } 
         });
-      } else {
-        console.log('AdvancedFiltersComponent: дата не змінилася, пропускаємо оновлення');
       }
     }, 100); // Затримка 100мс для dateChange
   }
@@ -229,8 +214,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onDateInputChange(type: 'start' | 'end', event: any) {
-    console.log('AdvancedFiltersComponent: onDateInputChange викликано з type:', type, 'event:', event);
-    
     // Очищаємо попередні таймаути
     if (this.dateInputTimeout) {
       clearTimeout(this.dateInputTimeout);
@@ -245,7 +228,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
       if (value) {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
-          console.log('AdvancedFiltersComponent: парсимо дату з input (debounced):', date);
           this.onDateRangeChange(type, date);
         }
       }
@@ -253,8 +235,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onDateBlur(type: 'start' | 'end', event: any) {
-    console.log('AdvancedFiltersComponent: onDateBlur викликано з type:', type, 'event:', event);
-    
     // Очищаємо таймаути при blur
     if (this.dateInputTimeout) {
       clearTimeout(this.dateInputTimeout);
@@ -267,15 +247,12 @@ export class AdvancedFiltersComponent implements OnDestroy {
     if (value) {
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
-        console.log('AdvancedFiltersComponent: парсимо дату з blur:', date);
         this.onDateRangeChange(type, date);
       }
     }
   }
 
   onDateKeyup(type: 'start' | 'end', event: any) {
-    console.log('AdvancedFiltersComponent: onDateKeyup викликано з type:', type, 'event:', event);
-    
     // Очищаємо попередні таймаути
     if (this.dateInputTimeout) {
       clearTimeout(this.dateInputTimeout);
@@ -290,7 +267,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
       if (value && value.length >= 8) { // Мінімальна довжина для дати YYYY-MM-DD
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
-          console.log('AdvancedFiltersComponent: парсимо дату з keyup (debounced):', date);
           this.onDateRangeChange(type, date);
         }
       }
@@ -305,10 +281,8 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   onClearFilters() {
-    console.log('AdvancedFiltersComponent: onClearFilters викликано');
     this.selectedDurationOption = 'all';
     this.clearFilters.emit();
-    console.log('AdvancedFiltersComponent: clearFilters.emit() викликано');
   }
 
   private updateFilters(newFilters: FilterOptions) {
@@ -333,8 +307,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
 
   // Додаємо метод для зміни типу фільтрації часу
   onDurationTypeChange(type: 'total' | 'average') {
-    console.log('AdvancedFiltersComponent: змінюємо тип фільтрації часу на:', type);
-    
     // Оновлюємо діапазон в залежності від типу
     const maxRange = type === 'average' ? 60 : 180;
     const newFilters = { 

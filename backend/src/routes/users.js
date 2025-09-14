@@ -111,12 +111,8 @@ router.post('/clear-data', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.uid;
     
-    console.log(`Очищення даних для користувача ${userId}`);
-    
     // Видалити тільки дані історії, залишити користувача та пристрої
     const deletedCount = await HistoryItem.deleteMany({ userId });
-    
-    console.log(`Видалено ${deletedCount.deletedCount} записів історії для користувача ${userId}`);
     
     res.json({ 
       success: true, 
@@ -135,8 +131,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
     const userId = req.user.uid;
     const { period = '30d', deviceId } = req.query; // 7d, 30d, 90d, 1y, all
     
-    console.log('Запит статистики користувача:', { userId, period, deviceId });
-    
     let dateFilter = {};
     if (period !== 'all') {
       const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
@@ -149,20 +143,11 @@ router.get('/stats', authenticateToken, async (req, res) => {
       deviceFilter.deviceId = deviceId;
     }
     
-    console.log('Фільтри:', { dateFilter, deviceFilter });
-    
     // Спочатку перевіримо, скільки записів знайдено
     const totalRecords = await HistoryItem.countDocuments({ userId, ...dateFilter, ...deviceFilter });
-    console.log('Загальна кількість записів для користувача:', totalRecords);
     
     // Перевіримо кілька записів для діагностики
     const sampleRecords = await HistoryItem.find({ userId, ...dateFilter, ...deviceFilter }).limit(5);
-    console.log('Приклади записів:', sampleRecords.map(record => ({
-      _id: record._id,
-      duration: record.duration,
-      visitTime: record.visitTime,
-      deviceId: record.deviceId
-    })));
     
     const stats = await HistoryItem.aggregate([
       { $match: { userId, ...dateFilter, ...deviceFilter } },
@@ -186,8 +171,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
       }
     ]);
     
-    console.log('Загальна статистика:', stats[0]);
-    
     // Отримати топ доменів з зашифрованими даними для дешифрування
     const topDomains = await HistoryItem.aggregate([
       { $match: { userId, ...dateFilter, ...deviceFilter } },
@@ -203,22 +186,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
       { $sort: { visits: -1 } },
       { $limit: 10 }
     ]);
-    
-    console.log('Топ доменів:', topDomains.length);
-    console.log('Приклади топ доменів:', topDomains.slice(0, 3).map(domain => ({
-      _id: domain._id,
-      visits: domain.visits,
-      totalDuration: domain.totalDuration,
-      totalDurationHours: Math.round(domain.totalDuration / 3600 * 100) / 100,
-      avgDurationPerVisit: Math.round(domain.totalDuration / domain.visits)
-    })));
-    
-    console.log('Результат статистики:', {
-      period,
-      deviceId,
-      stats: stats[0] || { totalVisits: 0, uniqueDomains: 0, totalDuration: 0, avgDuration: 0 },
-      topDomainsCount: topDomains.length
-    });
     
     res.json({
       period,

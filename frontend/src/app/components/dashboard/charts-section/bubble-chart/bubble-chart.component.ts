@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -12,11 +12,11 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BubbleChartComponent implements OnInit, OnChanges {
-  @Input() bubbleChartData: { 
-    x: number; 
-    y: number; 
-    z: number; 
+export class BubbleChartComponent implements OnChanges {
+  @Input() bubbleChartData: {
+    x: number;
+    y: number;
+    z: number;
     name: string;
     rawTotalMinutes?: number;
     rawVisits?: number;
@@ -24,19 +24,13 @@ export class BubbleChartComponent implements OnInit, OnChanges {
   }[] = [];
   @Input() bubbleChartOptions: any = {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() {
-    this.logDebugInfo('ngOnInit');
-  }
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
-    this.logDebugInfo('ngOnChanges');
     this.cdr.markForCheck();
   }
 
   getBubbleChartSeries() {
-    console.log('🔍 BUBBLE CHART DEBUG: getBubbleChartSeries called with data:', this.bubbleChartData);
     return [{
       name: 'Сайти',
       data: this.bubbleChartData
@@ -44,13 +38,6 @@ export class BubbleChartComponent implements OnInit, OnChanges {
   }
 
   onChartReady(event: any) {
-    console.log('🔍 BUBBLE CHART DEBUG: Chart ready event:', event);
-  }
-
-  private logDebugInfo(method: string) {
-    console.log(`🔍 BUBBLE CHART DEBUG: ${method} called`, {
-      dataLength: this.bubbleChartData.length,
-      hasOptions: !!this.bubbleChartOptions
-    });
+    // Chart ready event handled
   }
 }

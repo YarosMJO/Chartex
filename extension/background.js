@@ -81,11 +81,8 @@ let isCollecting = false;
     }
   });
   try {
-    console.log(translationManager.getTranslation('BACKGROUND.INIT_GLOBALS'));
-    
     // === Стабільна ініціалізація deviceId ===
     deviceId = await getOrCreateStableDeviceId();
-    console.log(translationManager.getTranslation('BACKGROUND.DEVICE_ID_INIT'), deviceId);
     
     // === Ініціалізація encryptionKey та sessionId ===
     const data = await chrome.storage.local.get(['encryptionKey', 'sessionId']);
@@ -100,13 +97,9 @@ let isCollecting = false;
       await chrome.storage.local.set({ sessionId });
     }
     
-    console.log(translationManager.getTranslation('BACKGROUND.ENCRYPTION_INIT'));
-    
     // Автоматично зберегти ключ шифрування в chrome.storage для дашборду
     if (encryptionKey) {
-      console.log(translationManager.getTranslation('BACKGROUND.SAVING_ENCRYPTION_KEY'));
       await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
-      console.log(translationManager.getTranslation('BACKGROUND.ENCRYPTION_KEY_SAVED'));
     }
     
     // Don't validate during initialization to avoid blocking auth process
@@ -119,13 +112,6 @@ let isCollecting = false;
 // API URL з конфігурації (для Service Worker)
 const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
 const API_BASE_URL = chartexConfig.apiUrl;
-
-// Діагностика конфігурації
-console.log('Chartex Config:', {
-  config: chartexConfig,
-  apiUrl: API_BASE_URL,
-  environment: chartexConfig.environment || 'unknown'
-});
 
 // Додаємо функцію для кодування у base64 з підтримкою UTF-8
 function utf8ToBase64(str) {
@@ -197,13 +183,10 @@ class APIUtils {
     const url = `${API_BASE_URL}${endpoint}`;
     let authHeader = {};
     
-    console.log(`API запит до: ${url}`);
-    
     // Завжди беремо idToken з локального сховища
     try {
       const userData = await chrome.storage.local.get(['user']);
       const idToken = userData.user?.idToken;
-      console.log('Токен авторизації:', { hasToken: !!idToken, tokenLength: idToken?.length });
       
       if (idToken) {
         authHeader = { 'Authorization': `Bearer ${idToken}` };
@@ -221,20 +204,7 @@ class APIUtils {
       }
     };
     
-    console.log('Відправка запиту з опціями:', { 
-      url, 
-      method: options.method || 'GET',
-      hasAuth: !!authHeader.Authorization,
-      bodySize: options.body?.length 
-    });
-    
     const response = await fetch(url, { ...defaultOptions, ...options });
-    
-    console.log('Відповідь API:', { 
-      status: response.status, 
-      ok: response.ok,
-      statusText: response.statusText 
-    });
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -243,7 +213,6 @@ class APIUtils {
     }
     
     const result = await response.json();
-    console.log('API успішна відповідь:', result);
     return result;
   }
   
@@ -289,7 +258,6 @@ class HistoryCollector {
     if (this.isCollecting) return;
     
     this.isCollecting = true;
-    console.log('Початок збору історії браузера');
     
     // Зареєструвати пристрій
     await this.registerDevice();
@@ -310,7 +278,6 @@ class HistoryCollector {
       }
       
       const response = await APIUtils.registerDevice();
-      console.log('Пристрій зареєстровано:', response);
       
       // Зберегти час останньої синхронізації для поточного користувача
       if (currentUser?.uid) {
@@ -323,7 +290,6 @@ class HistoryCollector {
   
   async collectHistory() {
     try {
-      console.log('Початок збору існуючої історії...');
       // Отримати історію за останні дні з конфігурації
       const historyDays = chartexConfig.collection?.historyDays || 7;
       const endTime = Date.now();
@@ -336,7 +302,6 @@ class HistoryCollector {
           maxResults: 1000
         }, resolve);
       });
-      console.log(`Знайдено ${historyItems.length} записів історії`);
       // Обробити кожен запис
       let processedCount = 0;
       for (const item of historyItems) {
@@ -346,10 +311,8 @@ class HistoryCollector {
           console.log(`Оброблено ${processedCount}/${historyItems.length} записів`);
         }
       }
-      console.log(`Завершено обробку ${processedCount} записів історії`);
       // Відправити накопичені записи
       await this.flushBatch();
-      console.log('Збір існуючої історії завершено');
       
       // Notify popups that initial data collection is complete
       chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
@@ -413,20 +376,12 @@ class HistoryCollector {
         // Якщо значення більше 1000, це ймовірно мілісекунди
         if (historyItem.duration > 1000) {
           duration = Math.round(historyItem.duration / 1000); // Конвертуємо мс в секунди
-          console.log('🔍 DURATION DEBUG: Converted from milliseconds:', {
-            originalMs: historyItem.duration,
-            convertedSeconds: duration
-          });
         } else {
           duration = historyItem.duration; // Вже в секундах
         }
         
         // Обмежуємо максимальний час 1 годиною (3600 сек) для одного відвідування
         if (duration > 3600) {
-          console.log('🔍 DURATION DEBUG: Duration too large, capping at 1 hour:', {
-            originalDuration: duration,
-            cappedDuration: 3600
-          });
           duration = 3600;
         }
       } else {
@@ -439,14 +394,6 @@ class HistoryCollector {
           duration = 60; // 1 хвилина для перезавантажень
         }
       }
-      
-      console.log('🔍 DURATION DEBUG: Final calculated duration:', {
-        url: historyItem.url,
-        originalDuration: historyItem.duration,
-        finalDuration: duration,
-        durationMinutes: Math.round(duration / 60 * 100) / 100,
-        transition: historyItem.transition
-      });
       
       // Створити запис для відправки
       const record = {
@@ -461,18 +408,7 @@ class HistoryCollector {
             referrer: historyItem.referrer || ''
           };
           
-          console.log('Шифрування даних:', {
-            hasEncryptionKey: !!encryptionKey,
-            keyLength: encryptionKey?.length,
-            dataToEncrypt: dataToEncrypt
-          });
-          
           const encrypted = CryptoUtils.encrypt(dataToEncrypt, encryptionKey);
-          
-          console.log('Результат шифрування:', {
-            success: !!encrypted,
-            encryptedLength: encrypted?.length
-          });
           
           return encrypted;
         })(),
@@ -503,8 +439,6 @@ class HistoryCollector {
       const currentCount = await chrome.storage.local.get([historyCountKey]);
       const newCount = (currentCount[historyCountKey] || 0) + 1;
       await chrome.storage.local.set({ [historyCountKey]: newCount });
-      
-      console.log(`Запис додано до черги. Загальна кількість: ${newCount}, Duration: ${duration}с`);
       
       // Запланувати відправку, якщо досягнуто розмір пакету
       if (this.pendingItems.length >= this.batchSize) {
@@ -538,7 +472,6 @@ class HistoryCollector {
       
       // Обчислити загальну суму duration для логування
       const totalDuration = itemsToSend.reduce((sum, item) => sum + (item.duration || 0), 0);
-      console.log(`Відправка пакету з ${itemsToSend.length} записами, загальний duration: ${totalDuration}с`);
       
       await APIUtils.sendHistoryBatch(itemsToSend);
       
@@ -546,10 +479,7 @@ class HistoryCollector {
       if (currentUser?.uid) {
         const lastSyncKey = `lastSync_${currentUser.uid}`;
         await chrome.storage.local.set({ [lastSyncKey]: new Date().toISOString() });
-        console.log(`Оновлено час останньої синхронізації для користувача ${currentUser.uid}`);
       }
-      
-      console.log('Пакет успішно відправлено');
       
       // Повідомити popup про завершення синхронізації
       chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
@@ -563,7 +493,6 @@ class HistoryCollector {
   
   stop() {
     this.isCollecting = false;
-    console.log('Збір історії зупинено');
     
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
@@ -615,12 +544,10 @@ async function saveCollectionStateForUser(uid, collecting) {
 // Helper: Clear old data for user
 async function clearUserData(uid) {
   try {
-    console.log(`Очищення старих даних для користувача ${uid}`);
     // Clear history count
     await chrome.storage.local.set({ [`historyCount_${uid}`]: 0 });
     // Clear last sync time
     await chrome.storage.local.set({ [`lastSync_${uid}`]: null });
-    console.log(`Дані користувача ${uid} очищено`);
   } catch (error) {
     console.error(`Помилка очищення даних користувача ${uid}:`, error);
   }
@@ -629,11 +556,9 @@ async function clearUserData(uid) {
 // Helper: Clear user data on backend
 async function clearUserDataOnBackend(uid) {
   try {
-    console.log(`Очищення даних користувача ${uid} на бекенді`);
     // Wait a bit to ensure Firebase auth is ready
     await new Promise(resolve => setTimeout(resolve, 1000));
     const user = firebase.auth().currentUser;
-    console.log('Поточний користувач Firebase:', user ? user.uid : 'null');
     if (!user) {
       console.warn('Користувач не авторизований для очищення даних');
       return;
@@ -643,7 +568,6 @@ async function clearUserDataOnBackend(uid) {
       return;
     }
     const idToken = await user.getIdToken();
-    console.log('Отримано ID токен для очищення даних');
     const response = await APIUtils.makeRequest('/users/clear-data', {
       method: 'POST',
       headers: {
@@ -651,7 +575,6 @@ async function clearUserDataOnBackend(uid) {
         'Content-Type': 'application/json'
       }
     });
-    console.log('Дані користувача очищено на бекенді:', response);
   } catch (error) {
     console.error(`Помилка очищення даних користувача на бекенді:`, error);
     // Don't throw error - just log it and continue
@@ -661,20 +584,14 @@ async function clearUserDataOnBackend(uid) {
 
 // Update collection state on user change
 async function handleUserSwitch(newUser) {
-  console.log('handleUserSwitch: початок для користувача:', newUser?.uid);
-  
   if (lastUserUid && lastUserUid !== newUser?.uid) {
-    console.log('handleUserSwitch: зберігаємо стан попереднього користувача:', lastUserUid);
     // Save previous user's state
     await saveCollectionStateForUser(lastUserUid, historyCollector.isCollecting);
     historyCollector.stop();
   }
   
   if (newUser?.uid) {
-    console.log('handleUserSwitch: налаштовуємо нового користувача:', newUser.uid);
-    
     // Clear old data for new user before starting collection
-    console.log('handleUserSwitch: крок 1 - очищення локальних даних...');
     await clearUserData(newUser.uid);
     
     console.log('handleUserSwitch: крок 2 - очищення даних на бекенді (асинхронно)...');
@@ -683,12 +600,9 @@ async function handleUserSwitch(newUser) {
       console.error('Помилка асинхронного очищення даних на бекенді:', error);
     });
     
-    console.log('handleUserSwitch: крок 3 - перевірка стану збору даних...');
     const collecting = await loadCollectionStateForUser(newUser.uid);
-    console.log(`handleUserSwitch: стан збору даних для користувача ${newUser.uid}: ${collecting}`);
     
     if (collecting) {
-      console.log('handleUserSwitch: крок 4 - запуск збору даних...');
       historyCollector.start();
       // Don't send dataSyncComplete here - let the collection process send it when complete
     } else {
@@ -696,9 +610,7 @@ async function handleUserSwitch(newUser) {
       historyCollector.stop();
     }
     lastUserUid = newUser.uid;
-    console.log('handleUserSwitch: завершено для користувача:', newUser.uid);
   } else {
-    console.log('handleUserSwitch: користувач не вказаний, зупиняємо збір');
     lastUserUid = null;
     historyCollector.stop();
   }
@@ -707,14 +619,10 @@ async function handleUserSwitch(newUser) {
 // handleAuthentication: інтеграція chrome.identity + Firebase Auth
 async function handleAuthentication() {
   try {
-    console.log('handleAuthentication: початок');
-    
     // Якщо вже залогінений у Firebase
     const user = firebase.auth().currentUser;
-    console.log('handleAuthentication: поточний користувач Firebase:', user ? user.uid : 'null');
     
     if (user) {
-      console.log('handleAuthentication: користувач вже авторизований, оновлюємо токен');
       const idToken = await user.getIdToken();
       await chrome.storage.local.set({
         user: {
@@ -726,22 +634,16 @@ async function handleAuthentication() {
         }
       });
       currentUser = user;
-      console.log('handleAuthentication: викликаємо handleUserSwitch');
       await handleUserSwitch(user);
-      console.log('handleAuthentication: handleUserSwitch завершено');
       return { success: true, user };
     }
     
-    console.log('handleAuthentication: користувач не авторизований, починаємо OAuth');
     // Якщо не залогінений — отримати Google OAuth токен через chrome.identity
     const googleToken = await getGoogleOAuthToken();
-    console.log('handleAuthentication: отримано Google токен');
     
     const firebaseUser = await firebaseSignInWithGoogleToken(googleToken);
-    console.log('handleAuthentication: увійшли в Firebase:', firebaseUser.uid);
     
     const idToken = await firebaseUser.getIdToken();
-    console.log('handleAuthentication: отримано Firebase токен');
     
     await chrome.storage.local.set({
       user: {
@@ -752,12 +654,9 @@ async function handleAuthentication() {
         idToken
       }
     });
-    console.log('handleAuthentication: збережено дані користувача');
     
     currentUser = firebaseUser;
-    console.log('handleAuthentication: викликаємо handleUserSwitch для нового користувача');
     await handleUserSwitch(firebaseUser);
-    console.log('handleAuthentication: handleUserSwitch завершено для нового користувача');
     
     return { success: true, user: firebaseUser };
   } catch (error) {
@@ -777,7 +676,6 @@ async function handleLogout() {
     // Видалити користувача з локального сховища
     await chrome.storage.local.remove(['user']);
     historyCollector.stop();
-    console.log('Користувач вийшов з системи');
     return { success: true };
   } catch (error) {
     console.error('Помилка виходу:', error);
@@ -820,8 +718,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
           
           // Оновлюємо переклади в background script
-          await translationManager.loadTranslations();
-          console.log('Переклади оновлено в background для мови:', request.settings.display?.language);
+          await translationManager.loadTranslations();    
           
           sendResponse({ success: true });
         } catch (error) {
@@ -983,7 +880,6 @@ async function getOrCreateStableDeviceId() {
 
 // Ініціалізація при встановленні extension
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log('Розширення Chartex встановлено:', details.reason);
   if (details.reason === 'install') {
     try {
       // === Стабільна ініціалізація deviceId ===
@@ -999,7 +895,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       });
       // Також оновити у sync
       await chrome.storage.sync.set({ deviceId });
-      console.log('Розширення ініціалізовано з deviceId:', deviceId);
     } catch (error) {
       console.error('Помилка ініціалізації розширення:', error);
     }
@@ -1046,7 +941,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 // Ініціалізація при запуску
 chrome.runtime.onStartup.addListener(async () => {
-  console.log('Розширення Chartex запущено');
   try {
     // === Стабільна ініціалізація deviceId ===
     // deviceId = await getOrCreateStableDeviceId(); // This is now handled by initializeGlobals
@@ -1057,7 +951,6 @@ chrome.runtime.onStartup.addListener(async () => {
     if (!data.sessionId) {
       await chrome.storage.local.set({ sessionId });
     }
-    console.log('Дані розширення відновлено, deviceId:', deviceId);
     if (data.user) {
       console.log('Відновлення сесії користувача:', data.user.email);
       // Don't validate during startup to avoid blocking auth process
@@ -1082,7 +975,6 @@ async function checkAndRefreshToken() {
   try {
     const user = firebase.auth().currentUser;
     if (!user) {
-      console.log('Користувач не авторизований');
       return false;
     }
     
@@ -1094,7 +986,6 @@ async function checkAndRefreshToken() {
     
     // Refresh token if it expires in less than 5 minutes
     if (timeUntilExpiry < 5 * 60 * 1000) {
-      console.log('Токен скоро закінчиться, оновлюємо...');
       const newToken = await user.getIdToken(true); // Force refresh
       
       // Update stored token
@@ -1108,7 +999,6 @@ async function checkAndRefreshToken() {
         }
       });
       
-      console.log('Токен успішно оновлено');
       return true;
     }
     
@@ -1127,7 +1017,6 @@ async function validateAuthentication() {
       // Check if we have stored user data
       const storedUser = await chrome.storage.local.get(['user']);
       if (storedUser.user) {
-        console.log('Знайдено збережені дані користувача, але користувач не авторизований');
         // Don't call handleAuthentication here, just return false
         return false;
       }
@@ -1137,7 +1026,6 @@ async function validateAuthentication() {
     // Check and refresh token if needed
     const tokenValid = await checkAndRefreshToken();
     if (!tokenValid) {
-      console.log('Токен недійсний, вимагається повторна авторизація');
       return false;
     }
     
