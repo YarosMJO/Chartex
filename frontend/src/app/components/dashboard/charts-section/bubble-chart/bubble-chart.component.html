@@ -1,6 +1,14 @@
 <mat-card class="chart-card bubble-chart-card">
   <mat-card-header>
     <mat-card-title>{{ 'DASHBOARD.CHARTS.BUBBLE_CHART' | translate }}</mat-card-title>
+    <div class="chart-controls">
+      <button mat-icon-button 
+              (click)="toggleScale()" 
+              [title]="getScaleButtonTitle()"
+              class="scale-toggle-btn">
+        <mat-icon>{{ getScaleButtonIcon() }}</mat-icon>
+      </button>
+    </div>
   </mat-card-header>
   <mat-card-content>
     <apx-chart
@@ -13,6 +21,7 @@
       [grid]="bubbleChartOptions.grid"
       [plotOptions]="bubbleChartOptions.plotOptions"
       [tooltip]="bubbleChartOptions.tooltip"
+      [annotations]="bubbleChartOptions.annotations"
       [noData]="{ text: 'Немає даних для відображення' }"
       (chartReady)="onChartReady($event)">
     </apx-chart>

@@ -1,6 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -9,8 +11,8 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './bubble-chart.component.html',
   styleUrls: ['./bubble-chart.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, NgApexchartsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class BubbleChartComponent implements OnChanges {
   @Input() bubbleChartData: {
@@ -23,10 +25,13 @@ export class BubbleChartComponent implements OnChanges {
     rawAvgMinutes?: number;
   }[] = [];
   @Input() bubbleChartOptions: any = {};
+  @Input() scaleMode: 'normal' | 'zoomed' = 'normal';
+  @Output() scaleToggle = new EventEmitter<void>();
 
   constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
+    console.log('Bubble chart змінився, scaleMode:', this.scaleMode);
     this.cdr.markForCheck();
   }
 
@@ -39,5 +44,18 @@ export class BubbleChartComponent implements OnChanges {
 
   onChartReady(event: any) {
     // Chart ready event handled
+  }
+
+  toggleScale() {
+    console.log('Кнопка масштабу натиснута, поточний режим:', this.scaleMode);
+    this.scaleToggle.emit();
+  }
+
+  getScaleButtonIcon(): string {
+    return this.scaleMode === 'normal' ? 'zoom_in' : 'zoom_out';
+  }
+
+  getScaleButtonTitle(): string {
+    return this.scaleMode === 'normal' ? 'Збільшити масштаб' : 'Зменшити масштаб';
   }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnInit, OnChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -28,7 +28,7 @@ import { TopSitesComponent } from './top-sites/top-sites.component';
     BubbleChartComponent,
     TopSitesComponent
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class ChartsSectionComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
@@ -51,12 +51,20 @@ export class ChartsSectionComponent implements OnChanges {
     rawAvgMinutes?: number;
   }[] = [];
   @Input() bubbleChartOptions: any = {};
+  @Input() bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
+  @Output() bubbleChartScaleToggle = new EventEmitter<void>();
 
   constructor(private cdr: ChangeDetectorRef) { }
 
 
 
   ngOnChanges() {
+    console.log('Charts section змінився, bubbleChartScaleMode:', this.bubbleChartScaleMode);
     this.cdr.markForCheck();
+  }
+
+  onBubbleChartScaleToggle() {
+    console.log('Подія масштабу отримана в charts-section');
+    this.bubbleChartScaleToggle.emit();
   }
 } 

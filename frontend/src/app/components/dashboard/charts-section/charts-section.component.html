@@ -27,7 +27,9 @@
   <!-- Бульбашкова діаграма -->
   <app-bubble-chart
     [bubbleChartData]="bubbleChartData"
-    [bubbleChartOptions]="bubbleChartOptions">
+    [bubbleChartOptions]="bubbleChartOptions"
+    [scaleMode]="bubbleChartScaleMode"
+    (scaleToggle)="onBubbleChartScaleToggle()">
   </app-bubble-chart>
   
   <!-- Топ сайтів -->

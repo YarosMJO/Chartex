@@ -3,6 +3,27 @@
   min-height: 525px; // Збільшуємо мінімальну висоту
   max-height: 525px; // Збільшуємо максимальну висоту
   
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .chart-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .scale-toggle-btn {
+        color: #666;
+        
+        &:hover {
+          color: #333;
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+      }
+    }
+  }
+  
   mat-card-content {
     padding: 16px;
     height: 100%;

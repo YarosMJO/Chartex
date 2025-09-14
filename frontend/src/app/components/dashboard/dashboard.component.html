@@ -98,7 +98,9 @@
       [categoryDistributionData]="categoryDistributionData"
       [pieChartOptions]="pieChartOptions"
       [bubbleChartData]="bubbleChartData"
-      [bubbleChartOptions]="bubbleChartOptions">
+      [bubbleChartOptions]="bubbleChartOptions"
+      [bubbleChartScaleMode]="bubbleChartScaleMode"
+      (bubbleChartScaleToggle)="toggleBubbleChartScale()">
     </app-charts-section>
 
     <!-- Статистика пристроїв -->

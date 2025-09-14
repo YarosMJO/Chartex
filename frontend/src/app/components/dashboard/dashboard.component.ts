@@ -107,6 +107,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     rawVisits?: number;
     rawAvgMinutes?: number;
   }[] = [];
+  
+  // Налаштування масштабу для bubble chart
+  bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
 
   // Відстеження ширини графіка для адаптивності
   private chartWidth: number = 0;
@@ -689,9 +692,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // X-координата: реальна кількість відвідувань + offset
         const finalX = (visitsCount || 1) + (offsetX || 0);
 
-        // Y-координата: середній час в хвилинах + offset
-        const avgMinutesY = (visitsCount || 0) > 0 ? (totalTimeMinutes || 0) / (visitsCount || 1) : 0;
-        const finalY = Math.max(avgMinutesY || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
+        // Y-координата: загальний час в хвилинах + offset
+        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
 
         // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
         const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
@@ -702,7 +704,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         // Використовуємо реальні значення
         const scaledX = finalX || 1; // X = реальна кількість відвідувань
-        const scaledY = finalY || 0.1; // Y = реальні хвилини середнього часу
+        const scaledY = finalY || 0.1; // Y = реальні хвилини загального часу
 
         // Використовуємо збережені оригінальні дані з групування
         const originalUrl = domain.originalUrl;
@@ -718,7 +720,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           name: siteName,
           rawTotalMinutes: totalDurationMinutes || 0,
           rawVisits: visits || 0,
-          rawAvgMinutes: this.safeRound((avgMinutesY || 0) * 100) / 100
+          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
         };
 
         return result;
@@ -779,9 +781,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // X-координата: реальна кількість відвідувань + offset
         const finalX = (visitsCount || 1) + (offsetX || 0);
 
-        // Y-координата: середній час в хвилинах + offset
-        const avgMinutesY = (visitsCount || 0) > 0 ? (totalTimeMinutes || 0) / (visitsCount || 1) : 0;
-        const finalY = Math.max(avgMinutesY || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
+        // Y-координата: загальний час в хвилинах + offset
+        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
 
         // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
         const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
@@ -812,7 +813,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           name: siteName,
           rawTotalMinutes: totalDurationMinutes || 0,
           rawVisits: visits || 0,
-          rawAvgMinutes: this.safeRound((avgMinutesY || 0) * 100) / 100
+          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
         };
         
         return result;
@@ -1227,10 +1228,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       yaxis: {
         title: {
-          text: this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE') + ' (хв)'
+          text: 'Загальний час (хв)'
         },
         min: 0,
-        max: this.getYAxisMax(), // Динамічне максимальне значення для середнього часу
+        max: this.getYAxisMax(), // Динамічне максимальне значення для загального часу
         tickAmount: 6,
         labels: {
           style: {
@@ -1238,7 +1239,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           },
           offsetX: -4,
           formatter: (val: number): string => {
-            // Для середнього часу показуємо тільки хвилини (оскільки max = 60)
+            // Для загального часу показуємо години та хвилини
             if ((val || 0) >= 60) {
               const h = Math.floor((val || 0) / 60);
               const m: number = this.safeRound((val || 0) % 60);
@@ -1334,9 +1335,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           return `
             <div class="bubble-tooltip">
               <div class="title">${siteName}</div>
-              <div class="row"><span class="label">Візитів:</span><span class="value">${visits}</span></div>
-              <div class="row"><span class="label">Загальний час:</span><span class="value">${formatDuration((totalMinutes || 0) * 60, this.translateService)}</span></div>
-              <div class="row"><span class="label">Середній час:</span><span class="value">${formatDuration(this.safeRound((avgMinutes || 0) * 60), this.translateService)}</span></div>
+              <div class="row"><span class="label">Візитів: </span><span class="value">${visits}</span></div>
+              <div class="row"><span class="label">Загальний час: </span><span class="value">${formatDuration((totalMinutes || 0) * 60, this.translateService)}</span></div>
+              <div class="row"><span class="label">Середній час: </span><span class="value">${formatDuration(this.safeRound((avgMinutes || 0) * 60), this.translateService)}</span></div>
             </div>
           `;
         }
@@ -1355,12 +1356,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
         onItemClick: {
           toggleDataSeries: false
         },
-        formatter: () => this.translateService.instant('DASHBOARD.FILTERS.DURATION.AVERAGE')
+        formatter: () => 'Загальний час'
       },
       colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
       stroke: {
         width: 2,
         colors: ['#ffffff']
+      },
+      annotations: {
+        lines: [{
+          x: 0,
+          y: 0,
+          x2: this.getXAxisMax(),
+          y2: this.getYAxisMax(),
+          strokeColor: '#ff0000',
+          strokeWidth: 2,
+          strokeDashArray: 0,
+          opacity: 0.8,
+          label: {
+            text: 'Діагональна лінія',
+            textAnchor: 'middle',
+            offsetX: 0,
+            offsetY: -10,
+            style: {
+              background: 'rgba(255, 255, 255, 0.8)',
+              color: '#ff0000',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }
+          }
+        }]
       }
     };
 
@@ -1370,6 +1395,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Перехід до налаштувань
   openSettings() {
     this.router.navigate(['/settings']);
+  }
+
+  // Перемикання масштабу bubble chart
+  toggleBubbleChartScale() {
+    console.log('Перемикання масштабу з', this.bubbleChartScaleMode);
+    this.bubbleChartScaleMode = this.bubbleChartScaleMode === 'normal' ? 'zoomed' : 'normal';
+    console.log('Новий режим масштабу:', this.bubbleChartScaleMode);
+    console.log('X max:', this.getXAxisMax(), 'Y max:', this.getYAxisMax());
+    this.cdr.markForCheck();
   }
 
   // Вихід з системи
@@ -1850,22 +1884,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Метод для отримання динамічного максимального значення X-осі
   private getXAxisMax(): number {
     if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
-      return 100; // Значення за замовчуванням
+      const defaultMax = this.bubbleChartScaleMode === 'zoomed' ? 50 : 100;
+      console.log('Немає даних для X-осі, повертаємо:', defaultMax);
+      return defaultMax; // Значення за замовчуванням
     }
     
     const maxVisits = Math.max(...this.bubbleChartData.map(d => d.x));
-    // Додаємо 20% відступу для кращого відображення
-    return Math.max(maxVisits * 1.2, 50);
+    console.log('Максимальні відвідування:', maxVisits, 'Режим:', this.bubbleChartScaleMode);
+    
+    if (this.bubbleChartScaleMode === 'zoomed') {
+      // Для збільшеного масштабу обмежуємо максимальне значення
+      const result = Math.min(maxVisits * 1.5, 200);
+      console.log('Збільшений масштаб X:', result);
+      return result;
+    } else {
+      // Додаємо 20% відступу для кращого відображення
+      const result = Math.max(maxVisits * 1.2, 50);
+      console.log('Звичайний масштаб X:', result);
+      return result;
+    }
   }
 
-  // Метод для отримання динамічного максимального значення Y-осі
+  // Метод для отримання динамічного максимального значення Y-осі (загальний час)
   private getYAxisMax(): number {
     if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
-      return 10; // Значення за замовчуванням у хвилинах
+      const defaultMax = this.bubbleChartScaleMode === 'zoomed' ? 30 : 60;
+      console.log('Немає даних для Y-осі, повертаємо:', defaultMax);
+      return defaultMax; // Значення за замовчуванням у хвилинах
     }
     
-    const maxAvgTime = Math.max(...this.bubbleChartData.map(d => d.y));
-    // Додаємо 20% відступу для кращого відображення, мінімум 10 хвилин
-    return Math.max(maxAvgTime * 1.2, 10);
+    // Використовуємо rawTotalMinutes для загального часу
+    const maxTotalTime = Math.max(...this.bubbleChartData.map(d => d.rawTotalMinutes || 0));
+    console.log('Максимальний загальний час:', maxTotalTime, 'Режим:', this.bubbleChartScaleMode);
+    
+    if (this.bubbleChartScaleMode === 'zoomed') {
+      // Для збільшеного масштабу обмежуємо максимальне значення
+      const result = Math.min(maxTotalTime * 1.5, 120);
+      console.log('Збільшений масштаб Y:', result);
+      return result;
+    } else {
+      // Додаємо 20% відступу для кращого відображення, мінімум 60 хвилин
+      const result = Math.max(maxTotalTime * 1.2, 60);
+      console.log('Звичайний масштаб Y:', result);
+      return result;
+    }
   }
 } 
