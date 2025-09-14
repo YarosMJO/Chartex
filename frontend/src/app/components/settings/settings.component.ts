@@ -163,7 +163,6 @@ export class SettingsComponent implements OnInit {
 
   // Збереження налаштувань
   saveSettings() {
-    console.log('saveSettings() викликано');
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
@@ -247,7 +246,6 @@ export class SettingsComponent implements OnInit {
 
   // Скидання налаштувань до значень за замовчуванням
   resetSettings() {
-    console.log('resetSettings() викликано');
     this.loading = true;
     this.cdr.markForCheck();
     try {
@@ -265,7 +263,6 @@ export class SettingsComponent implements OnInit {
 
   // Експорт налаштувань
   exportSettings() {
-    console.log('exportSettings() викликано');
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
@@ -350,7 +347,6 @@ export class SettingsComponent implements OnInit {
 
   // Очищення даних
   clearData() {
-    console.log('clearData() викликано');
     this.loading = true;
     this.cdr.markForCheck();
     try {

@@ -244,7 +244,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async loadUserStats() {
     // Запобігаємо одночасним оновленням
     if (this.isUpdating) {
-      console.log('Оновлення вже виконується, пропускаємо...');
       return;
     }
 
@@ -594,7 +593,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
 
     } catch (error) {
-      console.error('🔍 PIE CHART DEBUG: Error preparing category distribution data:', error);
       this.categoryDistributionData = [];
     }
   }
@@ -627,7 +625,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
 
     } catch (error) {
-      console.error('🔍 PIE CHART DEBUG: Error preparing category distribution data from filtered:', error);
       this.categoryDistributionData = [];
     }
   }
@@ -717,7 +714,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
 
     } catch (error) {
-      console.error('🔍 BUBBLE DEBUG: Error in prepareBubbleChartDataFromFiltered:', error);
       this.bubbleChartData = [];
     }
   }
@@ -795,15 +791,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const siteName = (cleanNameResult && typeof cleanNameResult === 'string') ? cleanNameResult : 'Unknown';
         
         if (!siteName || siteName === 'Unknown') {
-          console.warn('🔍 BUBBLE DEBUG: Missing or invalid siteName:', {
-            originalUrl: originalUrl,
-            originalId: originalId,
-            inputForCleanName: inputForCleanName,
-            cleanNameResult: cleanNameResult,
-            siteName: siteName,
-            domainId: domain._id,
-            domainUrl: domain.decryptedData?.url
-          });
+          // Site name not available, using fallback
         }
         
         const result = {
@@ -820,7 +808,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
 
     } catch (error) {
-      console.error('🔍 BUBBLE DEBUG: Error in prepareBubbleChartData:', error);
       this.bubbleChartData = [];
     }
   }
@@ -1060,7 +1047,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // Конвертуємо назад до секунд (приблизно)
         maxVal = this.safeRound((maxVal || 0) * 3600 / 999) || 3600; // Default 1 година
       } catch (error) {
-        console.error('🔍 WEEK HEATMAP ERROR: Error calculating max value:', error);
         maxVal = 3600; // Default 1 година
       }
     } else {
@@ -1272,7 +1258,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
             }
             return `${this.safeRound(avgMinutes || 0)}хв`;
           } catch (error) {
-            console.error('🔍 DATALABEL ERROR:', error);
             return '';
           }
         },
@@ -1546,8 +1531,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Фільтр за датою
     if (this.advancedFilters.dateRange.start || this.advancedFilters.dateRange.end) {
-      console.log('Фільтруємо за діапазоном дат:', this.advancedFilters.dateRange);
-
       // Симулюємо фільтрацію за датами
       // Оскільки у нас немає дат для кожного домену, ми будемо фільтрувати пропорційно
       const startDate = this.advancedFilters.dateRange.start;

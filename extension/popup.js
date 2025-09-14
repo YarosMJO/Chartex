@@ -219,7 +219,6 @@ class PopupManager {
     }
     if (this.elements.loginBtn) {
       this.elements.loginBtn.addEventListener('click', async () => {
-        console.log('LOGIN BUTTON CLICKED');
         if (this.status.hasUser) {
           // Logout
           this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.LOGGING_OUT') : 'Вихід з системи...');

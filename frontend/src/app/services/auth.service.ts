@@ -45,8 +45,6 @@ export class AuthService {
   // Отримати ключ шифрування з extension
   async getEncryptionKey(): Promise<string | null> {
     try {
-      console.log('Спроба отримання ключа шифрування...');
-      
       // Спочатку спробувати отримати з chrome.storage.local
       if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.storage && (window as any).chrome.storage.local) {
         const result = await new Promise<any>((resolve) => {
@@ -54,11 +52,6 @@ export class AuthService {
         });
         
         if (result.chartex_encryption_key) {
-          console.log('Ключ шифрування знайдено в chrome.storage.local:', {
-            hasKey: !!result.chartex_encryption_key,
-            keyLength: result.chartex_encryption_key?.length,
-            keyPreview: result.chartex_encryption_key?.substring(0, 10) + '...'
-          });
           return result.chartex_encryption_key;
         }
       }
@@ -66,39 +59,23 @@ export class AuthService {
       // Fallback: спробувати отримати з localStorage (для сумісності)
       const localKey = localStorage.getItem('chartex_encryption_key');
       if (localKey) {
-        console.log('Ключ шифрування знайдено в localStorage (fallback):', {
-          hasKey: !!localKey,
-          keyLength: localKey?.length,
-          keyPreview: localKey?.substring(0, 10) + '...'
-        });
         return localKey;
       }
       
       // Перевірити, чи доступний chrome.runtime API
       if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime && (window as any).chrome.runtime.sendMessage) {
-        console.log('Chrome runtime API доступний, запитую ключ у extension...');
-        
         // Запитати ключ у extension
         const response = await new Promise<any>((resolve) => {
           (window as any).chrome.runtime.sendMessage({ action: 'getEncryptionKey' }, resolve);
         });
         
-        console.log('Відповідь від extension:', response);
-        
         if (response && response.encryptionKey) {
-          console.log('Ключ шифрування отримано з extension:', {
-            hasKey: !!response.encryptionKey,
-            keyLength: response.encryptionKey?.length,
-            keyPreview: response.encryptionKey?.substring(0, 10) + '...'
-          });
           // Зберегти в chrome.storage.local для майбутнього використання
           if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.storage && (window as any).chrome.storage.local) {
             (window as any).chrome.storage.local.set({ chartex_encryption_key: response.encryptionKey });
           }
           return response.encryptionKey;
         }
-      } else {
-        console.log('Chrome runtime API недоступний');
       }
       
       console.log('Ключ шифрування не знайдено');

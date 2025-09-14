@@ -340,13 +340,11 @@ class HistoryCollector {
                /^opera:\/\//.test(url);
       }
       if (isBrowserInternalUrl(historyItem.url)) {
-        console.log('Пропущено внутрішню сторінку браузера:', historyItem.url);
         return;
       }
       
       // Перевірити та ініціалізувати необхідні дані, якщо потрібно
       if (!deviceId || !encryptionKey || !sessionId) {
-        console.log('Ініціалізація необхідних змінних...');
         if (!deviceId) {
           deviceId = await getOrCreateStableDeviceId();
         }
@@ -577,8 +575,6 @@ async function clearUserDataOnBackend(uid) {
     });
   } catch (error) {
     console.error(`Помилка очищення даних користувача на бекенді:`, error);
-    // Don't throw error - just log it and continue
-    console.log('Продовжуємо без очищення даних на бекенді');
   }
 }
 
@@ -594,7 +590,6 @@ async function handleUserSwitch(newUser) {
     // Clear old data for new user before starting collection
     await clearUserData(newUser.uid);
     
-    console.log('handleUserSwitch: крок 2 - очищення даних на бекенді (асинхронно)...');
     // Don't await this - let it run in background
     clearUserDataOnBackend(newUser.uid).catch(error => {
       console.error('Помилка асинхронного очищення даних на бекенді:', error);
@@ -606,7 +601,6 @@ async function handleUserSwitch(newUser) {
       historyCollector.start();
       // Don't send dataSyncComplete here - let the collection process send it when complete
     } else {
-      console.log('handleUserSwitch: крок 4 - збір даних вимкнено для цього користувача');
       historyCollector.stop();
     }
     lastUserUid = newUser.uid;

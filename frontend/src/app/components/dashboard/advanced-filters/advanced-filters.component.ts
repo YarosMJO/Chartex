@@ -286,9 +286,7 @@ export class AdvancedFiltersComponent implements OnDestroy {
   }
 
   private updateFilters(newFilters: FilterOptions) {
-    console.log('AdvancedFiltersComponent: updateFilters викликано з фільтрами:', newFilters);
     this.filtersChange.emit(newFilters);
-    console.log('AdvancedFiltersComponent: filtersChange.emit() викликано');
   }
 
   getDurationLabel(min: number, max: number): string {

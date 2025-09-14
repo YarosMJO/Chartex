@@ -115,11 +115,6 @@ export class ApiService {
 
   // Метод для встановлення ключа шифрування
   setEncryptionKey(key: string) {
-    console.log('Встановлення ключа шифрування:', { 
-      hasKey: !!key, 
-      keyLength: key?.length,
-      keyPreview: key?.substring(0, 10) + '...'
-    });
     this.encryptionKey = key;
     localStorage.setItem('chartex_encryption_key', key);
   }
@@ -127,7 +122,6 @@ export class ApiService {
   // Метод для дешифрування даних
   private decryptData(encryptedData: string): DecryptedData | undefined {
     if (!this.encryptionKey) {
-      console.warn('Ключ шифрування не знайдено');
       return undefined;
     }
 
@@ -141,11 +135,10 @@ export class ApiService {
         return decryptedData;
       }
       
-      // Якщо ключ не співпадає, повертаємо undefined замість викидання помилки
-      console.warn('Невірний ключ шифрування для даних');
+      // Якщо ключ не співпадає, повертаємо undefined без попередження
+      // (це нормально для старих даних або даних з іншого ключа)
       return undefined;
     } catch (error) {
-      console.error('Помилка дешифрування:', error);
       // Повертаємо undefined замість викидання помилки
       return undefined;
     }
@@ -163,7 +156,6 @@ export class ApiService {
       const decoder = new TextDecoder();
       return decoder.decode(bytes);
     } catch (error) {
-      console.error('Base64 to UTF8 error:', error);
       // Fallback для старих браузерів
       return decodeURIComponent(escape(atob(base64)));
     }
@@ -242,7 +234,6 @@ export class ApiService {
           const fallbackStats = await this.getUserStats(params);
           return fallbackStats;
         } catch (fallbackError) {
-          console.error('Помилка fallback статистики:', fallbackError);
           // Повертаємо порожню статистику як останній fallback
           return {
             period: params.period || '30d',
@@ -322,18 +313,11 @@ export class ApiService {
         topDomains
       };
     } catch (error) {
-      console.error('Помилка отримання статистики з дешифрованими даними:', error);
-      console.log('Спроба fallback до звичайної статистики...');
       // Fallback до звичайної статистики
       try {
         const fallbackStats = await this.getUserStats(params);
-        console.log('Fallback статистика отримана:', {
-          hasStats: !!fallbackStats,
-          topDomainsCount: fallbackStats.topDomains?.length || 0
-        });
         return fallbackStats;
       } catch (fallbackError) {
-        console.error('Помилка fallback статистики:', fallbackError);
         // Повертаємо порожню статистику як останній fallback
         return {
           period: params.period || '30d',
@@ -369,12 +353,9 @@ export class ApiService {
       const token = await this.authService.getCurrentUserToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
-        console.log('Токен авторизації додано до заголовків');
-      } else {
-        console.warn('Токен авторизації не знайдено');
       }
     } catch (error) {
-      console.error('Помилка отримання токена авторизації:', error);
+      // Токен не знайдено, продовжуємо без авторизації
     }
     
     return headers;
@@ -562,20 +543,10 @@ export class ApiService {
     const headers = await this.getHeaders();
     const httpParams = new URLSearchParams(params as any);
     
-    console.log('API getUserStats params:', params);
-    console.log('API getUserStats URL:', `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`);
-    
     const response = await this.http.get<HistoryStats>(
       `${this.API_BASE_URL}/users/stats?${httpParams.toString()}`,
       { headers }
     ).toPromise();
-    
-    console.log('API getUserStats response:', {
-      hasResponse: !!response,
-      hasStats: !!response?.stats,
-      totalVisits: response?.stats?.totalVisits || 0,
-      topDomainsCount: response?.topDomains?.length || 0
-    });
     
     return response as HistoryStats;
   }
