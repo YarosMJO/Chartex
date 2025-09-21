@@ -406,6 +406,14 @@ class HistoryCollector {
         return;
       }
       
+      // Перевірити налаштування приватності для фільтрації інших пристроїв
+      const privacySettings = await this.getPrivacySettings();
+      if (!privacySettings.showOtherDevices) {
+        // Якщо налаштування вимкнено, збираємо дані тільки з поточного пристрою
+        // Поточний пристрій завжди збирається, тому просто продовжуємо
+        console.log('Збір даних тільки з поточного пристрою (showOtherDevices = false)');
+      }
+      
       
       // Фільтрація внутрішніх сторінок браузера
       function isBrowserInternalUrl(url) {

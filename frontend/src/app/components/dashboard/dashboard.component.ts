@@ -75,14 +75,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Графіки що залежать від збору тривалості відвідувань
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
       
-      // Секція пристроїв та дропдаун фільтра
-      this.showDeviceSection = settings.privacy.showOtherDevices;
-      
-      // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
-      if (!this.showDeviceSection && this.selectedDevice !== 'all') {
-        this.selectedDevice = 'all';
-        this.loadUserStats();
-      }
+      // Секція пристроїв та дропдаун фільтра завжди видима
+      this.showDeviceSection = true;
       
       this.cdr.markForCheck();
     });
@@ -199,13 +193,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Слухаємо зміни налаштувань
     this.settingsService.settings$.subscribe(settings => {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
-      this.showDeviceSection = settings.privacy.showOtherDevices;
-      
-      // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
-      if (!this.showDeviceSection && this.selectedDevice !== 'all') {
-        this.selectedDevice = 'all';
-        this.loadUserStats();
-      }
+      // Секція пристроїв завжди видима
+      this.showDeviceSection = true;
       
       this.cdr.markForCheck();
     });
