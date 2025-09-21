@@ -74,7 +74,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
       
       // Секція пристроїв та дропдаун фільтра
-      this.showDeviceSection = settings.dataCollection.collectDeviceInfo;
+      this.showDeviceSection = settings.privacy.showOtherDevices;
       
       // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
       if (!this.showDeviceSection && this.selectedDevice !== 'all') {
@@ -187,7 +187,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Слухаємо зміни налаштувань
     this.settingsService.settings$.subscribe(settings => {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
-      this.showDeviceSection = settings.dataCollection.collectDeviceInfo;
+      this.showDeviceSection = settings.privacy.showOtherDevices;
       
       // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
       if (!this.showDeviceSection && this.selectedDevice !== 'all') {

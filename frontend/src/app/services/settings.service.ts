@@ -12,8 +12,7 @@ export interface DataCollectionSettings {
 
 export interface PrivacySettings {
   encryptData: boolean;
-  shareAnalytics: boolean;
-  showDeviceInfo: boolean;
+  showOtherDevices: boolean;
 }
 
 export interface DisplaySettings {
@@ -60,8 +59,7 @@ export class SettingsService {
       },
       privacy: {
         encryptData: true,
-        shareAnalytics: false,
-        showDeviceInfo: true
+        showOtherDevices: true
       },
       display: {
         language: 'uk',

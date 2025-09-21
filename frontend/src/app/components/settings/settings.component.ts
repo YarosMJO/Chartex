@@ -70,12 +70,10 @@ export class SettingsComponent implements OnInit {
   // Налаштування приватності
   privacySettings: {
     encryptData: boolean;
-    shareAnalytics: boolean;
-    showDeviceInfo: boolean;
+    showOtherDevices: boolean;
   } = {
     encryptData: true,
-    shareAnalytics: false,
-    showDeviceInfo: true
+    showOtherDevices: true
   };
 
   // Налаштування відображення

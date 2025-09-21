@@ -297,6 +297,29 @@ class HistoryCollector {
       };
     }
   }
+
+  // Перевірка налаштувань приватності
+  async getPrivacySettings() {
+    try {
+      const data = await chrome.storage.local.get(['chartex_settings']);
+      const settings = data.chartex_settings;
+      
+      if (!settings || !settings.privacy) {
+        return {
+          encryptData: true,
+          showOtherDevices: true
+        };
+      }
+      
+      return settings.privacy;
+    } catch (error) {
+      console.error('Помилка отримання налаштувань приватності:', error);
+      return {
+        encryptData: true,
+        showOtherDevices: true
+      };
+    }
+  }
   
   async start() {
     if (this.isCollecting) return;
@@ -382,6 +405,7 @@ class HistoryCollector {
       if (!collectionEnabled) {
         return;
       }
+      
       
       // Фільтрація внутрішніх сторінок браузера
       function isBrowserInternalUrl(url) {
@@ -523,6 +547,7 @@ class HistoryCollector {
     if (this.pendingItems.length === 0) return;
     
     try {
+      
       const itemsToSend = [...this.pendingItems];
       this.pendingItems = [];
       
