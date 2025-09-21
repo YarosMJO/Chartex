@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
@@ -48,6 +49,7 @@ import { AdvancedFiltersComponent, FilterOptions } from './advanced-filters/adva
     MatMenuModule,
     TranslateModule,
     MatSnackBarModule,
+    MatTooltipModule,
     StatsCardsComponent,
     ChartsSectionComponent,
     FiltersSectionComponent,
@@ -134,6 +136,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Відстеження ширини графіка для адаптивності
   private chartWidth: number = 0;
   private resizeHandler = () => this.updateChartWidth();
+  private visibilityChangeHandler = () => {
+    if (!document.hidden && this.currentUser) {
+      this.refreshData();
+    }
+  };
+  private dataClearedHandler = () => {
+    if (this.currentUser) {
+      this.refreshData();
+    }
+  };
 
   // Пошук
   searchQuery: string = '';
@@ -211,6 +223,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Слухаємо зміни видимості сторінки для оновлення даних
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+
+    // Слухаємо події очищення даних
+    window.addEventListener('dataCleared', this.dataClearedHandler);
+
+    // Слухаємо подію фокусу на вікні (повернення на вкладку)
+    window.addEventListener('focus', this.visibilityChangeHandler);
+
     // Слухаємо зміни розміру вікна для адаптивності графіків
     window.addEventListener('resize', this.resizeHandler);
 
@@ -264,6 +285,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     // Очищаємо слухачі подій
     window.removeEventListener('resize', this.resizeHandler);
+    document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+    window.removeEventListener('dataCleared', this.dataClearedHandler);
+    window.removeEventListener('focus', this.visibilityChangeHandler);
     this.formatCache.clear();
   }
 
@@ -296,6 +320,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Оновлення даних (примусове)
+  async refreshData() {
+    try {
+      // Очищаємо кеш форматування
+      this.formatCache.clear();
+      
+      // Скидаємо дані графіків
+      this.activityChartData = [];
+      this.topDomainsData = [];
+      this.deviceStatsData = [];
+      this.activityHeatmapData = [];
+      this.timeOfDayWeekHeatmapData = [];
+      this.categoryDistributionData = [];
+      this.bubbleChartData = [];
+      
+      // Перезавантажуємо дані
+      await Promise.all([
+        this.loadUserStats(),
+        this.loadDevices()
+      ]);
+      
+      console.log('Дані оновлено після очищення');
+    } catch (error) {
+      console.error('Помилка оновлення даних:', error);
+    }
+  }
+
   // Завантаження статистики користувача
   async loadUserStats() {
     // Запобігаємо одночасним оновленням
@@ -316,7 +367,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Додаємо timestamp для уникнення кешування
       const paramsWithTimestamp = {
         ...params,
-        _t: Date.now()
+        _t: Date.now(),
+        forceRefresh: true // Примусове оновлення
       };
       
       const stats = await this.apiService.getUserStatsWithDecryptedData(paramsWithTimestamp);

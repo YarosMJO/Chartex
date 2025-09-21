@@ -207,17 +207,9 @@
               (change)="importSettings($event)">
           </div>
           <div class="actions-row">
-            <button mat-raised-button color="warn" (click)="clearData()">
-              <mat-icon>delete_forever</mat-icon>
-              {{ 'SETTINGS.CLEAR_DATA' | translate }}
-            </button>
             <button mat-raised-button color="warn" (click)="resetSettings()">
               <mat-icon>restore</mat-icon>
               {{ 'SETTINGS.RESET_SETTINGS' | translate }}
-            </button>
-            <button mat-raised-button color="primary" (click)="saveSettings()">
-              <mat-icon>save</mat-icon>
-              {{ 'SETTINGS.SAVE_SETTINGS' | translate }}
             </button>
           </div>
         </mat-card-content>

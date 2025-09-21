@@ -150,12 +150,22 @@ export class SettingsComponent implements OnInit {
     // Перевіряємо чи дійсно змінилася тема
     if (this.displaySettings.theme !== this.previousTheme) {
       this.previousTheme = this.displaySettings.theme;
-      this.saveSettings();
+      const settings: AppSettings = {
+        dataCollection: this.dataCollectionSettings,
+        privacy: this.privacySettings,
+        display: this.displaySettings
+      };
+      this.settingsService.saveSettings(settings);
       this.applyImmediateSettings();
       this.cdr.markForCheck();
     } else {
       // Зберігаємо налаштування для інших змін
-      this.saveSettings();
+      const settings: AppSettings = {
+        dataCollection: this.dataCollectionSettings,
+        privacy: this.privacySettings,
+        display: this.displaySettings
+      };
+      this.settingsService.saveSettings(settings);
       this.cdr.markForCheck();
     }
   }
@@ -165,7 +175,12 @@ export class SettingsComponent implements OnInit {
     // Перевіряємо чи дійсно змінилася мова
     if (this.displaySettings.language !== this.previousLanguage) {
       this.previousLanguage = this.displaySettings.language;
-      this.saveSettings();
+      const settings: AppSettings = {
+        dataCollection: this.dataCollectionSettings,
+        privacy: this.privacySettings,
+        display: this.displaySettings
+      };
+      this.settingsService.saveSettings(settings);
       this.applyLanguage(this.displaySettings.language);
       this.cdr.markForCheck();
     }
@@ -173,7 +188,12 @@ export class SettingsComponent implements OnInit {
 
   // Зміна налаштувань збору даних
   onDataCollectionChange() {
-    this.saveSettings();
+    const settings: AppSettings = {
+      dataCollection: this.dataCollectionSettings,
+      privacy: this.privacySettings,
+      display: this.displaySettings
+    };
+    this.settingsService.saveSettings(settings);
     // Відправити налаштування до extension для негайного застосування
     this.sendSettingsToExtension({
       dataCollection: this.dataCollectionSettings,
@@ -185,7 +205,12 @@ export class SettingsComponent implements OnInit {
 
   // Зміна налаштувань приватності
   onPrivacyChange() {
-    this.saveSettings();
+    const settings: AppSettings = {
+      dataCollection: this.dataCollectionSettings,
+      privacy: this.privacySettings,
+      display: this.displaySettings
+    };
+    this.settingsService.saveSettings(settings);
     // Відправити налаштування до extension для негайного застосування
     this.sendSettingsToExtension({
       dataCollection: this.dataCollectionSettings,
@@ -197,26 +222,15 @@ export class SettingsComponent implements OnInit {
 
   // Зміна налаштувань відображення
   onDisplayChange() {
-    this.saveSettings();
-    this.cdr.markForCheck();
-  }
-
-  // Збереження налаштувань
-  saveSettings() {
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
       privacy: this.privacySettings,
       display: this.displaySettings
     };
-    try {
-      this.settingsService.saveSettings(settings);
-      this.snackBar.open('Налаштування збережено', 'Закрити', { duration: 2000 });
-      this.applySettings(settings);
-    } catch (error) {
-      console.error('Помилка збереження налаштувань:', error);
-      this.snackBar.open('Помилка збереження налаштувань', 'Закрити', { duration: 3000 });
-    }
+    this.settingsService.saveSettings(settings);
+    this.cdr.markForCheck();
   }
+
 
   // Застосування налаштувань
   private applySettings(settings: AppSettings) {
@@ -383,60 +397,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  // Очищення даних
-  clearData() {
-    this.loading = true;
-    this.cdr.markForCheck();
-    try {
-      // Очищення даних на backend
-      this.apiService.clearUserData().then((result) => {
-        this.snackBar.open('Дані очищено', 'Закрити', { duration: 2000 });
-        this.clearLocalData();
-      }).catch((error: any) => {
-        console.error('Помилка очищення даних:', error);
-        this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
-      }).finally(() => {
-        this.loading = false;
-        this.cdr.markForCheck();
-      });
-    } catch (error) {
-      console.error('Помилка очищення даних:', error);
-      this.snackBar.open('Помилка очищення даних', 'Закрити', { duration: 3000 });
-      this.loading = false;
-      this.cdr.markForCheck();
-    }
-  }
 
-  // Очищення локальних даних
-  private clearLocalData() {
-    try {
-      // Очищення localStorage
-      const keysToKeep = ['chartex_encryption_key', 'chartex_data_collection', 'chartex_privacy', 'chartex_display'];
-      const allKeys = Object.keys(localStorage);
-      
-      allKeys.forEach(key => {
-        if (!keysToKeep.includes(key) && key.startsWith('chartex_')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      // Очищення sessionStorage
-      sessionStorage.clear();
-      
-      // Відправка повідомлення до extension про очищення
-      if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime) {
-        try {
-          (window as any).chrome.runtime.sendMessage({
-            action: 'clearData'
-          });
-        } catch (error) {
-          console.error('Помилка відправки повідомлення до extension:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Помилка очищення локальних даних:', error);
-    }
-  }
 
   // Перевірка статусу extension
   checkExtensionStatus(): boolean {

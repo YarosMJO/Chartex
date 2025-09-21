@@ -4,6 +4,9 @@
     <div class="header-content">
       <h1>{{ 'DASHBOARD.TITLE' | translate }}</h1>
       <div class="user-info" *ngIf="currentUser">
+        <button mat-icon-button (click)="refreshData()" [disabled]="loading" matTooltip="{{ 'DASHBOARD.REFRESH_DATA' | translate }}">
+          <mat-icon>refresh</mat-icon>
+        </button>
         <span>{{ 'DASHBOARD.WELCOME' | translate:{name: currentUser.displayName || currentUser.email} }}</span>
         <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-avatar-btn">
           <ng-container *ngIf="currentUser?.photoURL; else showIcon">

@@ -190,6 +190,8 @@ export class ApiService {
   async getUserStatsWithDecryptedData(params: {
     period?: '7d' | '30d' | '90d' | '1y' | 'all';
     deviceId?: string;
+    forceRefresh?: boolean;
+    _t?: number;
   } = {}): Promise<HistoryStats> {
     try {
       // Розраховуємо дати для періоду
@@ -222,6 +224,12 @@ export class ApiService {
       
       if (params.deviceId && params.deviceId !== 'all') {
         requestParams.deviceId = params.deviceId;
+      }
+      
+      // Додаємо параметри для примусового оновлення
+      if (params.forceRefresh) {
+        requestParams.forceRefresh = true;
+        requestParams._t = params._t || Date.now();
       }
       
       let historyResponse = await this.getHistoryWithDecryptedData(requestParams);
