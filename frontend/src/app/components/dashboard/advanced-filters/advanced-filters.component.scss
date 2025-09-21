@@ -63,14 +63,14 @@
 
 .duration-type-toggle {
   margin-bottom: 12px;
-  
+
   label {
     display: block;
     margin-bottom: 6px;
     font-size: 0.8rem;
     color: #666;
   }
-  
+
   .toggle-buttons {
     display: flex;
     gap: 6px;
@@ -343,4 +343,9 @@
   font-size: 18px;
   width: 18px;
   height: 18px;
+}
+
+/* Стилі для resetFiltersButton в темній темі */
+::ng-deep body.theme-dark .filter-actions .mat-mdc-raised-button {
+  background-color: #6c4bb6 !important;
 }

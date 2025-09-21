@@ -1876,16 +1876,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Оновлює ширину графіка при зміні розміру вікна
    */
   private updateChartWidth(): void {
-    // Отримуємо ширину контейнера графіка
-    const chartContainer = document.querySelector('.charts-section') as HTMLElement;
-    if (chartContainer) {
-      const newWidth = chartContainer.offsetWidth;
-      if (newWidth !== this.chartWidth) {
-        this.chartWidth = newWidth;
-        this.cdr.markForCheck();
+    try {
+      // Отримуємо ширину контейнера графіка
+      const chartContainer = document.querySelector('.charts-section') as HTMLElement;
+      if (chartContainer) {
+        const newWidth = chartContainer.offsetWidth;
+        if (newWidth !== this.chartWidth) {
+          this.chartWidth = newWidth;
+          this.cdr.markForCheck();
+        }
+      } else {
+        // Якщо контейнер ще не доступний, використовуємо ширину вікна як приблизну оцінку
+        this.chartWidth = window.innerWidth;
       }
-    } else {
-      // Якщо контейнер ще не доступний, використовуємо ширину вікна як приблизну оцінку
+    } catch (error) {
+      console.error('Error updating chart width:', error);
       this.chartWidth = window.innerWidth;
     }
   }
