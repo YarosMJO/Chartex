@@ -91,8 +91,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   error: string | null = null;
 
   // Відстеження попередніх значень для уникнення зайвих оновлень
-  private previousPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
-  private previousDevice: string = 'all';
 
   // Флаг для запобігання зайвих оновлень
   private isUpdating = false;
@@ -313,8 +311,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ]);
 
       // Ініціалізуємо попередні значення після завантаження
-      this.previousPeriod = this.selectedPeriod;
-      this.previousDevice = this.selectedDevice;
     } catch (error) {
       this.error = 'Помилка завантаження даних: ' + (error instanceof Error ? error.message : String(error));
       this.cdr.markForCheck();
@@ -918,11 +914,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Зміна періоду
   async onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
-    // Перевіряємо, чи період дійсно змінився
-    if (newPeriod === this.previousPeriod) {
-      return; // Нічого не робимо, якщо період не змінився
-    }
-    
     // Оновлюємо selectedPeriod
     this.selectedPeriod = newPeriod;
     
@@ -933,8 +924,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Встановлюємо новий таймаут
     this.periodChangeTimeout = setTimeout(async () => {
-      // Оновлюємо попередній період
-      this.previousPeriod = this.selectedPeriod;
       await this.loadUserStats();
       this.cdr.markForCheck();
     }, 300); // Затримка 300мс
@@ -942,11 +931,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Зміна пристрою
   async onDeviceChange(newDevice: string) {
-    // Перевіряємо, чи пристрій дійсно змінився
-    if (newDevice === this.previousDevice) {
-      return; // Нічого не робимо, якщо пристрій не змінився
-    }
-    
     // Оновлюємо selectedDevice
     this.selectedDevice = newDevice;
     
@@ -957,8 +941,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Встановлюємо новий таймаут
     this.deviceChangeTimeout = setTimeout(async () => {
-      // Оновлюємо попередній пристрій
-      this.previousDevice = this.selectedDevice;
       await this.loadUserStats();
       this.cdr.markForCheck();
     }, 300); // Затримка 300мс
