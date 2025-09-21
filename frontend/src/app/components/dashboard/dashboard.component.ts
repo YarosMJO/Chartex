@@ -130,16 +130,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Відстеження ширини графіка для адаптивності
   private chartWidth: number = 0;
   private resizeHandler = () => this.updateChartWidth();
+  private lastVisibilityState = true;
   private visibilityChangeHandler = () => {
-    if (!document.hidden && this.currentUser) {
+    const isVisible = !document.hidden;
+    // Оновлюємо дані тільки якщо видимість дійсно змінилася
+    if (isVisible && !this.lastVisibilityState && this.currentUser) {
       this.refreshData();
     }
+    this.lastVisibilityState = isVisible;
   };
   private dataClearedHandler = () => {
     if (this.currentUser) {
       this.refreshData();
     }
   };
+  private focusHandler = () => {
+    // Debounce focus events to avoid excessive refreshes
+    clearTimeout(this.focusTimeout);
+    this.focusTimeout = setTimeout(() => {
+      if (this.currentUser && !document.hidden) {
+        this.refreshData();
+      }
+    }, 1000); // 1 second delay
+  };
+  private focusTimeout: any;
 
   // Пошук
   searchQuery: string = '';
@@ -219,7 +233,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     window.addEventListener('dataCleared', this.dataClearedHandler);
 
     // Слухаємо подію фокусу на вікні (повернення на вкладку)
-    window.addEventListener('focus', this.visibilityChangeHandler);
+    window.addEventListener('focus', this.focusHandler);
 
     // Слухаємо зміни розміру вікна для адаптивності графіків
     window.addEventListener('resize', this.resizeHandler);
@@ -276,7 +290,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.resizeHandler);
     document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
     window.removeEventListener('dataCleared', this.dataClearedHandler);
-    window.removeEventListener('focus', this.visibilityChangeHandler);
+    window.removeEventListener('focus', this.focusHandler);
+    clearTimeout(this.focusTimeout);
     this.formatCache.clear();
   }
 
@@ -315,22 +330,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Очищаємо кеш форматування
       this.formatCache.clear();
       
-      // Скидаємо дані графіків
-      this.activityChartData = [];
-      this.topDomainsData = [];
-      this.deviceStatsData = [];
-      this.activityHeatmapData = [];
-      this.timeOfDayWeekHeatmapData = [];
-      this.categoryDistributionData = [];
-      this.bubbleChartData = [];
-      
-      // Перезавантажуємо дані
+      // НЕ очищаємо дані графіків, щоб уникнути миготіння
+      // Просто перезавантажуємо дані
       await Promise.all([
         this.loadUserStats(),
         this.loadDevices()
       ]);
       
-      console.log('Дані оновлено після очищення');
+      console.log('Дані оновлено');
     } catch (error) {
       console.error('Помилка оновлення даних:', error);
     }
