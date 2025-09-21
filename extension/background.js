@@ -253,9 +253,60 @@ class HistoryCollector {
     this.batchSize = chartexConfig.collection?.batchSize || 50;
     this.batchTimeout = null;
   }
+
+  // Перевірка налаштувань збору даних
+  async checkDataCollectionSettings() {
+    try {
+      const data = await chrome.storage.local.get(['chartex_settings']);
+      const settings = data.chartex_settings;
+      
+      if (!settings || !settings.dataCollection) {
+        return true; // Якщо налаштування відсутні, дозволити збір за замовчуванням
+      }
+      
+      return settings.dataCollection.enabled;
+    } catch (error) {
+      console.error('Помилка перевірки налаштувань збору даних:', error);
+      return true; // При помилці дозволити збір
+    }
+  }
+
+  // Перевірка конкретних налаштувань збору даних
+  async getDataCollectionSettings() {
+    try {
+      const data = await chrome.storage.local.get(['chartex_settings']);
+      const settings = data.chartex_settings;
+      
+      if (!settings || !settings.dataCollection) {
+        return {
+          enabled: true,
+          collectDeviceInfo: true,
+          collectPageTitles: true,
+          collectVisitDuration: true
+        };
+      }
+      
+      return settings.dataCollection;
+    } catch (error) {
+      console.error('Помилка отримання налаштувань збору даних:', error);
+      return {
+        enabled: true,
+        collectDeviceInfo: true,
+        collectPageTitles: true,
+        collectVisitDuration: true
+      };
+    }
+  }
   
   async start() {
     if (this.isCollecting) return;
+    
+    // Перевірити налаштування збору даних
+    const collectionEnabled = await this.checkDataCollectionSettings();
+    if (!collectionEnabled) {
+      console.log('Збір даних вимкнено в налаштуваннях');
+      return;
+    }
     
     this.isCollecting = true;
     
@@ -326,6 +377,12 @@ class HistoryCollector {
   
   async processHistoryItem(historyItem) {
     try {
+      // Перевірити налаштування збору даних
+      const collectionEnabled = await this.checkDataCollectionSettings();
+      if (!collectionEnabled) {
+        return;
+      }
+      
       // Фільтрація внутрішніх сторінок браузера
       function isBrowserInternalUrl(url) {
         return /^chrome(-extension)?:\/\//.test(url) ||
@@ -361,12 +418,15 @@ class HistoryCollector {
         return;
       }
       
-      // Отримати інформацію про пристрій
-      const deviceInfo = DeviceUtils.getDeviceInfo();
+      // Отримати налаштування збору даних
+      const collectionSettings = await this.getDataCollectionSettings();
       
-      // Обчислення duration: використовуємо більш надійний метод
+      // Отримати інформацію про пристрій (тільки якщо дозволено)
+      const deviceInfo = collectionSettings.collectDeviceInfo ? DeviceUtils.getDeviceInfo() : null;
+      
+      // Обчислення duration: використовуємо більш надійний метод (тільки якщо дозволено)
       let duration = 0;
-      if (historyItem.duration && historyItem.duration > 0) {
+      if (collectionSettings.collectVisitDuration && historyItem.duration && historyItem.duration > 0) {
         // Chrome API може повертати duration в мілісекундах, потрібно конвертувати в секунди
         // Якщо значення більше 1000, це ймовірно мілісекунди
         if (historyItem.duration > 1000) {
@@ -390,7 +450,7 @@ class HistoryCollector {
         }
       }
       
-      // Створити запис для відправки
+      // Створити запис для відправки з валідацією
       const record = {
         userId: currentUser?.uid || 'anonymous',
         deviceId: deviceId,
@@ -398,7 +458,7 @@ class HistoryCollector {
         encryptedData: (() => {
           const dataToEncrypt = {
             url: historyItem.url,
-            title: historyItem.title || '',
+            title: collectionSettings.collectPageTitles ? (historyItem.title || '') : '',
             faviconUrl: historyItem.favicon || '',
             referrer: historyItem.referrer || ''
           };
@@ -410,13 +470,14 @@ class HistoryCollector {
         domainHash: CryptoUtils.hashDomain(historyItem.url),
         visitCount: historyItem.visitCount || 1,
         typedCount: historyItem.typedCount || 0,
-        duration: duration,
+        duration: collectionSettings.collectVisitDuration ? duration : 0,
         transitionType: historyItem.transition || 'link',
-        deviceType: deviceInfo.deviceType,
-        browser: deviceInfo.browser,
-        language: deviceInfo.language,
-        screenResolution: deviceInfo.screenResolution,
-        os: deviceInfo.os,
+        // Завжди відправляємо поля пристрою, але зі значеннями за замовчуванням якщо збір відключений
+        deviceType: (collectionSettings.collectDeviceInfo && deviceInfo?.deviceType) ? deviceInfo.deviceType : 'unknown',
+        browser: (collectionSettings.collectDeviceInfo && deviceInfo?.browser) ? deviceInfo.browser : 'unknown',
+        language: (collectionSettings.collectDeviceInfo && deviceInfo?.language) ? deviceInfo.language : 'unknown',
+        screenResolution: (collectionSettings.collectDeviceInfo && deviceInfo?.screenResolution) ? deviceInfo.screenResolution : 'unknown',
+        os: (collectionSettings.collectDeviceInfo && deviceInfo?.os) ? deviceInfo.os : 'unknown',
         visitTime: new Date(historyItem.lastVisitTime),
         isBookmarked: false,
         isIncognito: false,
@@ -465,10 +526,34 @@ class HistoryCollector {
       const itemsToSend = [...this.pendingItems];
       this.pendingItems = [];
       
-      // Обчислити загальну суму duration для логування
-      const totalDuration = itemsToSend.reduce((sum, item) => sum + (item.duration || 0), 0);
+      // Валідація та очищення даних перед відправкою
+      const validatedItems = itemsToSend.filter(item => {
+        // Перевіряємо основні обов'язкові поля
+        if (!item.userId || !item.deviceId || !item.sessionId || !item.encryptedData) {
+          console.warn('Пропускаємо невалідний запис:', item);
+          return false;
+        }
+        
+        // Перевіряємо, чи URL не порожній
+        if (!item.domainHash) {
+          console.warn('Пропускаємо запис без домену:', item);
+          return false;
+        }
+        
+        return true;
+      });
       
-      await APIUtils.sendHistoryBatch(itemsToSend);
+      if (validatedItems.length === 0) {
+        console.log('Немає валідних записів для відправки');
+        return;
+      }
+      
+      // Обчислити загальну суму duration для логування
+      const totalDuration = validatedItems.reduce((sum, item) => sum + (item.duration || 0), 0);
+      
+      console.log(`Відправляємо ${validatedItems.length} записів (загальний час: ${totalDuration}с)`);
+      
+      await APIUtils.sendHistoryBatch(validatedItems);
       
       // Оновити час останньої синхронізації для поточного користувача
       if (currentUser?.uid) {
@@ -481,8 +566,8 @@ class HistoryCollector {
       
     } catch (error) {
       console.error('Помилка відправки пакету:', error);
-      // Повернути елементи назад до черги
-      this.pendingItems.unshift(...this.pendingItems);
+      // Повернути валідні елементи назад до черги
+      this.pendingItems.unshift(...itemsToSend);
     }
   }
   

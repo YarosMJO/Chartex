@@ -18,6 +18,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { ApiService, HistoryStats, Device } from '../../services/api.service';
 import { HeatmapService, HeatmapSeries } from '../../services/heatmap.service';
+import { SettingsService } from '../../services/settings.service';
 import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl, getDeviceTypeLabel, cleanDomainName, categorizeWebsite } from '../../utils/utils';
 import { StatsCardsComponent } from './stats-cards/stats-cards.component';
 import { ChartsSectionComponent } from './charts-section/charts-section.component';
@@ -65,6 +66,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Fallback якщо Math недоступний
     return Math.floor(value + 0.5);
   };
+
+  // Перевірка налаштувань збору даних
+  private checkDataCollectionSettings() {
+    this.settingsService.getSettings().subscribe(settings => {
+      // Графіки що залежать від збору тривалості відвідувань
+      this.showDurationCharts = settings.dataCollection.collectVisitDuration;
+      
+      // Секція пристроїв та дропдаун фільтра
+      this.showDeviceSection = settings.dataCollection.collectDeviceInfo;
+      
+      // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
+      if (!this.showDeviceSection && this.selectedDevice !== 'all') {
+        this.selectedDevice = 'all';
+        this.loadUserStats();
+      }
+      
+      this.cdr.markForCheck();
+    });
+  }
 
   currentUser: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null = null;
   userStats: HistoryStats | null = null;
@@ -121,6 +141,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isSearching: boolean = false;
   hasResults: boolean = false;
 
+  // Налаштування видимості графіків
+  showDurationCharts: boolean = true;
+  showDeviceSection: boolean = true;
+
 
 
   // Розширені фільтри
@@ -144,6 +168,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private apiService: ApiService,
     private heatmapService: HeatmapService,
+    private settingsService: SettingsService,
     private ngZone: NgZone,
     private router: Router,
     private translateService: TranslateService,
@@ -155,6 +180,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Ініціалізуємо мову з localStorage
     const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
     this.translateService.use(savedLanguage);
+    
+    // Перевіряємо налаштування збору даних
+    this.checkDataCollectionSettings();
+
+    // Слухаємо зміни налаштувань
+    this.settingsService.settings$.subscribe(settings => {
+      this.showDurationCharts = settings.dataCollection.collectVisitDuration;
+      this.showDeviceSection = settings.dataCollection.collectDeviceInfo;
+      
+      // Якщо збір статистики по пристроях вимкнено, скидаємо вибраний пристрій
+      if (!this.showDeviceSection && this.selectedDevice !== 'all') {
+        this.selectedDevice = 'all';
+        this.loadUserStats();
+      }
+      
+      this.cdr.markForCheck();
+    });
 
     // Слухаємо зміни мови
     window.addEventListener('languageChanged', (event: any) => {

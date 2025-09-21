@@ -1,6 +1,6 @@
 {
   "DASHBOARD": {
-    "TITLE": "📊 Chartex Dashboard",
+    "TITLE": "📊 Аналітична панель Chartex",
     "WELCOME": "Вітаємо, {{name}}!",
     "LOGIN_GOOGLE": "Увійти через Google",
     "SETTINGS": "Налаштування",
@@ -169,6 +169,14 @@
     "DEFAULT": "По замовчуванню",
     "ENABLE_COLLECTION": "Увімкнути збір даних",
     "ENABLE_COLLECTION_DESC": "Дозволити розширенню збирати дані про відвідування сайтів",
+    "ENABLE_DATA_COLLECTION": "Увімкнути збір даних",
+    "ENABLE_DATA_COLLECTION_DESC": "Дозволити розширенню збирати дані про відвідування сайтів",
+    "COLLECT_DEVICE_INFO": "Збирати інформацію про пристрій",
+    "COLLECT_DEVICE_INFO_DESC": "Зберігати тип пристрою, браузер та ОС",
+    "COLLECT_PAGE_TITLES": "Збирати заголовки сторінок",
+    "COLLECT_PAGE_TITLES_DESC": "Зберігати назви сторінок для кращого відображення",
+    "COLLECT_VISIT_DURATION": "Збирати тривалість відвідувань",
+    "COLLECT_VISIT_DURATION_DESC": "Вимірювати час, проведений на кожному сайті",
     "ENABLE_NOTIFICATIONS": "Увімкнути сповіщення",
     "ENABLE_NOTIFICATIONS_DESC": "Отримувати сповіщення про нові функції та оновлення",
     "ENABLE_ANALYTICS": "Увімкнути аналітику",
@@ -212,15 +220,7 @@
     "ERROR": "Помилка",
     "SUCCESS": "Успішно",
     "WARNING": "Попередження",
-    "INFO": "Інформація",
-    "COLLECT_HISTORY": "Збирати історію відвідувань",
-    "COLLECT_HISTORY_DESC": "Зберігати URL та час відвідування сайтів",
-    "COLLECT_DEVICE_INFO": "Збирати інформацію про пристрій",
-    "COLLECT_DEVICE_INFO_DESC": "Зберігати тип пристрою, браузер та ОС",
-    "COLLECT_PAGE_TITLES": "Збирати заголовки сторінок",
-    "COLLECT_PAGE_TITLES_DESC": "Зберігати назви сторінок для кращого відображення",
-    "COLLECT_VISIT_DURATION": "Збирати тривалість відвідувань",
-    "COLLECT_VISIT_DURATION_DESC": "Вимірювати час, проведений на кожному сайті"
+    "INFO": "Інформація"
   },
   "COMMON": {
     "LOADING": "Завантаження...",
@@ -369,11 +369,12 @@
       "ALL": "Весь час"
     }
   },
-  "DEVICE_TYPES": {
-    "DESKTOP": "Настільний комп'ютер",
-    "MOBILE": "Мобільний пристрій",
-    "TABLET": "Планшет"
-  },
+    "DEVICE_TYPES": {
+      "DESKTOP": "Настільний комп'ютер",
+      "MOBILE": "Мобільний пристрій",
+      "TABLET": "Планшет",
+      "UNKNOWN": "Невідомий пристрій"
+    },
   "CONTEXT_MENU": {
     "OPEN_DASHBOARD": "Відкрити панель управління",
     "TOGGLE_COLLECTION": "Перемкнути збір даних"

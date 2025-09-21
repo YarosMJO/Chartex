@@ -1,4 +1,4 @@
-<div class="charts-grid">
+<div class="charts-grid" [class.duration-charts-hidden]="!showDurationCharts">
   <!-- Графік активності -->
   <app-activity-chart
     [activityChartData]="activityChartData"
@@ -8,18 +8,21 @@
   
   <!-- Добова активність по тижнях -->
   <app-time-heatmap
+    *ngIf="showDurationCharts"
     [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
     [timeOfDayWeekHeatmapOptions]="timeOfDayWeekHeatmapOptions">
   </app-time-heatmap>
 
   <!-- Теплова карта активності за часом доби -->
   <app-activity-heatmap
+    *ngIf="showDurationCharts"
     [activityHeatmapData]="activityHeatmapData"
     [activityHeatmapOptions]="activityHeatmapOptions">
   </app-activity-heatmap>
   
   <!-- Кругова діаграма розподілу часу за категоріями -->
   <app-pie-chart
+    *ngIf="showDurationCharts"
     [categoryDistributionData]="categoryDistributionData"
     [pieChartOptions]="pieChartOptions">
   </app-pie-chart>

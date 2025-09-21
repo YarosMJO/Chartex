@@ -14,7 +14,14 @@ export class AppTranslateService {
     // Встановлюємо CustomTranslateLoader
     this.translate.setDefaultLang('uk');
     
-    // Визначення мови браузера
+    // Спочатку перевіряємо збережену мову
+    const savedLanguage = localStorage.getItem('chartex_language');
+    if (savedLanguage && ['uk', 'en'].includes(savedLanguage)) {
+      this.translate.use(savedLanguage);
+      return;
+    }
+    
+    // Якщо збереженої мови немає, визначаємо мову браузера
     const browserLang = this.translate.getBrowserLang();
     if (browserLang && ['uk', 'en'].includes(browserLang)) {
       this.translate.use(browserLang);

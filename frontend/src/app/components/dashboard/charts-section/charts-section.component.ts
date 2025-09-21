@@ -52,6 +52,7 @@ export class ChartsSectionComponent implements OnChanges {
   }[] = [];
   @Input() bubbleChartOptions: any = {};
   @Input() bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
+  @Input() showDurationCharts: boolean = true;
   @Output() bubbleChartScaleToggle = new EventEmitter<void>();
 
   constructor(private cdr: ChangeDetectorRef) { }

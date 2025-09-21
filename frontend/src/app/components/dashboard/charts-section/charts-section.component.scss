@@ -31,6 +31,26 @@
   @media (max-width: 768px) {
     gap: 12px;
   }
+
+  // Коли графіки залежні від часу приховані, розширюємо перший графік на 3 колонки
+  &.duration-charts-hidden {
+    grid-template-columns: 1fr 1fr 1fr; // Три рівні колонки
+    grid-template-rows: 1fr auto; // Два ряди: основний графік + bubble chart
+    
+    @media (max-width: 1400px) {
+      grid-template-columns: 1fr 1fr 1fr; // Зберігаємо три колонки
+    }
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr 1fr; // Дві колонки на середніх екранах
+      grid-template-rows: auto auto;
+    }
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+  }
 }
 
 .chart-card {
@@ -86,6 +106,20 @@
   }
 }
 
+// Коли графіки залежні від часу приховані, розширюємо графік активності на всі 3 колонки
+.charts-grid.duration-charts-hidden ::ng-deep app-activity-chart {
+  grid-column: 1 / 4; // Займає всі 3 колонки (від 1 до 4)
+  grid-row: 1; // Перший ряд
+  
+  @media (max-width: 1200px) {
+    grid-column: 1 / 3; // Займає 2 колонки на середніх екранах
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1; // Одна колонка на мобільних
+  }
+}
+
 ::ng-deep app-bubble-chart {
   grid-column: 1; // Occupies the first column
   grid-row: 2; // Occupies the second row (under main chart)
@@ -107,6 +141,22 @@
   }
 }
 
+// Коли графіки залежні від часу приховані, розміщуємо bubble chart та top sites в другому ряду
+.charts-grid.duration-charts-hidden ::ng-deep app-bubble-chart {
+  grid-column: 1 / 3; // Займає перші 2 колонки
+  grid-row: 2; // Другий ряд
+  
+  @media (max-width: 1200px) {
+    grid-column: 1; // Одна колонка на середніх екранах
+    grid-row: 2;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 ::ng-deep app-top-sites {
   grid-column: 2; // Occupies the second column (1/3 width)
   grid-row: 2; // Occupies the second row (under heatmap)
@@ -119,6 +169,22 @@
 
   @media (max-width: 1200px) {
     grid-column: 2;
+    grid-row: 2;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+// Коли графіки залежні від часу приховані, розміщуємо top sites в третій колонці другого ряду
+.charts-grid.duration-charts-hidden ::ng-deep app-top-sites {
+  grid-column: 3; // Третя колонка
+  grid-row: 2; // Другий ряд
+  
+  @media (max-width: 1200px) {
+    grid-column: 2; // Друга колонка на середніх екранах
     grid-row: 2;
   }
 

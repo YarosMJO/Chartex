@@ -36,6 +36,7 @@
     [selectedPeriod]="selectedPeriod"
     [selectedDevice]="selectedDevice"
     [devices]="activeDevices"
+    [showDeviceFilter]="showDeviceSection"
     (periodChange)="onPeriodChange($event)"
     (deviceChange)="onDeviceChange($event)">
   </app-filters-section>
@@ -100,11 +101,13 @@
       [bubbleChartData]="bubbleChartData"
       [bubbleChartOptions]="bubbleChartOptions"
       [bubbleChartScaleMode]="bubbleChartScaleMode"
+      [showDurationCharts]="showDurationCharts"
       (bubbleChartScaleToggle)="toggleBubbleChartScale()">
     </app-charts-section>
 
     <!-- Статистика пристроїв -->
     <app-devices-section
+      *ngIf="showDeviceSection"
       [devices]="devices">
     </app-devices-section>
   </div>

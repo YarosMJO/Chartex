@@ -47,6 +47,21 @@
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">{{ 'SETTINGS.ENABLE_DATA_COLLECTION' | translate }}</div>
+              <div class="setting-description">
+                {{ 'SETTINGS.ENABLE_DATA_COLLECTION_DESC' | translate }}
+              </div>
+            </div>
+            <mat-slide-toggle 
+              [(ngModel)]="dataCollectionSettings.enabled"
+              (change)="onDataCollectionChange()">
+            </mat-slide-toggle>
+          </div>
+
+          <mat-divider></mat-divider>
+
           <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
             <div class="setting-info">
               <div class="setting-label">{{ 'SETTINGS.COLLECT_DEVICE_INFO' | translate }}</div>
@@ -57,7 +72,7 @@
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectDeviceInfo"
               [disabled]="!dataCollectionSettings.enabled"
-              (change)="onSettingChange()">
+              (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>
 
@@ -73,7 +88,7 @@
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectPageTitles"
               [disabled]="!dataCollectionSettings.enabled"
-              (change)="onSettingChange()">
+              (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>
 
@@ -89,7 +104,7 @@
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectVisitDuration"
               [disabled]="!dataCollectionSettings.enabled"
-              (change)="onSettingChange()">
+              (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>
         </mat-card-content>
@@ -116,7 +131,7 @@
             </div>
             <mat-slide-toggle 
               [(ngModel)]="privacySettings.shareAnalytics"
-              (change)="onSettingChange()">
+              (change)="onPrivacyChange()">
             </mat-slide-toggle>
           </div>
 
@@ -131,7 +146,7 @@
             </div>
             <mat-slide-toggle 
               [(ngModel)]="privacySettings.showDeviceInfo"
-              (change)="onSettingChange()">
+              (change)="onPrivacyChange()">
             </mat-slide-toggle>
           </div>
         </mat-card-content>

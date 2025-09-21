@@ -269,6 +269,14 @@
     "DEFAULT": "Default",
     "ENABLE_COLLECTION": "Enable data collection",
     "ENABLE_COLLECTION_DESC": "Allow extension to collect browsing data",
+    "ENABLE_DATA_COLLECTION": "Enable data collection",
+    "ENABLE_DATA_COLLECTION_DESC": "Allow extension to collect browsing data",
+    "COLLECT_DEVICE_INFO": "Collect device information",
+    "COLLECT_DEVICE_INFO_DESC": "Store device type, browser and OS",
+    "COLLECT_PAGE_TITLES": "Collect page titles",
+    "COLLECT_PAGE_TITLES_DESC": "Store page names for better display",
+    "COLLECT_VISIT_DURATION": "Collect visit duration",
+    "COLLECT_VISIT_DURATION_DESC": "Measure time spent on each site",
     "ENABLE_NOTIFICATIONS": "Enable notifications",
     "ENABLE_NOTIFICATIONS_DESC": "Receive notifications about new features and updates",
     "ENABLE_ANALYTICS": "Enable analytics",
@@ -312,15 +320,7 @@
     "ERROR": "Error",
     "SUCCESS": "Success",
     "WARNING": "Warning",
-    "INFO": "Information",
-    "COLLECT_HISTORY": "Collect browsing history",
-    "COLLECT_HISTORY_DESC": "Save URLs and visit times of websites",
-    "COLLECT_DEVICE_INFO": "Collect device information",
-    "COLLECT_DEVICE_INFO_DESC": "Save device type, browser, and OS",
-    "COLLECT_PAGE_TITLES": "Collect page titles",
-    "COLLECT_PAGE_TITLES_DESC": "Save page titles for better display",
-    "COLLECT_VISIT_DURATION": "Collect visit duration",
-    "COLLECT_VISIT_DURATION_DESC": "Measure time spent on each website"
+    "INFO": "Information"
   },
   "COMMON": {
     "LOADING": "Loading...",
@@ -375,6 +375,7 @@
   "DEVICE_TYPES": {
     "DESKTOP": "Desktop",
     "MOBILE": "Mobile",
-    "TABLET": "Tablet"
+    "TABLET": "Tablet",
+    "UNKNOWN": "Unknown device"
   }
 } 

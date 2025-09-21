@@ -77,7 +77,7 @@ router.post('/batch', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Необхідно передати масив записів' });
     }
     
-    // Додати userId до кожного запису та валідувати duration
+    // Додати userId до кожного запису та валідувати всі поля
     const historyItems = items.map(item => {
       let duration = item.duration || 0;
       
@@ -96,6 +96,13 @@ router.post('/batch', authenticateToken, async (req, res) => {
         ...item,
         userId: req.user.uid,
         duration: duration,
+        // Забезпечуємо значення за замовчуванням для необов'язкових полів
+        deviceType: item.deviceType || 'unknown',
+        browser: item.browser || 'unknown',
+        language: item.language || 'uk',
+        screenResolution: item.screenResolution || 'unknown',
+        os: item.os || 'unknown',
+        transitionType: item.transitionType || 'link',
         visitTime: item.visitTime ? new Date(item.visitTime) : new Date()
       };
     });

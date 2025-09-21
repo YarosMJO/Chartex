@@ -12,7 +12,7 @@
             <mat-option value="all">{{ 'DASHBOARD.PERIODS.ALL' | translate }}</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" *ngIf="showDeviceFilter">
           <mat-label>{{ 'DASHBOARD.DEVICE' | translate }}</mat-label>
           <mat-select [(ngModel)]="selectedDevice" (ngModelChange)="onDeviceChange()">
             <mat-option value="all">{{ 'DASHBOARD.ALL_DEVICES' | translate }}</mat-option>

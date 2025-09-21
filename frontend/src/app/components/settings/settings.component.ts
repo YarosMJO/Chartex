@@ -106,6 +106,10 @@ export class SettingsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Ініціалізуємо мову з localStorage
+    const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
+    this.applyLanguage(savedLanguage as 'uk' | 'en');
+    
     this.authService.getUser().subscribe(user => {
       this.currentUser = user;
       if (!user) {
@@ -128,6 +132,9 @@ export class SettingsComponent implements OnInit {
         this.previousLanguage = this.displaySettings.language;
         this.previousTheme = this.displaySettings.theme;
         
+        // Застосувати мову з налаштувань
+        this.applyLanguage(this.displaySettings.language);
+        
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -148,6 +155,10 @@ export class SettingsComponent implements OnInit {
       this.saveSettings();
       this.applyImmediateSettings();
       this.cdr.markForCheck();
+    } else {
+      // Зберігаємо налаштування для інших змін
+      this.saveSettings();
+      this.cdr.markForCheck();
     }
   }
 
@@ -157,8 +168,39 @@ export class SettingsComponent implements OnInit {
     if (this.displaySettings.language !== this.previousLanguage) {
       this.previousLanguage = this.displaySettings.language;
       this.saveSettings();
+      this.applyLanguage(this.displaySettings.language);
       this.cdr.markForCheck();
     }
+  }
+
+  // Зміна налаштувань збору даних
+  onDataCollectionChange() {
+    this.saveSettings();
+    // Відправити налаштування до extension для негайного застосування
+    this.sendSettingsToExtension({
+      dataCollection: this.dataCollectionSettings,
+      privacy: this.privacySettings,
+      display: this.displaySettings
+    });
+    this.cdr.markForCheck();
+  }
+
+  // Зміна налаштувань приватності
+  onPrivacyChange() {
+    this.saveSettings();
+    // Відправити налаштування до extension для негайного застосування
+    this.sendSettingsToExtension({
+      dataCollection: this.dataCollectionSettings,
+      privacy: this.privacySettings,
+      display: this.displaySettings
+    });
+    this.cdr.markForCheck();
+  }
+
+  // Зміна налаштувань відображення
+  onDisplayChange() {
+    this.saveSettings();
+    this.cdr.markForCheck();
   }
 
   // Збереження налаштувань

@@ -16,12 +16,12 @@ const HistoryItemSchema = new mongoose.Schema({
   duration: { type: Number, default: 0 }, // Час проведений на сторінці (в секундах)
   transitionType: { type: String }, // Тип переходу (typed, link, auto_bookmark, etc.)
   
-  // Технічні метадані
-  deviceType: { type: String, required: true }, // desktop, mobile, tablet
-  browser: { type: String, required: true }, // Chrome, Firefox, Safari, etc.
+  // Технічні метадані (необов'язкові для приватності)
+  deviceType: { type: String, default: 'unknown' }, // desktop, mobile, tablet
+  browser: { type: String, default: 'unknown' }, // Chrome, Firefox, Safari, etc.
   language: { type: String, default: 'uk' },
-  screenResolution: { type: String },
-  os: { type: String }, // Operating System
+  screenResolution: { type: String, default: 'unknown' },
+  os: { type: String, default: 'unknown' }, // Operating System
   
   // Часові метки
   visitTime: { type: Date, required: true }, // Час відвідування (з Chrome API)

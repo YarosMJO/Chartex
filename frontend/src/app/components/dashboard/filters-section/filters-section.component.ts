@@ -19,6 +19,7 @@ export class FiltersSectionComponent {
   @Input() selectedPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
   @Input() selectedDevice: string = 'all';
   @Input() devices: Device[] = [];
+  @Input() showDeviceFilter: boolean = true;
 
   @Output() periodChange = new EventEmitter<'7d' | '30d' | '90d' | '1y' | 'all'>();
   @Output() deviceChange = new EventEmitter<string>();

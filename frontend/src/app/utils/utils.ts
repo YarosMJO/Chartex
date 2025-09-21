@@ -268,7 +268,8 @@ export const getDeviceTypeLabel = (deviceType: string, translateService?: Transl
     const fallbacks: Record<string, string> = {
       'DEVICE_TYPES.DESKTOP': 'Настільний комп\'ютер',
       'DEVICE_TYPES.MOBILE': 'Мобільний пристрій',
-      'DEVICE_TYPES.TABLET': 'Планшет'
+      'DEVICE_TYPES.TABLET': 'Планшет',
+      'DEVICE_TYPES.UNKNOWN': 'Невідомий пристрій'
     };
     return fallbacks[key] || deviceType;
   };
@@ -280,7 +281,9 @@ export const getDeviceTypeLabel = (deviceType: string, translateService?: Transl
       return getTranslation('DEVICE_TYPES.MOBILE');
     case 'tablet':
       return getTranslation('DEVICE_TYPES.TABLET');
+    case 'unknown':
+      return getTranslation('DEVICE_TYPES.UNKNOWN');
     default:
-      return deviceType || 'Unknown';
+      return deviceType || getTranslation('DEVICE_TYPES.UNKNOWN');
   }
 }; 

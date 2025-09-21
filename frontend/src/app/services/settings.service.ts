@@ -90,6 +90,8 @@ export class SettingsService {
       this.settingsSubject.next(settings);
       // Застосувати тему з налаштувань
       this.applyTheme(settings.display.theme);
+      // Застосувати мову з налаштувань
+      this.translateService.setLanguage(settings.display.language);
     } catch (error) {
       console.error('Помилка завантаження налаштувань:', error);
       this.settingsSubject.next(this.getDefaultSettings());
@@ -126,8 +128,13 @@ export class SettingsService {
 
       this.settingsSubject.next(settings);
 
+      // Застосувати тему негайно
+      this.applyTheme(settings.display.theme);
+
       // Відправити налаштування до extension
       this.sendSettingsToExtension(settings);
+      
+      console.log('Налаштування збережено:', settings);
     } catch (error) {
       console.error('Помилка збереження налаштувань:', error);
     }
