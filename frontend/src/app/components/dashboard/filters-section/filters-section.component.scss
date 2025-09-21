@@ -23,4 +23,17 @@ mat-form-field {
   color: #f3eaff !important;
   box-shadow: 0 2px 12px rgba(35, 33, 54, 0.22);
   border: 1px solid #2a2042;
-} 
+
+  mat-form-field {
+    color: white !important;
+
+    .mat-mdc-select-value,
+    mat-label {
+      color: white !important;
+    }
+  }
+}
+
+::ng-deep body.theme-dark .mat-mdc-select-panel {
+  background-color: #f3eaff !important;
+}

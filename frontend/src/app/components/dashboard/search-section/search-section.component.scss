@@ -31,7 +31,7 @@
 
 .results-header {
   margin-bottom: 15px;
-  
+
   h3 {
     margin: 0;
     font-size: 1.1rem;
@@ -144,7 +144,7 @@
 ::ng-deep body.theme-dark .search-card {
   background: #232136 !important;
   color: #f3eaff !important;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55);
   border: 1.5px solid #6c4bb6;
 }
 
@@ -179,4 +179,8 @@
 
 ::ng-deep body.theme-dark .results-header h3 {
   color: #f3eaff !important;
-} 
+}
+
+.mat-mdc-input-element::placeholder {
+  color: #fff !important;
+}
