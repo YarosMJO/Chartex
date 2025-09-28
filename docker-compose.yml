@@ -1,0 +1,74 @@
+services:
+  # MongoDB база даних
+  mongodb:
+    image: mongo:7.0
+    container_name: chartex-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: chartex
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb-init:/docker-entrypoint-initdb.d
+    networks:
+      - chartex-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chartex-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/chartex?authSource=admin
+      PORT: 5000
+    ports:
+      - "5001:5000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/firebase-service-account.json:/app/firebase-service-account.json:ro
+    networks:
+      - chartex-network
+
+  # Frontend (Angular + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chartex-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - chartex-network
+
+  # Nginx Reverse Proxy (опціонально - для production)
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: chartex-proxy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:80"
+  #   volumes:
+  #     - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - chartex-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  chartex-network:
+    driver: bridge

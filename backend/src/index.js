@@ -6,7 +6,14 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:80',
+    'http://localhost:8080',
+    /^chrome-extension:\/\/.*$/
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Підключення до MongoDB

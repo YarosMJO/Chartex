@@ -1,5 +1,25 @@
 /* === ТЕМИ === */
 
+/* Базові стилі для Material Design компонентів */
+.mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button, .mat-fab, .mat-mini-fab {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 36px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.0892857143em;
+}
+
+.mat-card {
+  border-radius: 4px;
+  box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+}
+
+.mat-form-field {
+  font-family: 'Roboto', sans-serif;
+}
+
 body.theme-default, body:not(.theme-light):not(.theme-dark):not(.theme-default) {
   /* Дефолтна тема (існуючі стилі) */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;

@@ -2,8 +2,8 @@
 const config = {
   // API URL для різних середовищ
   api: {
-    development: 'http://localhost:5000/api',
-    production: 'http://localhost:5000/api' // Використовуємо localhost для тестування
+    development: 'http://localhost:5001/api',
+    production: 'http://localhost:5001/api' // Використовуємо Docker backend порт
   },
   
   // Firebase конфігурація

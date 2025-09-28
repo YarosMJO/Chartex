@@ -69,6 +69,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return Math.floor(value + 0.5);
   };
 
+  // Методи санітизації даних
+  private sanitizeString(value: any): string {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+    return '';
+  }
+
+  private sanitizeNumber(value: any): number {
+    if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+      return Math.max(0, value);
+    }
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed) && isFinite(parsed)) {
+        return Math.max(0, parsed);
+      }
+    }
+    return 0;
+  }
+
   // Перевірка налаштувань збору даних
   private checkDataCollectionSettings() {
     this.settingsService.getSettings().subscribe(settings => {
@@ -575,20 +596,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
         .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
         .slice(0, 10); // Беремо топ-10
 
-      // Фільтруємо тільки домени з відвідуваннями > 0
-      this.activityChartData = rawData.filter(item => item.y > 0);
+      // Фільтруємо та валідуємо дані
+      this.activityChartData = rawData
+        .filter(item => item && typeof item === 'object')
+        .map(item => ({
+          x: this.sanitizeString(item.x),
+          y: this.sanitizeNumber(item.y)
+        }))
+        .filter(item => item.x && item.y > 0);
       
-      // Валідація фінальних даних
-      const isValidData = this.activityChartData.every(item => 
-        item && 
-        typeof item.x === 'string' && 
-        item.x.length > 0 &&
-        typeof item.y === 'number' && 
-        item.y >= 0
-      );
+      // Додаткова валідація для ApexCharts
+      this.activityChartData = this.activityChartData.filter(item => {
+        const isValid = item && 
+          typeof item.x === 'string' && 
+          item.x.length > 0 &&
+          typeof item.y === 'number' && 
+          !isNaN(item.y) && 
+          isFinite(item.y) &&
+          item.y >= 0;
+        
+        if (!isValid) {
+          console.warn('Invalid activity chart data item:', item);
+        }
+        return isValid;
+      });
       
-      // Якщо немає даних з відвідуваннями або дані невалідні, створюємо порожній масив
-      if (this.activityChartData.length === 0 || !isValidData) {
+      // Якщо немає валідних даних, створюємо порожній масив
+      if (this.activityChartData.length === 0) {
         this.activityChartData = [];
       }
 

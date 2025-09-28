@@ -28,11 +28,30 @@ export class ActivityChartComponent implements OnChanges, OnDestroy {
   ) {}
 
   ngOnChanges() {
-    if (this.activityChartData.length > 0) {
+    if (this.activityChartData && this.activityChartData.length > 0) {
+      // Валідуємо та очищаємо дані
+      this.activityChartData = this.activityChartData
+        .filter(item => item && typeof item === 'object')
+        .map(item => ({
+          x: this.sanitizeString(item.x),
+          y: this.sanitizeNumber(item.y)
+        }))
+        .filter(item => item.x && item.y >= 0);
+      
       // Перевіряємо діапазон значень
-      const yValues = this.activityChartData.map(item => item.y);
-      const minY = Math.min(...yValues);
-      const maxY = Math.max(...yValues);
+      if (this.activityChartData.length > 0) {
+        const yValues = this.activityChartData.map(item => item.y);
+        const minY = Math.min(...yValues);
+        const maxY = Math.max(...yValues);
+        
+        // Додаткова валідація для ApexCharts
+        if (isNaN(minY) || isNaN(maxY) || !isFinite(minY) || !isFinite(maxY)) {
+          console.warn('Invalid data detected in activity chart:', this.activityChartData);
+          this.activityChartData = [];
+        }
+      }
+    } else {
+      this.activityChartData = [];
     }
     
     this.cdr.markForCheck();
@@ -51,5 +70,25 @@ export class ActivityChartComponent implements OnChanges, OnDestroy {
 
   ngOnDestroy() {
     // Cleanup if needed
+  }
+
+  private sanitizeString(value: any): string {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+    return '';
+  }
+
+  private sanitizeNumber(value: any): number {
+    if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+      return Math.max(0, value);
+    }
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed) && isFinite(parsed)) {
+        return Math.max(0, parsed);
+      }
+    }
+    return 0;
   }
 }
