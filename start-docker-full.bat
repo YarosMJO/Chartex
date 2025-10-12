@@ -26,7 +26,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/3] Збираємо frontend для production...
+echo [1/4] Збираємо frontend для production...
 cd frontend
 call npm run build:prod
 if errorlevel 1 (
@@ -38,7 +38,19 @@ if errorlevel 1 (
 cd ..
 
 echo.
-echo [2/3] Збираємо Docker images...
+echo [2/4] Збираємо extension...
+cd frontend
+call npm run build:extension
+if errorlevel 1 (
+    echo ❌ Не вдалося зібрати extension!
+    cd ..
+    pause
+    exit /b 1
+)
+cd ..
+
+echo.
+echo [3/4] Збираємо Docker images...
 docker-compose build
 if errorlevel 1 (
     echo ❌ Не вдалося зібрати Docker images!
@@ -47,7 +59,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Запускаємо всі сервіси...
+echo [4/4] Запускаємо всі сервіси...
 docker-compose up -d
 
 if errorlevel 1 (
@@ -76,8 +88,9 @@ echo ========================================
 echo ℹ️  Інформація
 echo ========================================
 echo.
-echo ✅ Extension автоматично визначить доступний API
-echo    - Завжди використовує localhost:5000 (unified port)
+echo ✅ Extension зібрано і готово до використання
+echo    - Файли в extension/dashboard/ директорії
+echo    - Автоматично визначить доступний API (localhost:5000)
 echo.
 echo ✅ Frontend зібрано в production режимі
 echo    - Використовує environment.prod.ts

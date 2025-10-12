@@ -9,7 +9,7 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "build:extension": "ng build --configuration extension && npm run copy-to-extension",
-    "copy-to-extension": "xcopy /E /I /Y dist\\chartex-frontend\\browser\\* ..\\extension\\dashboard\\",
+    "copy-to-extension": "if exist ..\\extension\\dashboard\\ rmdir /S /Q ..\\extension\\dashboard\\ && mkdir ..\\extension\\dashboard\\ && xcopy /E /I /Y dist\\chartex-frontend\\browser\\* ..\\extension\\dashboard\\ && ren ..\\extension\\dashboard\\index.html dashboard.html",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
