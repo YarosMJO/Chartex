@@ -24,7 +24,8 @@
             "ssr": false,
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/indigo-pink.css"
             ],
             "styles": [
               "src/indigo-pink.css",

@@ -163,4 +163,25 @@ p, span, li, label, input, button { font-size: 1.02em; }
 /* Fix for wheel events */
 .apexcharts-canvas {
   pointer-events: auto !important;
-} 
+}
+
+/* Hidden theme classes for dynamic theme switching */
+.theme-classes-hidden {
+  display: none;
+}
+
+/* Перевизначення деяких Material Design змінних */
+:root {
+  /* Зміна основних кольорів Material */
+  --mat-app-background-color: #fafafa;
+  --mat-app-text-color: rgba(0, 0, 0, 0.87);
+  
+  /* Зміна кольорів кнопок */
+  --mat-text-button-label-text-color: #3f51b5;
+  --mat-filled-button-container-color: #3f51b5;
+  --mat-filled-button-label-text-color: white;
+  
+  /* Зміна кольорів форм */
+  --mdc-filled-text-field-caret-color: #3f51b5;
+  --mdc-filled-text-field-focus-active-indicator-color: #3f51b5;
+}
