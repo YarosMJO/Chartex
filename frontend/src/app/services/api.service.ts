@@ -102,7 +102,7 @@ export interface PaginatedResponse<T> {
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly API_BASE_URL = environment.apiUrl;
+  private API_BASE_URL: string = environment.apiUrl; // Будемо оновлювати динамічно
   private encryptionKey: string | null = null; // Ключ шифрування
 
   constructor(
@@ -111,12 +111,65 @@ export class ApiService {
   ) {
     // Отримати ключ шифрування з localStorage
     this.encryptionKey = localStorage.getItem('chartex_encryption_key');
+    
+    // Встановлюємо API за замовчуванням (тепер завжди 5000)
+    this.API_BASE_URL = 'http://localhost:5000/api';
+    console.log('Angular API Service: Ініціалізовано з API (5000)');
+    
+    // Асинхронно перевіряємо доступність та оновлюємо якщо потрібно
+    this.detectAvailableAPI();
+  }
+
+  // Динамічне визначення доступного API (тепер завжди 5000)
+  private async detectAvailableAPI() {
+    const apiUrl = 'http://localhost:5000/api';
+    
+    // Пробуємо кілька разів з різними інтервалами
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      console.log(`Angular API Service: Спроба ${attempt}/3 перевірки API (5000)`);
+      
+      try {
+        const response = await fetch(apiUrl.replace('/api', '/api/health'), {
+          method: 'GET',
+          mode: 'cors',
+          signal: AbortSignal.timeout(2000) // 2 секунди timeout
+        });
+        
+        if (response.ok) {
+          this.API_BASE_URL = apiUrl;
+          console.log('Angular API Service: ✅ API (5000) доступний');
+          return;
+        }
+      } catch (error) {
+        console.log(`Angular API Service: API (5000) недоступний (спроба ${attempt}):`, error instanceof Error ? error.message : String(error));
+      }
+      
+      // Затримка між спробами
+      if (attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    
+    // Якщо API недоступний після всіх спроб
+    console.log('Angular API Service: ⚠️ API недоступний, використовуємо:', this.API_BASE_URL);
   }
 
   // Метод для встановлення ключа шифрування
   setEncryptionKey(key: string) {
     this.encryptionKey = key;
     localStorage.setItem('chartex_encryption_key', key);
+  }
+
+  // Метод для отримання поточного API URL (для діагностики)
+  getCurrentAPIUrl(): string {
+    return this.API_BASE_URL;
+  }
+
+  // Метод для примусового оновлення API URL
+  async refreshAPIUrl(): Promise<string> {
+    console.log('Angular API Service: Примусове оновлення API URL...');
+    await this.detectAvailableAPI();
+    return this.API_BASE_URL;
   }
 
   // Метод для дешифрування даних
@@ -685,7 +738,6 @@ export class ApiService {
     try {
       return localStorage.getItem('chartex_device_id');
     } catch (error) {
-      console.error('Помилка отримання deviceId:', error);
       return null;
     }
   }

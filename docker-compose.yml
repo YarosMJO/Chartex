@@ -27,12 +27,14 @@ services:
       NODE_ENV: production
       MONGODB_URI: mongodb://admin:password123@mongodb:27017/chartex?authSource=admin
       PORT: 5000
+      # Firebase Admin SDK credentials
+      FIREBASE_PROJECT_ID: chartex-2eae7
+      FIREBASE_CLIENT_EMAIL: firebase-adminsdk-fbsvc@chartex-2eae7.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCZ41kccPP6fsNc\nzhw1piNeTj961SWccw7rh5O/88VcwvEwDwYvIIx77nOM4p61KCHI30xSs2RPFqMD\nxyaKQUx9qNF0Ps+k0aRfRXrXRujOnmlxILPDHNPf1IAl2vKSFtSHP+xxmkG3qa9t\n1YSuR/qotFQyfETWiz1hK5EC5qg91ZJ1eHpTk2zwBbT0j11TVdPLFbPqnOnGAg8G\nCKOrhmg5l37tCQmtLJmg+xUsBcgtGezQCfnGVPr1NlDFML1BQtYrCCQ5gxbiub56\nCjmITAUN0vE8E+fK9+mb8qKSJ4z6J+rCInwWWADNI3EBsLjWrhaP6tT2DJqRkKzh\nWLr8UextAgMBAAECggEAJEuaNKpSbRIxX0XwotmuzVscv0qe/pWnnvcg6rzi35RO\nARUGEx7063UL9V5s6tLOlxtNm9LaVYoEBEvYI/MvSJME5cs7u8bDY0IWrUg4+CSm\nP2ukYmA9+7SZzfPkUv8F/OlfidLFbb1clkXuL5HkBZ7Unfyv2r9ICI9XOi0vYLfN\nVRVmLpZRLIIF9Rqb0OzPpdPFzg+W+GnHOuHBZmcWcf+67a5+5V8fpSd97f5j5mTD\ntvCa+qvgr8O/ZA0ttlt9ECt0W7t+uYAdjf6zP22HdEHsgK1goKurG+2A92mDS2zZ\njl9ujup3mRippVGIdPbfChoS3r3m80JCP5X9GbBNuQKBgQDLninbQUWkZvE9Eiz2\nQ11r2sn0HarIFZqB+vuwjLOL0CPtibRPcTgc21TOKenPMwiz9PZZAGkLL+GbKaAM\nlJnAt3dijxinmsOXmQaa3YQUuohzgiD+0KvboOApvfjOUwDGyBfrch/565zaqDh6\nyjqqsBAV4+CViF7qdgw8l6wNlQKBgQDBehbbhbb99m4fQG8EBr9YYXSs5vQo71CG\nBb81QeKeMBH1PZic8EV5bzUAYoGQgA/e2fQVUGF2J7WJEnlDYvpSHmzQEkTdbOv+\nkvADztXrPHM7pa/+zR6u3E12d03oEAhD92ABHo99U2ife8/REE74Aist45up7T87\nfABo6vc9eQKBgQDAQkpxXXNdpVnZeWT87mSypzaTisOsA0INwyeN73zE4jZaXvDj\nJht+m9a6h7beTujDyuQk649D4eUbNjWKS3HWFyXh6Q21jBts9C/ZYJoLXInkzxVK\npUvwqDmhEGByqMsN5vc2+F6bA87qY3ZY8sRsUKwPj0iKyOYeanJpcCkj9QKBgFNZ\nTkmJxDiKFgy+jFTWt03SxhnKcPrFhhIGncXKuV7eZI4a2Akb9UIIJ3Qf+6MNmEiv\n6lfYRfRJzQnc/IKMPDxuQQAuLp6ZUt1b3aw2Sa/KXfYfPb9uDD7WR0S2xsgnR/hH\ntIMm8DfUW+kAxJlTBkIPZRyixiehPjFZDTAlsRc5AoGAZuq7xwiGdcane9tAchY3\nQRWPtoF6lfmBRTmR2CsaYTmtWJYN73isKSgbJtB0jlvMjK/lBhov/sEMI3ThnbJq\n+LwZaq+LsVZj84q5kRHfpLeSySt23sg2P8/YXCv0+fxIPTyBYfrCXU5nmOQSKVCg\npbFv94WSp0m9e18ccgld7EI=\n-----END PRIVATE KEY-----\n"
     ports:
-      - "5001:5000"
+      - "5000:5000"
     depends_on:
       - mongodb
-    volumes:
-      - ./backend/firebase-service-account.json:/app/firebase-service-account.json:ro
     networks:
       - chartex-network
 

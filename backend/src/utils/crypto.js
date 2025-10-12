@@ -31,7 +31,7 @@ function encryptAES(data, key, iv) {
     const keyBuffer = Buffer.from(key, 'base64');
     const ivBuffer = Buffer.from(iv, 'base64');
     
-    const cipher = crypto.createCipher('aes-256-gcm', keyBuffer);
+    const cipher = crypto.createCipheriv('aes-256-gcm', keyBuffer, ivBuffer);
     cipher.setAAD(Buffer.from('chartex', 'utf8')); // Додаткові автентифіковані дані
     
     let encrypted = cipher.update(data, 'utf8', 'base64');
@@ -42,7 +42,6 @@ function encryptAES(data, key, iv) {
     // Формат: iv:authTag:encryptedData
     return `${iv}:${authTag.toString('base64')}:${encrypted}`;
   } catch (error) {
-    console.error('Помилка шифрування:', error);
     throw new Error('Помилка шифрування даних');
   }
 }
@@ -65,7 +64,7 @@ function decryptAES(encryptedData, key) {
     const ivBuffer = Buffer.from(iv, 'base64');
     const authTagBuffer = Buffer.from(authTag, 'base64');
     
-    const decipher = crypto.createDecipher('aes-256-gcm', keyBuffer);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, ivBuffer);
     decipher.setAAD(Buffer.from('chartex', 'utf8'));
     decipher.setAuthTag(authTagBuffer);
     
@@ -74,7 +73,6 @@ function decryptAES(encryptedData, key) {
     
     return decrypted;
   } catch (error) {
-    console.error('Помилка розшифрування:', error);
     throw new Error('Помилка розшифрування даних');
   }
 }
@@ -92,7 +90,6 @@ function hashDomain(url, salt = 'chartex') {
     hash.update(domain + salt);
     return hash.digest('hex');
   } catch (error) {
-    console.error('Помилка хешування домену:', error);
     // Повернути хеш від URL якщо не вдалося розпарсити
     const hash = crypto.createHash('sha256');
     hash.update(url + salt);

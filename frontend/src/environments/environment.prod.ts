@@ -9,5 +9,5 @@ export const environment = {
     appId: "1:264979508048:web:c9501813cf613160a5da55",
     measurementId: "G-PGGLE2T3TD"
   },
-  apiUrl: 'http://localhost:5001/api' // Використовуємо Docker backend порт
+  apiUrl: 'http://localhost:5000/api' // Unified backend порт (5000)
 }; 

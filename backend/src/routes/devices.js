@@ -58,7 +58,6 @@ router.post('/register', authenticateToken, async (req, res) => {
     await device.save();
     res.json({ success: true, device });
   } catch (err) {
-    console.error('Помилка реєстрації пристрою:', err);
     res.status(500).json({ error: 'Помилка реєстрації пристрою' });
   }
 });
@@ -93,7 +92,6 @@ router.get('/', authenticateToken, async (req, res) => {
     
     res.json(devicesWithStats);
   } catch (err) {
-    console.error('Помилка отримання пристроїв:', err);
     res.status(500).json({ error: 'Помилка отримання пристроїв' });
   }
 });
@@ -116,7 +114,6 @@ router.put('/:deviceId/name', authenticateToken, async (req, res) => {
     
     res.json({ success: true, device });
   } catch (err) {
-    console.error('Помилка оновлення назви пристрою:', err);
     res.status(500).json({ error: 'Помилка оновлення назви пристрою' });
   }
 });
@@ -138,7 +135,6 @@ router.put('/:deviceId/deactivate', authenticateToken, async (req, res) => {
     
     res.json({ success: true, device });
   } catch (err) {
-    console.error('Помилка деактивації пристрою:', err);
     res.status(500).json({ error: 'Помилка деактивації пристрою' });
   }
 });
@@ -156,7 +152,6 @@ router.delete('/:deviceId', authenticateToken, async (req, res) => {
     
     res.json({ success: true, message: 'Пристрій та всі його дані успішно видалено' });
   } catch (err) {
-    console.error('Помилка видалення пристрою:', err);
     res.status(500).json({ error: 'Помилка видалення пристрою' });
   }
 });
@@ -222,7 +217,6 @@ router.get('/:deviceId/stats', authenticateToken, async (req, res) => {
       dailyActivity
     });
   } catch (err) {
-    console.error('Помилка отримання статистики пристрою:', err);
     res.status(500).json({ error: 'Помилка отримання статистики пристрою' });
   }
 });

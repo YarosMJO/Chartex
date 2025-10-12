@@ -43,6 +43,4 @@ router.get('/top-domains', async (req, res) => {
   }
 });
 
-// TODO: Додати інші глобальні метрики (наприклад, активність по годинах, пристроях)
-
 module.exports = router; 

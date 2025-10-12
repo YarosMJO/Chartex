@@ -2,8 +2,8 @@
 const config = {
   // API URL для різних середовищ
   api: {
-    development: 'http://localhost:5001/api',
-    production: 'http://localhost:5001/api' // Використовуємо Docker backend порт
+    development: 'http://localhost:5000/api', // Local backend без Docker
+    production: 'http://localhost:5000/api' // Docker backend - тепер також 5000
   },
   
   // Firebase конфігурація
@@ -31,32 +31,63 @@ const config = {
   }
 };
 
-// Визначення середовища для Service Worker
-const isDevelopment = typeof window === 'undefined' || 
-                     (window.location && (
-                       window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.protocol === 'chrome-extension:'
-                     ));
+// Функція для визначення доступного API (тепер завжди 5000)
+async function detectAvailableAPI() {
+  const apiUrl = config.api.production; // Тепер обидва режими використовують 5000
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    
+    const response = await fetch(apiUrl.replace('/api', '/api/health'), {
+      method: 'GET',
+      signal: controller.signal,
+      mode: 'cors'
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      console.log('Chartex: API (5000) доступний');
+      return apiUrl;
+    }
+  } catch (error) {
+    console.log('Chartex: API (5000) недоступний:', error.message);
+  }
+  
+  // Якщо API недоступний, все одно повертаємо його
+  console.log('Chartex: API недоступний, використовуємо:', apiUrl);
+  return apiUrl;
+}
 
 // Експорт конфігурації
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     ...config,
-    environment: isDevelopment ? 'development' : 'production',
-    apiUrl: isDevelopment ? config.api.development : config.api.production
+    apiUrl: config.api.production, // Для Node.js (build процес)
+    detectAvailableAPI
   };
 } else if (typeof window !== 'undefined') {
   window.chartexConfig = {
     ...config,
-    environment: isDevelopment ? 'development' : 'production',
-    apiUrl: isDevelopment ? config.api.development : config.api.production
+    apiUrl: config.api.development, // За замовчуванням для browser
+    detectAvailableAPI
   };
 } else {
-  // Для Service Worker - використовуємо development для тестування
+  // Для Service Worker - ініціалізуємо з API (5000)
   self.chartexConfig = {
     ...config,
-    environment: 'development',
-    apiUrl: config.api.development
+    apiUrl: config.api.production, // За замовчуванням API (5000)
+    detectAvailableAPI
   };
+  
+  console.log('Chartex Service Worker: Конфігурація ініціалізована з API (5000)');
+  
+  // Асинхронно пробуємо визначити доступний API
+  detectAvailableAPI().then(apiUrl => {
+    self.chartexConfig.apiUrl = apiUrl;
+    console.log('Chartex Service Worker: API визначено:', apiUrl);
+  }).catch(error => {
+    console.log('Chartex Service Worker: Помилка визначення API, використовуємо 5000:', error.message);
+  });
 } 

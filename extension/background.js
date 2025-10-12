@@ -25,7 +25,7 @@ class TranslationManager {
       const response = await fetch(chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`));
       this.translations = await response.json();
     } catch (error) {
-      console.error('Помилка завантаження перекладів:', error);
+      // Silent fail for translations
     }
   }
   
@@ -110,8 +110,35 @@ let isCollecting = false;
 })();
 
 // API URL з конфігурації (для Service Worker)
-const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' };
+const chartexConfig = self.chartexConfig || { apiUrl: 'http://localhost:5000/api' }; // Fallback до API (5000)
 const API_BASE_URL = chartexConfig.apiUrl;
+
+console.log('Chartex Background: API URL:', API_BASE_URL);
+console.log('Chartex Background: Режим роботи: Unified (5000)');
+
+// Функція для перевірки доступності API
+async function checkAPIHealth() {
+  try {
+    const response = await fetch(API_BASE_URL.replace('/api', '/api/health'), {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    if (response.ok) {
+      console.log('Chartex Background: API доступний');
+      return true;
+    } else {
+      console.log('Chartex Background: API недоступний, статус:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.log('Chartex Background: API недоступний, помилка:', error.message);
+    return false;
+  }
+}
+
+// Перевіряємо API при ініціалізації
+checkAPIHealth();
 
 // Додаємо функцію для кодування у base64 з підтримкою UTF-8
 function utf8ToBase64(str) {
@@ -181,6 +208,8 @@ class DeviceUtils {
 class APIUtils {
   static async makeRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log('Chartex API: Making request to:', url);
+    
     let authHeader = {};
     
     // Завжди беремо idToken з локального сховища
@@ -190,8 +219,9 @@ class APIUtils {
       
       if (idToken) {
         authHeader = { 'Authorization': `Bearer ${idToken}` };
+        console.log('Chartex API: Using auth token');
       } else {
-        console.warn('Токен авторизації не знайдено');
+        console.log('Chartex API: No auth token found');
       }
     } catch (error) {
       console.error('Помилка отримання токена:', error);
@@ -204,16 +234,22 @@ class APIUtils {
       }
     };
     
-    const response = await fetch(url, { ...defaultOptions, ...options });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API помилка:', { status: response.status, error: errorText });
-      throw new Error(`API помилка: ${response.status} - ${errorText}`);
+    try {
+      const response = await fetch(url, { ...defaultOptions, ...options });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API помилка:', { status: response.status, error: errorText, url });
+        throw new Error(`API помилка: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Chartex API: Request successful:', endpoint);
+      return result;
+    } catch (error) {
+      console.error('Chartex API: Request failed:', error.message, 'URL:', url);
+      throw error;
     }
-    
-    const result = await response.json();
-    return result;
   }
   
   static async registerDevice() {
@@ -261,13 +297,12 @@ class HistoryCollector {
       const settings = data.chartex_settings;
       
       if (!settings || !settings.dataCollection) {
-        return true; // Якщо налаштування відсутні, дозволити збір за замовчуванням
+        return true;
       }
       
       return settings.dataCollection.enabled;
     } catch (error) {
-      console.error('Помилка перевірки налаштувань збору даних:', error);
-      return true; // При помилці дозволити збір
+      return true;
     }
   }
 
@@ -288,7 +323,6 @@ class HistoryCollector {
       
       return settings.dataCollection;
     } catch (error) {
-      console.error('Помилка отримання налаштувань збору даних:', error);
       return {
         enabled: true,
         collectDeviceInfo: true,
@@ -313,7 +347,6 @@ class HistoryCollector {
       
       return settings.privacy;
     } catch (error) {
-      console.error('Помилка отримання налаштувань приватності:', error);
       return {
         encryptData: true,
         showOtherDevices: true
@@ -345,9 +378,7 @@ class HistoryCollector {
   
   async registerDevice() {
     try {
-      // Перевірити, чи є необхідні дані
       if (!deviceId || !encryptionKey) {
-        console.error('Відсутні необхідні дані для реєстрації пристрою');
         return;
       }
       
@@ -388,7 +419,7 @@ class HistoryCollector {
       // Notify popups that initial data collection is complete
       chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
     } catch (error) {
-      console.error('Помилка збору історії:', error);
+      // Silent fail
     }
   }
   
@@ -408,12 +439,6 @@ class HistoryCollector {
       
       // Перевірити налаштування приватності для фільтрації інших пристроїв
       const privacySettings = await this.getPrivacySettings();
-      if (!privacySettings.showOtherDevices) {
-        // Якщо налаштування вимкнено, збираємо дані тільки з поточного пристрою
-        // Поточний пристрій завжди збирається, тому просто продовжуємо
-        console.log('Збір даних тільки з поточного пристрою (showOtherDevices = false)');
-      }
-      
       
       // Фільтрація внутрішніх сторінок браузера
       function isBrowserInternalUrl(url) {
@@ -444,9 +469,7 @@ class HistoryCollector {
         }
       }
       
-      // Перевірити, чи є необхідні дані
       if (!deviceId || !encryptionKey || !sessionId) {
-        console.warn('Відсутні необхідні дані для обробки запису');
         return;
       }
       
@@ -536,7 +559,7 @@ class HistoryCollector {
       }
       
     } catch (error) {
-      console.error('Помилка обробки запису історії:', error);
+      // Silent fail
     }
   }
   
@@ -554,9 +577,11 @@ class HistoryCollector {
   async flushBatch() {
     if (this.pendingItems.length === 0) return;
     
+    // Оголошуємо itemsToSend поза try-catch для доступу в catch блоці
+    let itemsToSend = [];
+    
     try {
-      
-      const itemsToSend = [...this.pendingItems];
+      itemsToSend = [...this.pendingItems];
       this.pendingItems = [];
       
       // Валідація та очищення даних перед відправкою
@@ -577,14 +602,8 @@ class HistoryCollector {
       });
       
       if (validatedItems.length === 0) {
-        console.log('Немає валідних записів для відправки');
         return;
       }
-      
-      // Обчислити загальну суму duration для логування
-      const totalDuration = validatedItems.reduce((sum, item) => sum + (item.duration || 0), 0);
-      
-      console.log(`Відправляємо ${validatedItems.length} записів (загальний час: ${totalDuration}с)`);
       
       await APIUtils.sendHistoryBatch(validatedItems);
       
@@ -598,9 +617,11 @@ class HistoryCollector {
       chrome.runtime.sendMessage({ action: 'dataSyncComplete' });
       
     } catch (error) {
-      console.error('Помилка відправки пакету:', error);
+      console.error('Помилка відправки batch:', error);
       // Повернути валідні елементи назад до черги
-      this.pendingItems.unshift(...itemsToSend);
+      if (itemsToSend.length > 0) {
+        this.pendingItems.unshift(...itemsToSend);
+      }
     }
   }
   
@@ -662,7 +683,7 @@ async function clearUserData(uid) {
     // Clear last sync time
     await chrome.storage.local.set({ [`lastSync_${uid}`]: null });
   } catch (error) {
-    console.error(`Помилка очищення даних користувача ${uid}:`, error);
+    // Silent fail
   }
 }
 
@@ -689,7 +710,7 @@ async function clearUserDataOnBackend(uid) {
       }
     });
   } catch (error) {
-    console.error(`Помилка очищення даних користувача на бекенді:`, error);
+    // Silent fail
   }
 }
 
@@ -707,7 +728,7 @@ async function handleUserSwitch(newUser) {
     
     // Don't await this - let it run in background
     clearUserDataOnBackend(newUser.uid).catch(error => {
-      console.error('Помилка асинхронного очищення даних на бекенді:', error);
+      // Silent fail
     });
     
     const collecting = await loadCollectionStateForUser(newUser.uid);
@@ -769,7 +790,6 @@ async function handleAuthentication() {
     
     return { success: true, user: firebaseUser };
   } catch (error) {
-    console.error('handleAuthentication: помилка:', error);
     return { success: false, error: error.message };
   }
 }
@@ -812,7 +832,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           await chrome.storage.local.set({ chartex_encryption_key: encryptionKey });
           sendResponse({ success: true });
         } else {
-          sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.ENCRYPTION_KEY_NOT_FOUND') });
+          sendResponse({ success: false, error: 'Ключ шифрування не знайдено' });
         }
       })();
       return true;
@@ -831,7 +851,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           
           sendResponse({ success: true });
         } catch (error) {
-          console.error('Помилка збереження налаштувань:', error);
           sendResponse({ success: false, error: error.message });
         }
       })();
@@ -922,14 +941,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       (async () => {
         try {
           if (!request.data) {
-            sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.NO_TEST_DATA') });
+            sendResponse({ success: false, error: 'Немає тестових даних' });
             return;
           }
           await historyCollector.processHistoryItem(request.data);
           await historyCollector.flushBatch();
           sendResponse({ success: true, message: 'Тестовий запис відправлено' });
         } catch (error) {
-          console.error('Помилка тестової відправки:', error);
           sendResponse({ success: false, error: error.message });
         }
       })();
@@ -956,7 +974,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
       
     default:
-      sendResponse({ success: false, error: translationManager.getTranslation('BACKGROUND_ERRORS.UNKNOWN_ACTION') });
+      sendResponse({ success: false, error: 'Невідома дія' });
   }
   return true;
 });
@@ -1005,7 +1023,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       // Також оновити у sync
       await chrome.storage.sync.set({ deviceId });
     } catch (error) {
-      console.error('Помилка ініціалізації розширення:', error);
+      // Silent fail
     }
   }
   
@@ -1060,11 +1078,6 @@ chrome.runtime.onStartup.addListener(async () => {
     if (!data.sessionId) {
       await chrome.storage.local.set({ sessionId });
     }
-    if (data.user) {
-      console.log('Відновлення сесії користувача:', data.user.email);
-      // Don't validate during startup to avoid blocking auth process
-      // Validation will happen during getStatus calls
-    }
     
     // Set up periodic token validation (every 10 minutes)
     setInterval(async () => {
@@ -1075,7 +1088,7 @@ chrome.runtime.onStartup.addListener(async () => {
     }, 10 * 60 * 1000);
     
   } catch (error) {
-    console.error('Помилка ініціалізації при запуску:', error);
+    // Silent fail
   }
 });
 
@@ -1113,7 +1126,6 @@ async function checkAndRefreshToken() {
     
     return true;
   } catch (error) {
-    console.error('Помилка перевірки/оновлення токена:', error);
     return false;
   }
 }
@@ -1140,7 +1152,6 @@ async function validateAuthentication() {
     
     return true;
   } catch (error) {
-    console.error('Помилка валідації авторизації:', error);
     return false;
   }
 }

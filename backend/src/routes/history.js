@@ -62,7 +62,6 @@ router.post('/add', authenticateToken, async (req, res) => {
     await item.save();
     res.json({ success: true, id: item._id });
   } catch (err) {
-    console.error('Помилка збереження історії:', err);
     res.status(500).json({ error: 'Помилка збереження історії' });
   }
 });
@@ -73,7 +72,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
     const { items } = req.body;
     
     if (!Array.isArray(items) || items.length === 0) {
-      console.error('Невірний формат batch запиту');
       return res.status(400).json({ error: 'Необхідно передати масив записів' });
     }
     
@@ -88,7 +86,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
       
       // Якщо duration в мілісекундах (більше 1000), конвертуємо
       if (duration > 1000 && duration < 1000000) {
-        const originalDuration = duration;
         duration = Math.round(duration / 1000);
       }
       
@@ -111,7 +108,6 @@ router.post('/batch', authenticateToken, async (req, res) => {
     
     res.json({ success: true, count: result.length });
   } catch (err) {
-    console.error('Помилка batch збереження історії:', err);
     res.status(500).json({ error: 'Помилка збереження історії' });
   }
 });
@@ -127,7 +123,6 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
       message: `Видалено ${result.deletedCount} записів історії`
     });
   } catch (err) {
-    console.error('Помилка очищення історії:', err);
     res.status(500).json({ error: 'Помилка очищення історії' });
   }
 });
@@ -199,7 +194,6 @@ router.get('/duration-analysis', authenticateToken, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Помилка аналізу duration:', err);
     res.status(500).json({ error: 'Помилка аналізу duration' });
   }
 });
@@ -279,7 +273,6 @@ router.post('/fix-durations', authenticateToken, async (req, res) => {
       message: `Виправлено ${totalFixedCount} записів з неправильним duration`
     });
   } catch (err) {
-    console.error('Помилка виправлення duration:', err);
     res.status(500).json({ error: 'Помилка виправлення duration' });
   }
 });
@@ -337,7 +330,6 @@ router.get('/', authenticateToken, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Помилка отримання історії:', err);
     res.status(500).json({ error: 'Помилка отримання історії' });
   }
 });
@@ -402,7 +394,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
     
     res.json(stats);
   } catch (err) {
-    console.error('Помилка отримання статистики історії:', err);
     res.status(500).json({ error: 'Помилка отримання статистики історії' });
   }
 });
@@ -424,7 +415,6 @@ router.delete('/', authenticateToken, async (req, res) => {
     const result = await HistoryItem.deleteMany(query);
     res.json({ success: true, deletedCount: result.deletedCount });
   } catch (err) {
-    console.error('Помилка видалення історії:', err);
     res.status(500).json({ error: 'Помилка видалення історії' });
   }
 });

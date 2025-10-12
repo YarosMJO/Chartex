@@ -17,7 +17,6 @@ class TranslationManager {
       const response = await fetch(chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`));
       this.translations = await response.json();
     } catch (error) {
-      console.error('Помилка завантаження перекладів:', error);
       // Fallback translations
       this.translations = {
         CHROME_AUTH_ERRORS: {
@@ -75,7 +74,6 @@ class ChromeAuth {
         return { success: false, error: translationManager.getTranslation('CHROME_AUTH_ERRORS.TOKEN_NOT_OBTAINED') };
       }
     } catch (error) {
-      console.error('Помилка авторизації через Chrome Identity:', error);
       return { success: false, error: error.message };
     }
   }
@@ -147,14 +145,12 @@ class ChromeAuth {
           const data = await response.json();
           return data.id_token;
         } else {
-          console.error('Помилка конвертації токена:', response.status, response.statusText);
           // Якщо не вдалося конвертувати, повертаємо оригінальний токен
           return token;
         }
       }
       return null;
     } catch (error) {
-      console.error('Помилка отримання ID токена:', error);
       return null;
     }
   }

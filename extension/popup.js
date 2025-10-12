@@ -91,12 +91,10 @@ class PopupManager {
           this.translatePopup(ukTranslations);
           this.updateUI();
         } catch (fallbackError) {
-          console.error('Не вдалося завантажити переклади для української мови:', fallbackError);
           // Set empty translations object to prevent errors
           this.translations = {};
         }
       } else {
-        console.error('Не вдалося завантажити переклади для української мови');
         // Set empty translations object to prevent errors
         this.translations = {};
       }
@@ -105,7 +103,6 @@ class PopupManager {
   
   translatePopup(translations) {
     if (!translations || typeof translations !== 'object') {
-      console.error('Невірні переклади:', translations);
       return;
     }
     
@@ -160,7 +157,6 @@ class PopupManager {
   
   getNestedTranslation(translations, key) {
     if (!translations || typeof translations !== 'object') {
-      console.warn('Невірні переклади для getNestedTranslation:', translations);
       return null;
     }
     

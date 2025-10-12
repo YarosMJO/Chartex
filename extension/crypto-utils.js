@@ -35,7 +35,6 @@ class CryptoUtils {
       }
       throw new Error('Invalid key');
     } catch (error) {
-      console.error('Decryption error:', error);
       return null;
     }
   }
@@ -81,7 +80,6 @@ class CryptoUtils {
       const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
       return btoa(binaryString);
     } catch (error) {
-      console.error('UTF8 to Base64 error:', error);
       // Fallback для старих браузерів
       return btoa(unescape(encodeURIComponent(str)));
     }
@@ -99,7 +97,6 @@ class CryptoUtils {
       const decoder = new TextDecoder();
       return decoder.decode(bytes);
     } catch (error) {
-      console.error('Base64 to UTF8 error:', error);
       // Fallback для старих браузерів
       return decodeURIComponent(escape(atob(base64)));
     }

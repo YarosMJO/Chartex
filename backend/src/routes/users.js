@@ -32,7 +32,6 @@ router.post('/register', authenticateToken, async (req, res) => {
     
     res.json({ success: true, user });
   } catch (err) {
-    console.error('Помилка реєстрації користувача:', err);
     res.status(500).json({ error: 'Помилка реєстрації користувача' });
   }
 });
@@ -57,7 +56,6 @@ router.get('/profile', authenticateToken, async (req, res) => {
     
     res.json(profile);
   } catch (err) {
-    console.error('Помилка отримання профілю:', err);
     res.status(500).json({ error: 'Помилка отримання профілю' });
   }
 });
@@ -82,7 +80,6 @@ router.put('/settings', authenticateToken, async (req, res) => {
     await user.save();
     res.json({ success: true, user });
   } catch (err) {
-    console.error('Помилка оновлення налаштувань:', err);
     res.status(500).json({ error: 'Помилка оновлення налаштувань' });
   }
 });
@@ -101,7 +98,6 @@ router.delete('/account', authenticateToken, async (req, res) => {
     
     res.json({ success: true, message: 'Акаунт та всі дані успішно видалено' });
   } catch (err) {
-    console.error('Помилка видалення акаунту:', err);
     res.status(500).json({ error: 'Помилка видалення акаунту' });
   }
 });
@@ -120,7 +116,6 @@ router.post('/clear-data', authenticateToken, async (req, res) => {
       deletedCount: deletedCount.deletedCount
     });
   } catch (err) {
-    console.error('Помилка очищення даних користувача:', err);
     res.status(500).json({ error: 'Помилка очищення даних користувача' });
   }
 });
@@ -201,7 +196,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
       topDomains
     });
   } catch (err) {
-    console.error('Помилка отримання статистики:', err);
     res.status(500).json({ error: 'Помилка отримання статистики' });
   }
 });

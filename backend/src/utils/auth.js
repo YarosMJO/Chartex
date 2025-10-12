@@ -17,7 +17,6 @@ const authenticateToken = async (req, res, next) => {
     // Спробувати перевірити як Firebase токен
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
-      console.log('Firebase токен успішно перевірено:', { uid: decodedToken.uid, email: decodedToken.email });
       req.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
@@ -27,13 +26,12 @@ const authenticateToken = async (req, res, next) => {
       };
       return next();
     } catch (firebaseError) {
-      console.log('Firebase токен недійсний, спробуємо Google OAuth токен:', firebaseError.message);
+      // Firebase токен недійсний, спробуємо Google OAuth токен
     }
     
     // Якщо Firebase токен не спрацював, спробувати Google OAuth токен
     try {
       const userInfo = await verifyGoogleToken(token);
-      console.log('Google OAuth токен успішно перевірено:', { uid: userInfo.id, email: userInfo.email });
       req.user = {
         uid: userInfo.id,
         email: userInfo.email,
@@ -43,7 +41,7 @@ const authenticateToken = async (req, res, next) => {
       };
       return next();
     } catch (googleError) {
-      console.error('Помилка перевірки Google токена:', googleError);
+      console.error('Помилка перевірки токена:', googleError.message);
       return res.status(401).json({ error: 'Недійсний токен авторизації' });
     }
     

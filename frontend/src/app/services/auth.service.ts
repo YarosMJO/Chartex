@@ -78,10 +78,8 @@ export class AuthService {
         }
       }
       
-      console.log('Ключ шифрування не знайдено');
       return null;
     } catch (error) {
-      console.error('Помилка отримання ключа шифрування:', error);
       return null;
     }
   }

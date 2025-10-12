@@ -353,10 +353,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.loadUserStats(),
         this.loadDevices()
       ]);
-      
-      console.log('Дані оновлено');
     } catch (error) {
-      console.error('Помилка оновлення даних:', error);
+      // Silent fail
     }
   }
 
@@ -394,7 +392,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await this.prepareChartData();
       this.cdr.markForCheck();
     } catch (error) {
-      console.error('Помилка завантаження статистики:', error);
       this.error = 'Помилка завантаження статистики: ' + (error instanceof Error ? error.message : String(error));
       this.cdr.markForCheck();
     } finally {
@@ -539,7 +536,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       this.cdr.markForCheck();
     } catch (error) {
-      console.error('Помилка підготовки даних для графіків:', error);
+      // Silent fail
     }
   }
 
@@ -559,7 +556,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       return heatmapData;
     } catch (error) {
-      console.error('Error preparing heatmap data:', error);
       // Fallback to empty data
       return [];
     }
@@ -693,7 +689,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       return heatmapData;
     } catch (error) {
-      console.error('Error preparing heatmap data from filtered:', error);
       // Fallback to empty data
       return [];
     }
