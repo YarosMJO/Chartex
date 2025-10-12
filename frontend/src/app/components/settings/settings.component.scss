@@ -691,4 +691,9 @@ mat-divider {
 ::ng-deep body.theme-default .mat-select-value,
 ::ng-deep body.theme-default .mat-form-field-label {
   color: #181818 !important;
+}
+
+/* === HIDDEN FILE INPUT === */
+.file-input-hidden {
+  display: none;
 } 

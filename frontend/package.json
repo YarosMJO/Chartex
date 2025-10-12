@@ -9,7 +9,7 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "build:extension": "ng build --configuration extension && npm run copy-to-extension",
-    "copy-to-extension": "powershell -Command \"if (Test-Path '..\\extension\\dashboard') { Remove-Item -Recurse -Force '..\\extension\\dashboard' }; New-Item -ItemType Directory -Path '..\\extension\\dashboard' -Force; Copy-Item -Path 'dist\\chartex-frontend\\browser\\*' -Destination '..\\extension\\dashboard\\' -Recurse -Force; Copy-Item -Path 'src\\angular-material-theme.css' -Destination '..\\extension\\dashboard\\' -Force; Rename-Item -Path '..\\extension\\dashboard\\index.html' -NewName 'dashboard.html'\"",
+    "copy-to-extension": "powershell -Command \"if (Test-Path '..\\extension\\dashboard') { Remove-Item -Recurse -Force '..\\extension\\dashboard' }; New-Item -ItemType Directory -Path '..\\extension\\dashboard' -Force; Copy-Item -Path 'dist\\chartex-frontend\\browser\\*' -Destination '..\\extension\\dashboard\\' -Recurse -Force; Rename-Item -Path '..\\extension\\dashboard\\index.html' -NewName 'dashboard.html'\"",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
