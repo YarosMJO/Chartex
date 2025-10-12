@@ -23,15 +23,6 @@ if %errorlevel% neq 0 (
 echo Build finished successfully
 
 echo.
-echo [2.5/6] Copying Angular Material theme to dist...
-if exist "node_modules\@angular\material\prebuilt-themes\indigo-pink.css" (
-    copy /Y "node_modules\@angular\material\prebuilt-themes\indigo-pink.css" "dist\chartex-frontend\browser\indigo-pink.css"
-    echo Material theme copied to dist
-) else (
-    echo Material theme not found!
-)
-
-echo.
 echo [3/6] Cleaning dashboard folder...
 if exist "..\extension\dashboard" (
     rmdir /s /q "..\extension\dashboard"
