@@ -10,14 +10,14 @@
   <app-time-heatmap
     *ngIf="showDurationCharts"
     [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
-    [timeOfDayWeekHeatmapOptions]="timeOfDayWeekHeatmapOptions">
+    [isDarkTheme]="isDarkTheme">
   </app-time-heatmap>
 
   <!-- Теплова карта активності за часом доби -->
   <app-activity-heatmap
     *ngIf="showDurationCharts"
     [activityHeatmapData]="activityHeatmapData"
-    [activityHeatmapOptions]="activityHeatmapOptions">
+    [isDarkTheme]="isDarkTheme">
   </app-activity-heatmap>
   
   <!-- Кругова діаграма розподілу часу за категоріями -->

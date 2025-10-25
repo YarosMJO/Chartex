@@ -35,9 +35,7 @@ export class ChartsSectionComponent implements OnChanges {
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   @Input() selectedPeriod: string = '';
   @Input() activityHeatmapData: HeatmapSeries[] = [];
-  @Input() activityHeatmapOptions: any = {};
   @Input() timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
-  @Input() timeOfDayWeekHeatmapOptions: any = {};
   @Input() categoryDistributionData: number[] = [];
   @Input() bubbleChartData: {
     x: number;
