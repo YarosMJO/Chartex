@@ -4,7 +4,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { formatDuration } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-bubble-chart',
@@ -24,14 +25,42 @@ export class BubbleChartComponent implements OnChanges {
     rawVisits?: number;
     rawAvgMinutes?: number;
   }[] = [];
-  @Input() bubbleChartOptions: any = {};
   @Input() scaleMode: 'normal' | 'zoomed' = 'normal';
+  @Input() isDarkTheme: boolean = false;
   @Output() scaleToggle = new EventEmitter<void>();
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  // Кеш для опцій графіка
+  private _chartOptions: any = null;
+  private _lastThemeState: boolean | null = null;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private translateService: TranslateService
+  ) { }
 
   ngOnChanges() {
     this.cdr.markForCheck();
+  }
+
+
+  get bubbleChartOptions() {
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    const currentScaleMode = this.scaleMode;
+    const xAxisMax = this.getXAxisMax();
+    const yAxisMax = this.getYAxisMax();
+    const cacheKey = `bubbleChart_${currentTheme}_${currentScaleMode}_${xAxisMax}_${yAxisMax}`;
+    
+    if (this._chartOptions === null || 
+        this._lastThemeState !== currentTheme ||
+        this._chartOptions._cacheKey !== cacheKey) {
+      this._lastThemeState = currentTheme;
+      this._chartOptions = {
+        ...this.buildBubbleChartOptions(),
+        _cacheKey: cacheKey
+      };
+    }
+    return this._chartOptions;
   }
 
   getBubbleChartSeries() {
@@ -41,9 +70,6 @@ export class BubbleChartComponent implements OnChanges {
     }];
   }
 
-  onChartReady(event: any) {
-    // Chart ready event handled
-  }
 
   toggleScale() {
     this.scaleToggle.emit();
@@ -55,5 +81,298 @@ export class BubbleChartComponent implements OnChanges {
 
   getScaleButtonTitle(): string {
     return this.scaleMode === 'normal' ? 'Збільшити масштаб' : 'Зменшити масштаб';
+  }
+
+  private getXAxisMax(): number {
+    if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
+      const defaultMax = this.scaleMode === 'zoomed' ? 50 : 100;
+      return defaultMax; // Значення за замовчуванням
+    }
+    
+    const maxVisits = Math.max(...this.bubbleChartData.map(d => d.x));
+    
+    if (this.scaleMode === 'zoomed') {
+      // Для збільшеного масштабу обмежуємо максимальне значення
+      const result = Math.min(maxVisits * 1.5, 200);
+      return result;
+    } else {
+      // Додаємо 20% відступу для кращого відображення
+      const result = Math.max(maxVisits * 1.2, 50);
+      return result;
+    }
+  }
+
+  private getYAxisMax(): number {
+    if (!this.bubbleChartData || this.bubbleChartData.length === 0) {
+      const defaultMax = this.scaleMode === 'zoomed' ? 30 : 60;
+      return defaultMax; // Значення за замовчуванням у хвилинах
+    }
+    
+    // Використовуємо rawTotalMinutes для загального часу
+    const maxTotalTime = Math.max(...this.bubbleChartData.map(d => d.rawTotalMinutes || 0));
+    
+    if (this.scaleMode === 'zoomed') {
+      // Для збільшеного масштабу обмежуємо максимальне значення
+      const result = Math.min(maxTotalTime * 1.5, 120);
+      return result;
+    } else {
+      // Додаємо 20% відступу для кращого відображення, мінімум 60 хвилин
+      const result = Math.max(maxTotalTime * 1.2, 60);
+      return result;
+    }
+  }
+
+  private buildBubbleChartOptions() {
+    const options = {
+      chart: {
+        type: 'bubble',
+        height: 450, // Increased from 400 to 450
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 150
+          },
+          dynamicAnimation: {
+            enabled: true,
+            speed: 350
+          }
+        },
+        // Ensure proper chart boundaries
+        redrawOnWindowResize: true,
+        redrawOnParentResize: true,
+        // Toolbar and interactions
+        toolbar: {
+          show: true,
+          tools: {
+            download: true,
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true
+          }
+        },
+        zoom: {
+          enabled: true,
+          type: 'xy',
+          autoScaleYaxis: true
+        },
+        pan: {
+          enabled: true,
+          type: 'xy'
+        }
+      },
+      title: {
+        text: this.translateService.instant('DASHBOARD.CHARTS.BUBBLE_CHART')
+      },
+      xaxis: {
+        title: {
+          text: this.translateService.instant('DASHBOARD.CHARTS.VISITS') // Виправлено підпис X-осі
+        },
+        min: 0,
+        max: this.getXAxisMax(), // Динамічне максимальне значення на основі даних
+        tickAmount: 6,
+        labels: {
+          style: {
+            fontSize: '12px'
+          },
+          offsetX: 2,
+          formatter: (val: number) => `${this.safeRound(val || 0)}`
+        },
+        decimalsInFloat: 0,
+        tooltip: {
+          enabled: false
+        },
+        axisBorder: {
+          show: true,
+          color: '#78909c',
+          offsetX: 0
+        },
+        axisTicks: {
+          show: true,
+          color: '#78909c',
+          offsetX: 0
+        },
+        // Ensure proper spacing for bubbles
+        crosshairs: {
+          show: false
+        },
+        position: 'bottom'
+      },
+      yaxis: {
+        title: {
+          text: 'Загальний час (хв)'
+        },
+        min: 0,
+        max: this.getYAxisMax(), // Динамічне максимальне значення для загального часу
+        tickAmount: 6,
+        labels: {
+          style: {
+            fontSize: '12px'
+          },
+          offsetX: -4,
+          formatter: (val: number): string => {
+            // Для загального часу показуємо години та хвилини
+            if ((val || 0) >= 60) {
+              const h = Math.floor((val || 0) / 60);
+              const m: number = this.safeRound((val || 0) % 60);
+              return `${h}г ${m}хв`;
+            }
+            return `${this.safeRound(val || 0)}хв`;
+          }
+        },
+        axisBorder: {
+          show: true,
+          color: '#78909c'
+        },
+        axisTicks: {
+          show: true,
+          color: '#78909c'
+        },
+        opposite: false,
+        // Ensure proper spacing for bubbles
+        crosshairs: {
+          show: false
+        }
+      },
+      dataLabels: {
+        enabled: false, // Вимикаємо підписи на бульбашках
+        formatter: (val: any, opts: any): string => {
+          try {
+            const point = opts?.w?.config?.series?.[opts.seriesIndex]?.data?.[opts.dataPointIndex];
+            
+            // Y-ось показує середній час, тому використовуємо rawAvgMinutes
+            const avgMinutes = point?.rawAvgMinutes ?? 0;
+            
+            if (avgMinutes === 0 || !Number.isFinite(avgMinutes)) return '';
+            if ((avgMinutes || 0) >= 60) {
+              const h = Math.floor((avgMinutes || 0) / 60);
+              const m: number = this.safeRound((avgMinutes || 0) % 60);
+              return `${h}г ${m}хв`;
+            }
+            return `${this.safeRound(avgMinutes || 0)}хв`;
+          } catch (error) {
+            return '';
+          }
+        },
+        style: {
+          fontSize: '12px',
+          fontWeight: 'bold',
+          colors: ['#ffffff']
+        },
+        background: {
+          enabled: true,
+          foreColor: '#000000',
+          borderRadius: 4,
+          padding: 4,
+          opacity: 0.9,
+          borderWidth: 1,
+          borderColor: '#ffffff'
+        },
+        offsetY: 0,
+        textAnchor: 'middle'
+      },
+      plotOptions: {
+        bubble: {
+          minBubbleRadius: 15,
+          maxBubbleRadius: 45,
+          zScaling: true
+        }
+      },
+      grid: {
+        padding: {
+          top: 10,
+          right: 8,
+          bottom: 6,
+          left: 9
+        },
+        show: true,
+        borderColor: '#e0e0e0',
+        strokeDashArray: 5,
+        position: 'back'
+      },
+      tooltip: {
+        enabled: true,
+        shared: false,
+        intersect: true,
+        followCursor: false,
+        custom: ({ seriesIndex, dataPointIndex, w }: any) => {
+          const data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+          const siteName = data?.name || '';
+          
+          // Отримуємо всі дані для повного tooltip
+          const totalMinutes = Number(data?.rawTotalMinutes) || 0;
+          const avgMinutes = Number(data?.rawAvgMinutes) || 0;
+          const visits = Number(data?.rawVisits) || 0;
+          
+          return `
+            <div class="bubble-tooltip">
+              <div class="title">${siteName}</div>
+              <div class="row"><span class="label">Візитів: </span><span class="value">${visits}</span></div>
+              <div class="row"><span class="label">Загальний час: </span><span class="value">${formatDuration((totalMinutes || 0) * 60, this.translateService)}</span></div>
+              <div class="row"><span class="label">Середній час: </span><span class="value">${formatDuration(this.safeRound((avgMinutes || 0) * 60), this.translateService)}</span></div>
+            </div>
+          `;
+        }
+      },
+      legend: {
+        show: true,
+        position: 'top',
+        horizontalAlign: 'center',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 6
+        },
+        onItemClick: {
+          toggleDataSeries: false
+        },
+        formatter: () => 'Загальний час'
+      },
+      colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+      stroke: {
+        width: 2,
+        colors: ['#ffffff']
+      },
+      annotations: {
+        lines: [{
+          x: 0,
+          y: 0,
+          x2: this.getXAxisMax(),
+          y2: this.getYAxisMax(),
+          strokeColor: '#ff0000',
+          strokeWidth: 2,
+          strokeDashArray: 0,
+          opacity: 0.8,
+          label: {
+            text: 'Діагональна лінія',
+            textAnchor: 'middle',
+            offsetX: 0,
+            offsetY: -10,
+            style: {
+              background: 'rgba(255, 255, 255, 0.8)',
+              color: '#ff0000',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }
+          }
+        }]
+      }
+    };
+
+    return options;
+  }
+
+  private safeRound(value: number): number {
+    if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+      return 0;
+    }
+    return Math.round(value * 100) / 100;
   }
 }

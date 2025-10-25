@@ -3,7 +3,7 @@
   <app-activity-chart
     [activityChartData]="activityChartData"
     [selectedPeriod]="selectedPeriod"
-    [activityChartOptions]="activityChartOptions">
+    [isDarkTheme]="isDarkTheme">
   </app-activity-chart>
   
   <!-- Добова активність по тижнях -->
@@ -24,14 +24,14 @@
   <app-pie-chart
     *ngIf="showDurationCharts"
     [categoryDistributionData]="categoryDistributionData"
-    [pieChartOptions]="pieChartOptions">
+    [isDarkTheme]="isDarkTheme">
   </app-pie-chart>
   
   <!-- Бульбашкова діаграма -->
   <app-bubble-chart
     [bubbleChartData]="bubbleChartData"
-    [bubbleChartOptions]="bubbleChartOptions"
     [scaleMode]="bubbleChartScaleMode"
+    [isDarkTheme]="isDarkTheme"
     (scaleToggle)="onBubbleChartScaleToggle()">
   </app-bubble-chart>
   
