@@ -16,6 +16,10 @@ import { HeatmapSeries, HeatmapService } from '../../../../services/heatmap.serv
 export class TimeHeatmapComponent implements OnChanges {
   @Input() timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   @Input() isDarkTheme: boolean = false;
+  @Input() filteredDomains: any[] = [];
+  @Input() userStats: any = null;
+  @Input() selectedPeriod: string = '';
+  @Input() selectedDevice: string = '';
 
   // Кеш для опцій графіка
   private _chartOptions: any = null;
@@ -27,6 +31,63 @@ export class TimeHeatmapComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
+    // Якщо є відфільтровані домени, підготовлюємо дані з них
+    if (this.filteredDomains && this.filteredDomains.length > 0) {
+      this.prepareDataFromFilteredDomains(this.filteredDomains);
+    } else if (this.userStats && this.userStats.topDomains) {
+      // Підготовлюємо дані з userStats
+      this.prepareDataFromUserStats();
+    }
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з userStats
+  private async prepareDataFromUserStats(): Promise<void> {
+    try {
+      const heatmapData = await this.heatmapService.prepareTimeOfDayWeekHeatmapData(
+        this.selectedPeriod,
+        this.selectedDevice
+      );
+
+      this.timeOfDayWeekHeatmapData = heatmapData;
+    } catch (error) {
+      this.timeOfDayWeekHeatmapData = [];
+    }
+    
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з відфільтрованих доменів
+  private async prepareDataFromFilteredDomains(filteredDomains: any[]): Promise<void> {
+    if (!filteredDomains || filteredDomains.length === 0) {
+      this.timeOfDayWeekHeatmapData = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    try {
+      // Створюємо тимчасовий об'єкт userStats з відфільтрованими даними
+      const tempUserStats = {
+        ...this.userStats,
+        topDomains: filteredDomains,
+        stats: {
+          ...this.userStats?.stats,
+          totalVisits: filteredDomains.reduce((sum, domain) => sum + (domain.visits || 0), 0),
+          totalDuration: filteredDomains.reduce((sum, domain) => sum + (domain.totalDuration || 0), 0),
+          uniqueDomains: filteredDomains.length
+        }
+      };
+
+      const heatmapData = await this.heatmapService.prepareTimeOfDayWeekHeatmapData(
+        this.selectedPeriod,
+        this.selectedDevice
+      );
+
+      this.timeOfDayWeekHeatmapData = heatmapData;
+    } catch (error) {
+      this.timeOfDayWeekHeatmapData = [];
+    }
+    
     this.cdr.markForCheck();
   }
 

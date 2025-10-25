@@ -3,28 +3,39 @@
   <app-activity-chart
     [activityChartData]="activityChartData"
     [selectedPeriod]="selectedPeriod"
-    [isDarkTheme]="isDarkTheme">
+    [isDarkTheme]="isDarkTheme"
+    [filteredDomains]="filteredDomains">
   </app-activity-chart>
   
   <!-- Добова активність по тижнях -->
   <app-time-heatmap
     *ngIf="showDurationCharts"
     [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
-    [isDarkTheme]="isDarkTheme">
+    [isDarkTheme]="isDarkTheme"
+    [filteredDomains]="filteredDomains"
+    [userStats]="userStats"
+    [selectedPeriod]="selectedPeriod"
+    [selectedDevice]="selectedDevice">
   </app-time-heatmap>
 
   <!-- Теплова карта активності за часом доби -->
   <app-activity-heatmap
     *ngIf="showDurationCharts"
     [activityHeatmapData]="activityHeatmapData"
-    [isDarkTheme]="isDarkTheme">
+    [isDarkTheme]="isDarkTheme"
+    [filteredDomains]="filteredDomains"
+    [userStats]="userStats"
+    [selectedPeriod]="selectedPeriod"
+    [selectedDevice]="selectedDevice">
   </app-activity-heatmap>
   
   <!-- Кругова діаграма розподілу часу за категоріями -->
   <app-pie-chart
     *ngIf="showDurationCharts"
     [categoryDistributionData]="categoryDistributionData"
-    [isDarkTheme]="isDarkTheme">
+    [isDarkTheme]="isDarkTheme"
+    [filteredDomains]="filteredDomains"
+    [userStats]="userStats">
   </app-pie-chart>
   
   <!-- Бульбашкова діаграма -->
@@ -32,6 +43,9 @@
     [bubbleChartData]="bubbleChartData"
     [scaleMode]="bubbleChartScaleMode"
     [isDarkTheme]="isDarkTheme"
+    [filteredDomains]="filteredDomains"
+    [userStats]="userStats"
+    [sortedDomains]="sortedDomains"
     (scaleToggle)="onBubbleChartScaleToggle()">
   </app-bubble-chart>
   

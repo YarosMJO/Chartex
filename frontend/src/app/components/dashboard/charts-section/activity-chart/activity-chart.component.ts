@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { MatCardModule } from '@angular/material/card';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { cleanDomainName } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-activity-chart',
@@ -16,6 +17,7 @@ export class ActivityChartComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
   @Input() selectedPeriod: string = '';
   @Input() isDarkTheme: boolean = false;
+  @Input() filteredDomains: any[] = [];
 
   // Кеш для опцій графіка
   private _chartOptions: any = null;
@@ -26,8 +28,11 @@ export class ActivityChartComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
-    if (this.activityChartData && this.activityChartData.length > 0) {
-      // Валідуємо та очищаємо дані
+    // Якщо є відфільтровані домени, підготовлюємо дані з них
+    if (this.filteredDomains && this.filteredDomains.length > 0) {
+      this.prepareDataFromFilteredDomains(this.filteredDomains);
+    } else if (this.activityChartData && this.activityChartData.length > 0) {
+      // Валідуємо та очищаємо існуючі дані
       this.activityChartData = this.activityChartData
         .filter(item => item && typeof item === 'object')
         .map(item => ({
@@ -52,6 +57,74 @@ export class ActivityChartComponent implements OnChanges {
       this.activityChartData = [];
     }
     
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з відфільтрованих доменів
+  prepareDataFromFilteredDomains(filteredDomains: any[]): void {
+    if (!filteredDomains || filteredDomains.length === 0) {
+      this.activityChartData = [];
+      return;
+    }
+
+    try {
+      // Групуємо домени за очищеними назвами та сумуємо відвідування
+      const domainMap = new Map<string, number>();
+
+      filteredDomains.forEach(domain => {
+        const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
+        const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
+
+        if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
+          const cleanName = domainName.trim();
+          const currentVisits = domainMap.get(cleanName) || 0;
+          domainMap.set(cleanName, currentVisits + visits);
+        }
+      });
+
+      // Конвертуємо Map в масив, сортуємо за кількістю відвідувань та беремо топ-10
+      const rawData = Array.from(domainMap.entries())
+        .map(([domainName, visits]) => ({
+          x: domainName,
+          y: visits
+        }))
+        .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
+        .slice(0, 10); // Беремо топ-10
+
+      // Фільтруємо та валідуємо дані
+      this.activityChartData = rawData
+        .filter(item => item && typeof item === 'object')
+        .map(item => ({
+          x: this.sanitizeString(item.x),
+          y: this.sanitizeNumber(item.y)
+        }))
+        .filter(item => item.x && item.y > 0);
+
+      // Додаткова валідація для ApexCharts
+      this.activityChartData = this.activityChartData.filter(item => {
+        const isValid = item &&
+          typeof item.x === 'string' &&
+          item.x.length > 0 &&
+          typeof item.y === 'number' &&
+          !isNaN(item.y) &&
+          isFinite(item.y) &&
+          item.y >= 0;
+
+        if (!isValid) {
+          console.warn('Invalid activity chart data item:', item);
+        }
+        return isValid;
+      });
+
+      // Якщо немає валідних даних, створюємо порожній масив
+      if (this.activityChartData.length === 0) {
+        this.activityChartData = [];
+      }
+
+    } catch (error) {
+      this.activityChartData = [];
+    }
+
     this.cdr.markForCheck();
   }
 

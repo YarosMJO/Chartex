@@ -95,10 +95,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.settingsService.getSettings().subscribe(settings => {
       // Графіки що залежать від збору тривалості відвідувань
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
-
+      
       // Секція пристроїв та дропдаун фільтра завжди видима
       this.showDeviceSection = true;
-
+      
       this.cdr.markForCheck();
     });
   }
@@ -120,7 +120,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private periodChangeTimeout: any = null;
   private deviceChangeTimeout: any = null;
   private advancedFiltersTimeout: any = null;
-
+  
   // Event handlers for chart cleanup
   private chartCleanup?: () => void;
 
@@ -131,16 +131,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activityHeatmapData: HeatmapSeries[] = [];
   timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   categoryDistributionData: number[] = [];
-  bubbleChartData: {
-    x: number;
-    y: number;
-    z: number;
+  bubbleChartData: { 
+    x: number; 
+    y: number; 
+    z: number; 
     name: string;
     rawTotalMinutes?: number;
     rawVisits?: number;
     rawAvgMinutes?: number;
   }[] = [];
-
+  
   // Налаштування масштабу для bubble chart
   bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
 
@@ -212,7 +212,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Ініціалізуємо мову з localStorage
     const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
     this.translateService.use(savedLanguage);
-
+    
     // Перевіряємо налаштування збору даних
     this.checkDataCollectionSettings();
 
@@ -221,7 +221,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
       // Секція пристроїв завжди видима
       this.showDeviceSection = true;
-
+      
       this.cdr.markForCheck();
     });
 
@@ -289,12 +289,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
     }
-
+    
     // Cleanup chart event listeners
     if (this.chartCleanup) {
       this.chartCleanup();
     }
-
+    
     // Очищаємо слухачі подій
     window.removeEventListener('resize', this.resizeHandler);
     document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
@@ -336,7 +336,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       // Очищаємо кеш форматування
       this.formatCache.clear();
-
+      
       // НЕ очищаємо дані графіків, щоб уникнути миготіння
       // Просто перезавантажуємо дані
       await Promise.all([
@@ -371,11 +371,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         _t: Date.now(),
         forceRefresh: true // Примусове оновлення
       };
-
+      
       const stats = await this.apiService.getUserStatsWithDecryptedData(paramsWithTimestamp);
 
       if (stats?.topDomains && stats.topDomains.length > 0) {
-
+        
       }
 
       this.userStats = stats;
@@ -441,11 +441,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // Спочатку групуємо домени та сумуємо їх відвідування
       const domainMap = new Map<string, number>();
-
+      
       filteredTopDomains.forEach(domain => {
         const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
         const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
-
+        
         if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
           const cleanName = domainName.trim();
           const currentVisits = domainMap.get(cleanName) || 0;
@@ -464,16 +464,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // Фільтруємо тільки домени з відвідуваннями > 0
       this.activityChartData = rawData.filter(item => item.y > 0);
-
+      
       // Валідація фінальних даних
-      const isValidData = this.activityChartData.every(item =>
-        item &&
-        typeof item.x === 'string' &&
+      const isValidData = this.activityChartData.every(item => 
+        item && 
+        typeof item.x === 'string' && 
         item.x.length > 0 &&
-        typeof item.y === 'number' &&
+        typeof item.y === 'number' && 
         item.y >= 0
       );
-
+      
       // Якщо немає даних з відвідуваннями або дані невалідні, створимо мінімальні тестові дані
       if (this.activityChartData.length === 0 || !isValidData) {
         this.activityChartData = [
@@ -484,7 +484,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           { x: 'medium.com', y: 5 }
         ];
       }
-
+      
       this.topDomainsData = filteredTopDomains
         .slice(0, 10)
         .map(domain => ({
@@ -504,22 +504,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }));
 
       // Підготовка даних для теплової карти
-      this.activityHeatmapData = await this.prepareActivityHeatmapData();
 
       // Підготовка даних для теплової карти добової активності за тижнями
-      this.timeOfDayWeekHeatmapData = await this.heatmapService.prepareTimeOfDayWeekHeatmapData(
-        this.selectedPeriod,
-        this.selectedDevice
-      );
-
+      
       if (this.timeOfDayWeekHeatmapData?.length > 0) {
       }
 
       // Підготовка даних для кругової діаграми
-      this.prepareCategoryDistributionData();
 
       // Підготовка даних для бульбашкової діаграми
-      this.prepareBubbleChartData();
 
       // Оновлюємо ширину графіка після підготовки даних
 
@@ -529,404 +522,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Підготовка даних для теплової карти активності за днями тижня
-  private async prepareActivityHeatmapData(): Promise<HeatmapSeries[]> {
-
-    if (!this.userStats?.topDomains) {
-      return [];
-    }
-
-    try {
-      const heatmapData = await this.heatmapService.prepareActivityHeatmapData(
-        this.userStats,
-        this.selectedPeriod,
-        this.selectedDevice
-      );
-
-      return heatmapData;
-    } catch (error) {
-      // Fallback to empty data
-      return [];
-    }
-  }
 
   // Підготовка даних для графіка активності з відфільтрованих даних
-  private prepareActivityChartDataFromFiltered(filteredDomains: any[]): void {
-    if (!filteredDomains || filteredDomains.length === 0) {
-      this.activityChartData = [];
-      return;
-    }
 
-    try {
-      // Групуємо домени за очищеними назвами та сумуємо відвідування
-      const domainMap = new Map<string, number>();
-
-      filteredDomains.forEach(domain => {
-        const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
-        const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
-
-        if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
-          const cleanName = domainName.trim();
-          const currentVisits = domainMap.get(cleanName) || 0;
-          domainMap.set(cleanName, currentVisits + visits);
-        }
-      });
-
-      // Конвертуємо Map в масив, сортуємо за кількістю відвідувань та беремо топ-10
-      const rawData = Array.from(domainMap.entries())
-        .map(([domainName, visits]) => ({
-          x: domainName,
-          y: visits
-        }))
-        .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
-        .slice(0, 10); // Беремо топ-10
-
-      // Фільтруємо та валідуємо дані
-      this.activityChartData = rawData
-        .filter(item => item && typeof item === 'object')
-        .map(item => ({
-          x: this.sanitizeString(item.x),
-          y: this.sanitizeNumber(item.y)
-        }))
-        .filter(item => item.x && item.y > 0);
-
-      // Додаткова валідація для ApexCharts
-      this.activityChartData = this.activityChartData.filter(item => {
-        const isValid = item &&
-          typeof item.x === 'string' &&
-          item.x.length > 0 &&
-          typeof item.y === 'number' &&
-          !isNaN(item.y) &&
-          isFinite(item.y) &&
-          item.y >= 0;
-
-        if (!isValid) {
-          console.warn('Invalid activity chart data item:', item);
-        }
-        return isValid;
-      });
-
-      // Якщо немає валідних даних, створюємо порожній масив
-      if (this.activityChartData.length === 0) {
-        this.activityChartData = [];
-      }
-
-    } catch (error) {
-      this.activityChartData = [];
-    }
-  }
-
-  // Підготовка даних для теплової карти добової активності за тижнями з відфільтрованих даних
-  private async prepareTimeOfDayWeekHeatmapDataFromFiltered(filteredDomains: any[]): Promise<HeatmapSeries[]> {
-
-    if (!filteredDomains || filteredDomains.length === 0) {
-      return [];
-    }
-
-    try {
-      // Створюємо тимчасовий об'єкт userStats з відфільтрованими даними
-      const tempUserStats = {
-        ...this.userStats,
-        topDomains: filteredDomains,
-        stats: {
-          ...this.userStats?.stats,
-          totalVisits: filteredDomains.reduce((sum, domain) => sum + (domain.visits || 0), 0),
-          totalDuration: filteredDomains.reduce((sum, domain) => sum + (domain.totalDuration || 0), 0),
-          uniqueDomains: filteredDomains.length
-        }
-      };
-
-      const heatmapData = await this.heatmapService.prepareTimeOfDayWeekHeatmapData(
-        this.selectedPeriod,
-        this.selectedDevice
-      );
-
-      return heatmapData;
-    } catch (error) {
-      return [];
-    }
-  }
 
   // Підготовка даних для теплової карти активності з відфільтрованих даних
-  private async prepareActivityHeatmapDataFromFiltered(filteredDomains: any[]): Promise<HeatmapSeries[]> {
-    if (!filteredDomains || filteredDomains.length === 0) {
-      return [];
-    }
-
-    if (!this.userStats) {
-      return [];
-    }
-
-    try {
-      // Створюємо тимчасовий об'єкт userStats з відфільтрованими даними
-      const tempUserStats = {
-        ...this.userStats,
-        topDomains: filteredDomains,
-        stats: {
-          ...this.userStats.stats,
-          totalVisits: filteredDomains.reduce((sum, domain) => sum + (domain.visits || 0), 0),
-          totalDuration: filteredDomains.reduce((sum, domain) => sum + (domain.totalDuration || 0), 0),
-          uniqueDomains: filteredDomains.length
-        }
-      };
-
-      const heatmapData = await this.heatmapService.prepareActivityHeatmapData(
-        tempUserStats,
-        this.selectedPeriod,
-        this.selectedDevice
-      );
-
-      return heatmapData;
-    } catch (error) {
-      // Fallback to empty data
-      return [];
-    }
-  }
-
-  // Підготовка даних для кругової діаграми розподілу за категоріями
-  private prepareCategoryDistributionData(): void {
-    try {
-      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
-        this.categoryDistributionData = [];
-        return;
-      }
-
-      const categoryStats = new Map<string, number>();
-
-      this.userStats.topDomains.forEach(domain => {
-        if (domain.decryptedData) {
-          const domainName = getDomainFromUrl(domain.decryptedData.url);
-          const category = categorizeWebsite(domainName);
-          const duration = domain.totalDuration || 0;
-
-          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
-        }
-      });
-
-      // Сортуємо категорії за часом та беремо топ-6
-      const sortedCategories = Array.from(categoryStats.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
-
-      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
-
-    } catch (error) {
-      this.categoryDistributionData = [];
-    }
-  }
-
-  // Підготовка даних для кругової діаграми розподілу за категоріями з відфільтрованих даних
-  private prepareCategoryDistributionDataFromFiltered(filteredDomains: any[]): void {
-    try {
-      if (!filteredDomains || filteredDomains.length === 0) {
-        this.categoryDistributionData = [];
-        return;
-      }
-
-      const categoryStats = new Map<string, number>();
-
-      filteredDomains.forEach(domain => {
-        if (domain.decryptedData) {
-          const domainName = getDomainFromUrl(domain.decryptedData.url);
-          const category = categorizeWebsite(domainName);
-          const duration = domain.totalDuration || 0;
-
-          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
-        }
-      });
-
-      // Сортуємо категорії за часом та беремо топ-6
-      const sortedCategories = Array.from(categoryStats.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
-
-      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
-
-    } catch (error) {
-      this.categoryDistributionData = [];
-    }
-  }
-
-  // Підготовка даних для бульбашкової діаграми з відфільтрованих даних
-  private prepareBubbleChartDataFromFiltered(sortedDomains: any[]): void {
-    try {
-      if (!sortedDomains || sortedDomains.length === 0) {
-        this.bubbleChartData = [];
-        return;
-      }
-
-      // Використовуємо ту ж саму логіку, що й для верхнього графіка (без групування)
-      const domainsToProcess = sortedDomains
-        .slice(0, 10)
-        .map(domain => ({
-          visits: domain.totalVisits || 0,
-          totalDuration: domain.totalDuration || 0,
-          cleanName: domain.cleanName,
-          originalId: domain.originalNames?.[0] || '',
-          originalUrl: domain.originalNames?.[0] || '',
-          originalDomain: domain
-        }));
-
-      // Check if we have any domains with meaningful data
-      const domainsWithData = domainsToProcess.filter((d: any) => (d.visits || 0) > 0 || (d.totalDuration || 0) > 0);
-
-      // Використовуємо всі домени, навіть без даних (як у верхньому графіку)
-      const finalDomainsToProcess = domainsToProcess;
-
-      // Calculate ranges for better scaling
-      const maxVisits = Math.max(...finalDomainsToProcess.map((d: any) => d.visits || 0));
-      const maxDuration = Math.max(...finalDomainsToProcess.map((d: any) => d.totalDuration || 0));
 
 
-      this.bubbleChartData = finalDomainsToProcess.map((domain: any, index: number) => {
-        const visits = domain.visits || 0;
-        const duration = domain.totalDuration || 0;
-
-        // Convert to minutes for better scaling
-        const totalDurationMinutes = this.safeRound((duration || 0) / 60);
-
-        // Ensure minimum values for visibility
-        const totalTimeMinutes = Math.max(totalDurationMinutes || 1, 1);
-        const visitsCount = Math.max(visits || 1, 1);
-
-        // Додаємо невеликий offset для уникнення накладання бульбашок з однаковими даними
-        const offsetX = index * 0.1; // Невеликий offset по X
-        const offsetY = index * 0.05; // Невеликий offset по Y
-
-        // X-координата: реальна кількість відвідувань + offset
-        const finalX = (visitsCount || 1) + (offsetX || 0);
-
-        // Y-координата: загальний час в хвилинах + offset
-        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
-
-        // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
-        const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
-        const finalZ = Math.max(this.safeRound((normalizedZ || 0) * 30) + 15, 15); // Range: 15-45
-
-        // Обмежуємо розмір бульбашки
-        const clampedZ = Math.min(Math.max(finalZ || 15, 15), 45);
-
-        // Використовуємо реальні значення
-        const scaledX = finalX || 1; // X = реальна кількість відвідувань
-        const scaledY = finalY || 0.1; // Y = реальні хвилини загального часу
-
-        // Використовуємо збережені оригінальні дані з групування
-        const originalUrl = domain.originalUrl;
-        const originalId = domain.originalId;
-        const inputForCleanName = originalUrl || originalId;
-        const cleanNameResult = cleanDomainName(inputForCleanName);
-        const siteName = (cleanNameResult && typeof cleanNameResult === 'string') ? cleanNameResult : domain.cleanName || 'Unknown';
-
-        const result = {
-          x: scaledX,
-          y: scaledY,
-          z: clampedZ,
-          name: siteName,
-          rawTotalMinutes: totalDurationMinutes || 0,
-          rawVisits: visits || 0,
-          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
-        };
-
-        return result;
-      });
-
-    } catch (error) {
-      this.bubbleChartData = [];
-    }
-  }
-
-  // Підготовка даних для бульбашкової діаграми
-  private prepareBubbleChartData(): void {
-    try {
-      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
-        this.bubbleChartData = [];
-        return;
-      }
-
-      // Вилучаємо google.com
-      const filteredTopDomains = this.userStats.topDomains.filter((d: any) => {
-        const domain = cleanDomainName(d.decryptedData?.url || d._id);
-        return domain !== 'google.com';
-      });
-
-      // Використовуємо ту ж саму логіку, що й для верхнього графіка (без групування)
-      const domainsToProcess = filteredTopDomains
-        .slice(0, 10)
-        .map(domain => ({
-          visits: domain.visits || 0,
-          totalDuration: domain.totalDuration || 0,
-          cleanName: cleanDomainName(domain.decryptedData?.url || domain._id),
-          originalId: domain._id || '',
-          originalUrl: domain.decryptedData?.url || '',
-          originalDomain: domain
-        }));
-
-      // Використовуємо всі домени, навіть без даних (як у верхньому графіку)
-      const finalDomainsToProcess = domainsToProcess;
-
-      // Calculate ranges for better scaling
-      const maxVisits = Math.max(...domainsToProcess.map((d: any) => d.visits || 0));
-
-      this.bubbleChartData = finalDomainsToProcess.map((domain: any, index: number) => {
-        const visits = domain.visits || 0;
-        const duration = domain.totalDuration || 0;
-
-        // Convert to minutes for better scaling
-        const totalDurationMinutes = this.safeRound((duration || 0) / 60);
-
-        // Ensure minimum values for visibility
-        const totalTimeMinutes = Math.max(totalDurationMinutes || 1, 1);
-        const visitsCount = Math.max(visits || 1, 1);
-
-        // Додаємо невеликий offset для уникнення накладання бульбашок з однаковими даними
-        const offsetX = index * 0.1; // Невеликий offset по X
-        const offsetY = index * 0.05; // Невеликий offset по Y
-
-        // X-координата: реальна кількість відвідувань + offset
-        const finalX = (visitsCount || 1) + (offsetX || 0);
-
-        // Y-координата: загальний час в хвилинах + offset
-        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
-
-        // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
-        const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
-        const finalZ = Math.max(this.safeRound((normalizedZ || 0) * 30) + 15, 15); // Range: 15-45
-
-        // Обмежуємо розмір бульбашки
-        const clampedZ = Math.min(Math.max(finalZ || 15, 15), 45);
-
-        // Використовуємо реальні значення
-        const scaledX = finalX || 1; // X = реальна кількість відвідувань
-        const scaledY = finalY || 0.1; // Y = реальні хвилини середнього часу
-
-        // Використовуємо збережені оригінальні дані з групування
-        const originalUrl = domain.originalUrl;
-        const originalId = domain.originalId;
-        const inputForCleanName = originalUrl || originalId;
-        const cleanNameResult = cleanDomainName(inputForCleanName);
-        const siteName = (cleanNameResult && typeof cleanNameResult === 'string') ? cleanNameResult : 'Unknown';
-
-        if (!siteName || siteName === 'Unknown') {
-          // Site name not available, using fallback
-        }
-
-        const result = {
-          x: scaledX,
-          y: scaledY,
-          z: clampedZ,
-          name: siteName,
-          rawTotalMinutes: totalDurationMinutes || 0,
-          rawVisits: visits || 0,
-          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
-        };
-
-        return result;
-      });
-
-    } catch (error) {
-      this.bubbleChartData = [];
-    }
-  }
 
   // Зміна періоду
   async onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
@@ -937,7 +539,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо selectedPeriod
     this.selectedPeriod = newPeriod;
-
+    
     // Очищаємо попередній таймаут
     if (this.periodChangeTimeout) {
       clearTimeout(this.periodChangeTimeout);
@@ -959,7 +561,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо selectedDevice
     this.selectedDevice = newDevice;
-
+    
     // Очищаємо попередній таймаут
     if (this.deviceChangeTimeout) {
       clearTimeout(this.deviceChangeTimeout);
@@ -1329,25 +931,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо дані для всіх графіків
     await this.updateAllChartData(filteredDomains);
-
+    
     this.cdr.markForCheck();
   }
 
   private async updateAllChartData(filteredDomains: any[]) {
     // Оновлюємо дані для всіх графіків
     this.updateChartDataWithFilteredDomains(filteredDomains);
-
+    
     // Оновлюємо дані для кругової діаграми на основі відфільтрованих даних
-    this.prepareCategoryDistributionDataFromFiltered(filteredDomains);
-
+    
     // Оновлюємо дані для теплової карти на основі відфільтрованих даних
-    this.activityHeatmapData = await this.prepareActivityHeatmapDataFromFiltered(filteredDomains);
-
+    
     // Оновлюємо дані для теплової карти добової активності за тижнями
-    this.timeOfDayWeekHeatmapData = await this.prepareTimeOfDayWeekHeatmapDataFromFiltered(filteredDomains);
-
+    
     // Оновлюємо дані для графіка активності (activity chart)
-    this.prepareActivityChartDataFromFiltered(filteredDomains);
   }
 
   private updateChartDataWithFilteredDomains(filteredDomains: any[]) {
@@ -1403,7 +1001,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.topDomainsData = sortedDomains.slice(0, 10).map(domain => {
       // Вибираємо найкращий title
       const title = domain.titles.length > 0 ? domain.titles[0] : domain.cleanName;
-
+      
       return {
         name: domain.cleanName || '',
         title: title || '',
@@ -1415,8 +1013,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
 
     // Підготовка даних для бульбашкової діаграми з відфільтрованих даних
-    this.prepareBubbleChartDataFromFiltered(sortedDomains);
-
+    
     // Оновлюємо дані для статистики пристроїв
     this.deviceStatsData = this.devices
       .filter(device => (device.stats?.totalVisits || 0) > 0)

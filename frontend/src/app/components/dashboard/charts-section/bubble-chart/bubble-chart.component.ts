@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { formatDuration } from '../../../../utils/utils';
+import { formatDuration, cleanDomainName } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-bubble-chart',
@@ -27,6 +27,9 @@ export class BubbleChartComponent implements OnChanges {
   }[] = [];
   @Input() scaleMode: 'normal' | 'zoomed' = 'normal';
   @Input() isDarkTheme: boolean = false;
+  @Input() filteredDomains: any[] = [];
+  @Input() userStats: any = null;
+  @Input() sortedDomains: any[] = [];
   @Output() scaleToggle = new EventEmitter<void>();
 
   // Кеш для опцій графіка
@@ -39,6 +42,199 @@ export class BubbleChartComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
+    // Якщо є відсортовані домени, підготовлюємо дані з них
+    if (this.sortedDomains && this.sortedDomains.length > 0) {
+      this.prepareDataFromSortedDomains(this.sortedDomains);
+    } else if (this.userStats && this.userStats.topDomains) {
+      // Підготовлюємо дані з userStats
+      this.prepareDataFromUserStats();
+    }
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з userStats
+  private prepareDataFromUserStats(): void {
+    try {
+      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
+        this.bubbleChartData = [];
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // Вилучаємо google.com
+      const filteredTopDomains = this.userStats.topDomains.filter((d: any) => {
+        const domain = cleanDomainName(d.decryptedData?.url || d._id);
+        return domain !== 'google.com';
+      });
+
+      // Використовуємо ту ж саму логіку, що й для верхнього графіка (без групування)
+      const domainsToProcess = filteredTopDomains
+        .slice(0, 10)
+        .map((domain: any) => ({
+          visits: domain.visits || 0,
+          totalDuration: domain.totalDuration || 0,
+          cleanName: cleanDomainName(domain.decryptedData?.url || domain._id),
+          originalId: domain._id || '',
+          originalUrl: domain.decryptedData?.url || '',
+          originalDomain: domain
+        }));
+
+      // Використовуємо всі домени, навіть без даних (як у верхньому графіку)
+      const finalDomainsToProcess = domainsToProcess;
+
+      // Calculate ranges for better scaling
+      const maxVisits = Math.max(...domainsToProcess.map((d: any) => d.visits || 0));
+
+      this.bubbleChartData = finalDomainsToProcess.map((domain: any, index: number) => {
+        const visits = domain.visits || 0;
+        const duration = domain.totalDuration || 0;
+
+        // Convert to minutes for better scaling
+        const totalDurationMinutes = this.safeRound((duration || 0) / 60);
+
+        // Ensure minimum values for visibility
+        const totalTimeMinutes = Math.max(totalDurationMinutes || 1, 1);
+        const visitsCount = Math.max(visits || 1, 1);
+
+        // Додаємо невеликий offset для уникнення накладання бульбашок з однаковими даними
+        const offsetX = index * 0.1; // Невеликий offset по X
+        const offsetY = index * 0.05; // Невеликий offset по Y
+
+        // X-координата: реальна кількість відвідувань + offset
+        const finalX = (visitsCount || 1) + (offsetX || 0);
+
+        // Y-координата: загальний час в хвилинах + offset
+        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
+
+        // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
+        const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
+        const finalZ = Math.max(this.safeRound((normalizedZ || 0) * 30) + 15, 15); // Range: 15-45
+
+        // Обмежуємо розмір бульбашки
+        const clampedZ = Math.min(Math.max(finalZ || 15, 15), 45);
+
+        // Використовуємо реальні значення
+        const scaledX = finalX || 1; // X = реальна кількість відвідувань
+        const scaledY = finalY || 0.1; // Y = реальні хвилини середнього часу
+
+        // Використовуємо збережені оригінальні дані з групування
+        const originalUrl = domain.originalUrl;
+        const originalId = domain.originalId;
+        const inputForCleanName = originalUrl || originalId;
+        const cleanNameResult = cleanDomainName(inputForCleanName);
+        const siteName = (cleanNameResult && typeof cleanNameResult === 'string') ? cleanNameResult : 'Unknown';
+
+        if (!siteName || siteName === 'Unknown') {
+          // Site name not available, using fallback
+        }
+
+        const result = {
+          x: scaledX,
+          y: scaledY,
+          z: clampedZ,
+          name: siteName,
+          rawTotalMinutes: totalDurationMinutes || 0,
+          rawVisits: visits || 0,
+          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
+        };
+
+        return result;
+      });
+
+    } catch (error) {
+      this.bubbleChartData = [];
+    }
+    
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з відсортованих доменів
+  private prepareDataFromSortedDomains(sortedDomains: any[]): void {
+    try {
+      if (!sortedDomains || sortedDomains.length === 0) {
+        this.bubbleChartData = [];
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // Використовуємо ту ж саму логіку, що й для верхнього графіка (без групування)
+      const domainsToProcess = sortedDomains
+        .slice(0, 10)
+        .map((domain: any) => ({
+          visits: domain.totalVisits || 0,
+          totalDuration: domain.totalDuration || 0,
+          cleanName: domain.cleanName,
+          originalId: domain.originalNames?.[0] || '',
+          originalUrl: domain.originalNames?.[0] || '',
+          originalDomain: domain
+        }));
+
+      // Check if we have any domains with meaningful data
+      const domainsWithData = domainsToProcess.filter((d: any) => (d.visits || 0) > 0 || (d.totalDuration || 0) > 0);
+
+      // Використовуємо всі домени, навіть без даних (як у верхньому графіку)
+      const finalDomainsToProcess = domainsToProcess;
+
+      // Calculate ranges for better scaling
+      const maxVisits = Math.max(...finalDomainsToProcess.map((d: any) => d.visits || 0));
+      const maxDuration = Math.max(...finalDomainsToProcess.map((d: any) => d.totalDuration || 0));
+
+      this.bubbleChartData = finalDomainsToProcess.map((domain: any, index: number) => {
+        const visits = domain.visits || 0;
+        const duration = domain.totalDuration || 0;
+
+        // Convert to minutes for better scaling
+        const totalDurationMinutes = this.safeRound((duration || 0) / 60);
+
+        // Ensure minimum values for visibility
+        const totalTimeMinutes = Math.max(totalDurationMinutes || 1, 1);
+        const visitsCount = Math.max(visits || 1, 1);
+
+        // Додаємо невеликий offset для уникнення накладання бульбашок з однаковими даними
+        const offsetX = index * 0.1; // Невеликий offset по X
+        const offsetY = index * 0.05; // Невеликий offset по Y
+
+        // X-координата: реальна кількість відвідувань + offset
+        const finalX = (visitsCount || 1) + (offsetX || 0);
+
+        // Y-координата: загальний час в хвилинах + offset
+        const finalY = Math.max(totalTimeMinutes || 0.1, 0.1) + (offsetY || 0); // Мінімум 0.1 хв + offset
+
+        // Z (розмір бульбашки) базується на відвідуваннях для різноманітності
+        const normalizedZ = (maxVisits || 0) > 0 ? ((visitsCount || 0) / (maxVisits || 1)) : 0;
+        const finalZ = Math.max(this.safeRound((normalizedZ || 0) * 30) + 15, 15); // Range: 15-45
+
+        // Обмежуємо розмір бульбашки
+        const clampedZ = Math.min(Math.max(finalZ || 15, 15), 45);
+
+        // Використовуємо реальні значення
+        const scaledX = finalX || 1; // X = реальна кількість відвідувань
+        const scaledY = finalY || 0.1; // Y = реальні хвилини загального часу
+
+        // Використовуємо збережені оригінальні дані з групування
+        const originalUrl = domain.originalUrl;
+        const originalId = domain.originalId;
+        const inputForCleanName = originalUrl || originalId;
+        const cleanNameResult = cleanDomainName(inputForCleanName);
+        const siteName = (cleanNameResult && typeof cleanNameResult === 'string') ? cleanNameResult : domain.cleanName || 'Unknown';
+
+        const result = {
+          x: scaledX,
+          y: scaledY,
+          z: clampedZ,
+          name: siteName,
+          rawTotalMinutes: totalDurationMinutes || 0,
+          rawVisits: visits || 0,
+          rawAvgMinutes: (visitsCount || 0) > 0 ? this.safeRound((totalTimeMinutes || 0) / (visitsCount || 1) * 100) / 100 : 0
+        };
+
+        return result;
+      });
+
+    } catch (error) {
+      this.bubbleChartData = [];
+    }
+    
     this.cdr.markForCheck();
   }
 

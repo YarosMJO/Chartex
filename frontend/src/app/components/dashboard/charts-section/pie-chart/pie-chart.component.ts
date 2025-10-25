@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { MatCardModule } from '@angular/material/card';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { formatDuration } from '../../../../utils/utils';
+import { formatDuration, categorizeWebsite, getDomainFromUrl } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-pie-chart',
@@ -16,6 +16,8 @@ import { formatDuration } from '../../../../utils/utils';
 export class PieChartComponent implements OnChanges {
   @Input() categoryDistributionData: number[] = [];
   @Input() isDarkTheme: boolean = false;
+  @Input() filteredDomains: any[] = [];
+  @Input() userStats: any = null;
 
   // Кеш для опцій графіка
   private _chartOptions: any = null;
@@ -24,6 +26,83 @@ export class PieChartComponent implements OnChanges {
   constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnChanges() {
+    // Якщо є відфільтровані домени, підготовлюємо дані з них
+    if (this.filteredDomains && this.filteredDomains.length > 0) {
+      this.prepareDataFromFilteredDomains(this.filteredDomains);
+    } else if (this.userStats && this.userStats.topDomains) {
+      // Підготовлюємо дані з userStats
+      this.prepareDataFromUserStats();
+    }
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з userStats
+  private prepareDataFromUserStats(): void {
+    try {
+      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
+        this.categoryDistributionData = [];
+        this.cdr.markForCheck();
+        return;
+      }
+
+      const categoryStats = new Map<string, number>();
+
+      this.userStats.topDomains.forEach((domain: any) => {
+        if (domain.decryptedData) {
+          const domainName = getDomainFromUrl(domain.decryptedData.url);
+          const category = categorizeWebsite(domainName);
+          const duration = domain.totalDuration || 0;
+
+          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
+        }
+      });
+
+      // Сортуємо категорії за часом та беремо топ-6
+      const sortedCategories = Array.from(categoryStats.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
+
+    } catch (error) {
+      this.categoryDistributionData = [];
+    }
+    
+    this.cdr.markForCheck();
+  }
+
+  // Метод для підготовки даних з відфільтрованих доменів
+  private prepareDataFromFilteredDomains(filteredDomains: any[]): void {
+    try {
+      if (!filteredDomains || filteredDomains.length === 0) {
+        this.categoryDistributionData = [];
+        this.cdr.markForCheck();
+        return;
+      }
+
+      const categoryStats = new Map<string, number>();
+
+      filteredDomains.forEach(domain => {
+        if (domain.decryptedData) {
+          const domainName = getDomainFromUrl(domain.decryptedData.url);
+          const category = categorizeWebsite(domainName);
+          const duration = domain.totalDuration || 0;
+
+          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
+        }
+      });
+
+      // Сортуємо категорії за часом та беремо топ-6
+      const sortedCategories = Array.from(categoryStats.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
+
+    } catch (error) {
+      this.categoryDistributionData = [];
+    }
+    
     this.cdr.markForCheck();
   }
 

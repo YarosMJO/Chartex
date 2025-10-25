@@ -91,13 +91,17 @@
       [activityChartData]="activityChartData"
       [topDomainsData]="topDomainsData"
       [selectedPeriod]="getChartTitle()"
+      [selectedDevice]="selectedDevice"
       [activityHeatmapData]="activityHeatmapData"
       [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
       [categoryDistributionData]="categoryDistributionData"
+      [userStats]="userStats"
+      [sortedDomains]="[]"
       [bubbleChartData]="bubbleChartData"
       [bubbleChartScaleMode]="bubbleChartScaleMode"
       [showDurationCharts]="showDurationCharts"
       [isDarkTheme]="isDarkTheme"
+      [filteredDomains]="[]"
       (bubbleChartScaleToggle)="toggleBubbleChartScale()">
     </app-charts-section>
 

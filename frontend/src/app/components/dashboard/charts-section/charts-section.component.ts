@@ -34,9 +34,12 @@ export class ChartsSectionComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   @Input() selectedPeriod: string = '';
+  @Input() selectedDevice: string = '';
   @Input() activityHeatmapData: HeatmapSeries[] = [];
   @Input() timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   @Input() categoryDistributionData: number[] = [];
+  @Input() userStats: any = null;
+  @Input() sortedDomains: any[] = [];
   @Input() bubbleChartData: {
     x: number;
     y: number;
@@ -49,6 +52,7 @@ export class ChartsSectionComponent implements OnChanges {
   @Input() bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
   @Input() showDurationCharts: boolean = true;
   @Input() isDarkTheme: boolean = false;
+  @Input() filteredDomains: any[] = [];
   @Output() bubbleChartScaleToggle = new EventEmitter<void>();
 
   constructor(private cdr: ChangeDetectorRef) { }
