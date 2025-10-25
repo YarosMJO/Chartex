@@ -1,8 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, ChangeDetectorRef, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgApexchartsModule } from 'ng-apexcharts';
 
 @Component({
   selector: 'app-activity-chart',
@@ -12,20 +12,14 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [CommonModule, MatCardModule, NgApexchartsModule, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActivityChartComponent implements OnChanges, OnDestroy {
+export class ActivityChartComponent implements OnChanges {
   @Input() activityChartData: { x: string; y: number }[] = [];
   @Input() selectedPeriod: string = '';
   @Input() activityChartOptions: any = {};
 
-  private wheelHandler?: (e: Event) => void;
-  private touchStartHandler?: (e: Event) => void;
-  private touchMoveHandler?: (e: Event) => void;
-
   constructor(
-    private cdr: ChangeDetectorRef,
-    private el: ElementRef,
-    private renderer: Renderer2
-  ) {}
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnChanges() {
     if (this.activityChartData && this.activityChartData.length > 0) {
@@ -37,13 +31,13 @@ export class ActivityChartComponent implements OnChanges, OnDestroy {
           y: this.sanitizeNumber(item.y)
         }))
         .filter(item => item.x && item.y >= 0);
-      
+
       // Перевіряємо діапазон значень
       if (this.activityChartData.length > 0) {
         const yValues = this.activityChartData.map(item => item.y);
         const minY = Math.min(...yValues);
         const maxY = Math.max(...yValues);
-        
+
         // Додаткова валідація для ApexCharts
         if (isNaN(minY) || isNaN(maxY) || !isFinite(minY) || !isFinite(maxY)) {
           console.warn('Invalid data detected in activity chart:', this.activityChartData);
@@ -53,7 +47,7 @@ export class ActivityChartComponent implements OnChanges, OnDestroy {
     } else {
       this.activityChartData = [];
     }
-    
+
     this.cdr.markForCheck();
   }
 
@@ -62,14 +56,6 @@ export class ActivityChartComponent implements OnChanges, OnDestroy {
       name: 'Активність',
       data: this.activityChartData
     }];
-  }
-
-  onActivityChartReady(event: any) {
-    // Chart ready event handled
-  }
-
-  ngOnDestroy() {
-    // Cleanup if needed
   }
 
   private sanitizeString(value: any): string {

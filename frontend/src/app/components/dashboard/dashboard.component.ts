@@ -1,32 +1,32 @@
-import { Component, OnInit, NgZone, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { NgApexchartsModule } from 'ng-apexcharts';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgApexchartsModule } from 'ng-apexcharts';
+import { ApiService, Device, HistoryStats } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { ApiService, HistoryStats, Device } from '../../services/api.service';
-import { HeatmapService, HeatmapSeries } from '../../services/heatmap.service';
+import { HeatmapSeries, HeatmapService } from '../../services/heatmap.service';
 import { SettingsService } from '../../services/settings.service';
-import { formatDuration, formatNumber, getPeriodLabel, getDomainFromUrl, getDeviceTypeLabel, cleanDomainName, categorizeWebsite } from '../../utils/utils';
-import { StatsCardsComponent } from './stats-cards/stats-cards.component';
-import { ChartsSectionComponent } from './charts-section/charts-section.component';
-import { FiltersSectionComponent } from './filters-section/filters-section.component';
-import { DevicesSectionComponent } from './devices-section/devices-section.component';
-import { SearchSectionComponent } from './search-section/search-section.component';
+import { categorizeWebsite, cleanDomainName, formatDuration, getDeviceTypeLabel, getDomainFromUrl, getPeriodLabel } from '../../utils/utils';
 import { AdvancedFiltersComponent, FilterOptions } from './advanced-filters/advanced-filters.component';
+import { ChartsSectionComponent } from './charts-section/charts-section.component';
+import { DevicesSectionComponent } from './devices-section/devices-section.component';
+import { FiltersSectionComponent } from './filters-section/filters-section.component';
+import { SearchSectionComponent } from './search-section/search-section.component';
+import { StatsCardsComponent } from './stats-cards/stats-cards.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -122,8 +122,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private advancedFiltersTimeout: any = null;
   
   // Event handlers for chart cleanup
-  private scrollHandler?: (e: Event) => void;
-  private touchHandler?: (e: Event) => void;
   private chartCleanup?: () => void;
 
   // Дані для графіків
@@ -183,6 +181,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Налаштування видимості графіків
   showDurationCharts: boolean = true;
   showDeviceSection: boolean = true;
+
+  // Кеш для опцій графіків
+  private _activityChartOptions: any = null;
+  private _activityHeatmapOptions: any = null;
+  private _timeOfDayWeekHeatmapOptions: any = null;
+  private _pieChartOptions: any = null;
+  private _bubbleChartOptions: any = null;
+  private _lastThemeState: boolean | null = null;
+  private _lastChartWidth: number | null = null;
 
 
 
@@ -943,6 +950,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Зміна періоду
   async onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
+    // Перевіряємо чи значення дійсно змінилося
+    if (newPeriod === this.selectedPeriod) {
+      return; // Не оновлюємо якщо значення не змінилося
+    }
+    
     // Оновлюємо selectedPeriod
     this.selectedPeriod = newPeriod;
     
@@ -960,6 +972,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Зміна пристрою
   async onDeviceChange(newDevice: string) {
+    // Перевіряємо чи значення дійсно змінилося
+    if (newDevice === this.selectedDevice) {
+      return; // Не оновлюємо якщо значення не змінилося
+    }
+    
     // Оновлюємо selectedDevice
     this.selectedDevice = newDevice;
     
@@ -1009,6 +1026,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get activityChartOptions() {
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    if (this._activityChartOptions === null || this._lastThemeState !== currentTheme) {
+      this._lastThemeState = currentTheme;
+      this._activityChartOptions = this.buildActivityChartOptions();
+    }
+    return this._activityChartOptions;
+  }
+
+  private buildActivityChartOptions() {
     const baseOptions = {
       chart: { 
         type: 'area', 
@@ -1158,7 +1185,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get activityHeatmapOptions() {
-    return this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    const currentWidth = this.chartWidth;
+    if (this._activityHeatmapOptions === null || 
+        this._lastThemeState !== currentTheme || 
+        this._lastChartWidth !== currentWidth) {
+      this._lastThemeState = currentTheme;
+      this._lastChartWidth = currentWidth;
+      this._activityHeatmapOptions = this.heatmapService.getActivityHeatmapOptions(this.isDarkTheme, this.isChartNarrow());
+    }
+    return this._activityHeatmapOptions;
   }
 
   get timeOfDayWeekHeatmapOptions() {
@@ -1183,13 +1220,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
       maxVal = 3600; // Default 1 година
     }
     
-    return this.heatmapService.getTimeOfDayWeekHeatmapOptions(this.isDarkTheme, maxVal);
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    const cacheKey = `timeHeatmap_${currentTheme}_${maxVal}`;
+    if (this._timeOfDayWeekHeatmapOptions === null || 
+        this._lastThemeState !== currentTheme ||
+        this._timeOfDayWeekHeatmapOptions._cacheKey !== cacheKey) {
+      this._lastThemeState = currentTheme;
+      this._timeOfDayWeekHeatmapOptions = {
+        ...this.heatmapService.getTimeOfDayWeekHeatmapOptions(this.isDarkTheme, maxVal),
+        _cacheKey: cacheKey
+      };
+    }
+    return this._timeOfDayWeekHeatmapOptions;
   }
 
   get pieChartOptions() {
     // Визначаємо, чи потрібно показувати легенду на основі розміру екрану
     const shouldShowLegend = window.innerWidth > 1200;
     
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    const cacheKey = `pieChart_${currentTheme}_${shouldShowLegend}`;
+    if (this._pieChartOptions === null || 
+        this._lastThemeState !== currentTheme ||
+        this._pieChartOptions._cacheKey !== cacheKey) {
+      this._lastThemeState = currentTheme;
+      this._pieChartOptions = {
+        ...this.buildPieChartOptions(shouldShowLegend),
+        _cacheKey: cacheKey
+      };
+    }
+    return this._pieChartOptions;
+  }
+
+  private buildPieChartOptions(shouldShowLegend: boolean) {
     return {
       chart: {
         type: 'pie',
@@ -1259,6 +1324,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get bubbleChartOptions() {
+    // Перевіряємо чи потрібно оновити кеш
+    const currentTheme = this.isDarkTheme;
+    const currentScaleMode = this.bubbleChartScaleMode;
+    const xAxisMax = this.getXAxisMax();
+    const yAxisMax = this.getYAxisMax();
+    const cacheKey = `bubbleChart_${currentTheme}_${currentScaleMode}_${xAxisMax}_${yAxisMax}`;
+    
+    if (this._bubbleChartOptions === null || 
+        this._lastThemeState !== currentTheme ||
+        this._bubbleChartOptions._cacheKey !== cacheKey) {
+      this._lastThemeState = currentTheme;
+      this._bubbleChartOptions = {
+        ...this.buildBubbleChartOptions(),
+        _cacheKey: cacheKey
+      };
+    }
+    return this._bubbleChartOptions;
+  }
+
+  private buildBubbleChartOptions() {
     const options = {
       chart: {
         type: 'bubble',
@@ -1510,9 +1595,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/settings']);
   }
 
+  // Очищення кешу опцій графіків
+  private clearChartOptionsCache() {
+    this._activityChartOptions = null;
+    this._activityHeatmapOptions = null;
+    this._timeOfDayWeekHeatmapOptions = null;
+    this._pieChartOptions = null;
+    this._bubbleChartOptions = null;
+    this._lastThemeState = null;
+    this._lastChartWidth = null;
+  }
+
   // Перемикання масштабу bubble chart
   toggleBubbleChartScale() {
     this.bubbleChartScaleMode = this.bubbleChartScaleMode === 'normal' ? 'zoomed' : 'normal';
+    // Очищаємо кеш bubble chart опцій при зміні масштабу
+    this._bubbleChartOptions = null;
     this.cdr.markForCheck();
   }
 
@@ -1542,6 +1640,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Пошук
   onSearchChange(query: string) {
+    // Перевіряємо чи запит дійсно змінився
+    if (query === this.searchQuery) {
+      return; // Не оновлюємо якщо запит не змінився
+    }
+    
     this.searchQuery = query;
     this.hasResults = false;
     this.searchResults = [];
@@ -1599,6 +1702,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Розширені фільтри
   onAdvancedFiltersChange(filters: FilterOptions) {
+    // Перевіряємо чи фільтри дійсно змінилися
+    if (this.areFiltersEqual(this.advancedFilters, filters)) {
+      return; // Не оновлюємо якщо фільтри не змінилися
+    }
+    
     // Очищаємо попередній таймаут
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
@@ -1610,6 +1718,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await this.applyAdvancedFilters();
       this.cdr.markForCheck();
     }, 150); // Затримка 150мс для фільтрів
+  }
+
+  // Порівняння фільтрів для визначення змін
+  private areFiltersEqual(filters1: FilterOptions, filters2: FilterOptions): boolean {
+    if (!filters1 || !filters2) return false;
+    
+    // Порівнюємо категорії
+    if (filters1.categories.length !== filters2.categories.length) return false;
+    if (!filters1.categories.every(cat => filters2.categories.includes(cat))) return false;
+    
+    // Порівнюємо діапазон часу
+    if (filters1.durationRange.min !== filters2.durationRange.min) return false;
+    if (filters1.durationRange.max !== filters2.durationRange.max) return false;
+    
+    // Порівнюємо діапазон дат
+    if (filters1.dateRange.start?.getTime() !== filters2.dateRange.start?.getTime()) return false;
+    if (filters1.dateRange.end?.getTime() !== filters2.dateRange.end?.getTime()) return false;
+    
+    // Порівнюємо інші властивості
+    if (filters1.customPeriod !== filters2.customPeriod) return false;
+    if (filters1.durationType !== filters2.durationType) return false;
+    
+    return true;
   }
 
   async onClearAdvancedFilters() {
