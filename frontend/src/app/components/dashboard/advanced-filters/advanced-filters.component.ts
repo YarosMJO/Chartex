@@ -329,6 +329,14 @@ export class AdvancedFiltersComponent implements OnDestroy {
     
     // Скидаємо вибрану опцію на "all"
     this.selectedDurationOption = 'all';
+      }
+    } else {
+      // Інакше перевіряємо чи відповідає якійсь з попередньо визначених опцій
+      // Але тільки якщо не вибрано кастомний тип
+      if (this.selectedDurationOption !== 'custom') {
+        this.updateSelectedDurationOption();
+      }
+    }
     
     this.updateFilters(newFilters);
     
