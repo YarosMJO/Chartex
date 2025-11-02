@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { formatDuration, categorizeWebsite, getDomainFromUrl } from '../../../../utils/utils';
 
@@ -19,11 +19,16 @@ export class PieChartComponent implements OnChanges {
   @Input() filteredDomains: any[] = [];
   @Input() userStats: any = null;
 
+  // Дані категорій: зберігаємо назви категорій разом з даними
+  categoryLabels: string[] = [];
+  categoryValues: number[] = [];
+
   // Кеш для опцій графіка
   private _chartOptions: any = null;
   private _lastThemeState: boolean | null = null;
+  private _lastCategories: string = '';
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  constructor(private cdr: ChangeDetectorRef, private translateService: TranslateService) { }
 
   ngOnChanges() {
     // Якщо є відфільтровані домени, підготовлюємо дані з них
@@ -33,6 +38,7 @@ export class PieChartComponent implements OnChanges {
       // Підготовлюємо дані з userStats
       this.prepareDataFromUserStats();
     }
+    this._chartOptions = null; // Скидаємо кеш при зміні даних
     this.cdr.markForCheck();
   }
 
@@ -41,6 +47,8 @@ export class PieChartComponent implements OnChanges {
     try {
       if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
         this.categoryDistributionData = [];
+        this.categoryLabels = [];
+        this.categoryValues = [];
         this.cdr.markForCheck();
         return;
       }
@@ -62,10 +70,15 @@ export class PieChartComponent implements OnChanges {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 6);
 
-      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
+      // Зберігаємо категорії та значення окремо
+      this.categoryLabels = sortedCategories.map(([category]) => category);
+      this.categoryValues = sortedCategories.map(([category, duration]) => duration);
+      this.categoryDistributionData = this.categoryValues;
 
     } catch (error) {
       this.categoryDistributionData = [];
+      this.categoryLabels = [];
+      this.categoryValues = [];
     }
     
     this.cdr.markForCheck();
@@ -76,6 +89,8 @@ export class PieChartComponent implements OnChanges {
     try {
       if (!filteredDomains || filteredDomains.length === 0) {
         this.categoryDistributionData = [];
+        this.categoryLabels = [];
+        this.categoryValues = [];
         this.cdr.markForCheck();
         return;
       }
@@ -97,10 +112,15 @@ export class PieChartComponent implements OnChanges {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 6);
 
-      this.categoryDistributionData = sortedCategories.map(([category, duration]) => duration);
+      // Зберігаємо категорії та значення окремо
+      this.categoryLabels = sortedCategories.map(([category]) => category);
+      this.categoryValues = sortedCategories.map(([category, duration]) => duration);
+      this.categoryDistributionData = this.categoryValues;
 
     } catch (error) {
       this.categoryDistributionData = [];
+      this.categoryLabels = [];
+      this.categoryValues = [];
     }
     
     this.cdr.markForCheck();
@@ -111,13 +131,18 @@ export class PieChartComponent implements OnChanges {
     // Визначаємо, чи потрібно показувати легенду на основі розміру екрану
     const shouldShowLegend = window.innerWidth > 1200;
     
+    // Генеруємо локалізовані labels на основі реальних категорій
+    const currentCategories = this.categoryLabels.join(',');
+    
     // Перевіряємо чи потрібно оновити кеш
     const currentTheme = this.isDarkTheme;
-    const cacheKey = `pieChart_${currentTheme}_${shouldShowLegend}`;
+    const cacheKey = `pieChart_${currentTheme}_${shouldShowLegend}_${currentCategories}`;
     if (this._chartOptions === null || 
         this._lastThemeState !== currentTheme ||
+        this._lastCategories !== currentCategories ||
         this._chartOptions._cacheKey !== cacheKey) {
       this._lastThemeState = currentTheme;
+      this._lastCategories = currentCategories;
       this._chartOptions = {
         ...this.buildPieChartOptions(shouldShowLegend),
         _cacheKey: cacheKey
@@ -127,6 +152,19 @@ export class PieChartComponent implements OnChanges {
   }
 
   private buildPieChartOptions(shouldShowLegend: boolean) {
+    // Генеруємо локалізовані labels на основі реальних категорій
+    const labels = this.categoryLabels.map(category => {
+      const categoryKey = category.toUpperCase().replace(/-/g, '_');
+      const translationKey = `DASHBOARD.FILTERS.CATEGORIES.${categoryKey}`;
+      const translated = this.translateService.instant(translationKey);
+      // Якщо переклад не знайдено, повертаємо оригінальну категорію
+      return translated !== translationKey ? translated : category;
+    });
+
+    // Кольори для категорій (використовуємо циклічно, якщо категорій більше)
+    const colorPalette = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
+    const colors = labels.map((_, index) => colorPalette[index % colorPalette.length]);
+
     return {
       chart: {
         type: 'pie',
@@ -134,8 +172,8 @@ export class PieChartComponent implements OnChanges {
         foreColor: this.isDarkTheme ? '#f3eaff' : '#23272f',
         background: this.isDarkTheme ? '#232136' : '#fff'
       },
-      labels: ['Соц. мережі', 'Робота', 'Розваги', 'Новини', 'Покупки', 'Інше'],
-      colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'],
+      labels: labels,
+      colors: colors,
       dataLabels: {
         enabled: true,
         formatter: (val: number, opts: any) => {

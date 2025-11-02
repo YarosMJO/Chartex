@@ -141,6 +141,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     rawAvgMinutes?: number;
   }[] = [];
   
+  // Відфільтровані домени для передачі до графіків
+  filteredDomains: any[] = [];
+  
+  // Динамічні діапазони тривалості на основі реальних даних
+  // Максимальний час обмежено до 3 годин (180 хвилин) для обох типів
+  durationRange: { minTotal: number; maxTotal: number; minAverage: number; maxAverage: number } = {
+    minTotal: 0,
+    maxTotal: 180,
+    minAverage: 0,
+    maxAverage: 180
+  };
+  
   // Налаштування масштабу для bubble chart
   bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
 
@@ -438,6 +450,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const domain = cleanDomainName(d.decryptedData?.url || d._id);
         return domain !== 'google.com';
       });
+      
+      // Встановлюємо відфільтровані домени за замовчуванням
+      this.filteredDomains = filteredTopDomains;
+      
+      // Обчислюємо мінімальну та максимальну тривалість з даних
+      this.calculateDurationRanges(filteredTopDomains);
+      
+      // Ініціалізуємо фільтри з динамічними діапазонами, якщо вони ще не встановлені
+      if (this.advancedFilters.durationRange.min === 0 && this.advancedFilters.durationRange.max === 180) {
+        const currentMinRange = this.advancedFilters.durationType === 'average' 
+          ? this.durationRange.minAverage 
+          : this.durationRange.minTotal;
+        const currentMaxRange = this.advancedFilters.durationType === 'average' 
+          ? this.durationRange.maxAverage 
+          : this.durationRange.maxTotal;
+        
+        this.advancedFilters = {
+          ...this.advancedFilters,
+          durationRange: { min: currentMinRange, max: currentMaxRange }
+        };
+      }
 
       // Спочатку групуємо домени та сумуємо їх відвідування
       const domainMap = new Map<string, number>();
@@ -724,6 +757,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }, 150); // Затримка 150мс для фільтрів
   }
 
+
   // Порівняння фільтрів для визначення змін
   private areFiltersEqual(filters1: FilterOptions, filters2: FilterOptions): boolean {
     if (!filters1 || !filters2) return false;
@@ -753,12 +787,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearTimeout(this.advancedFiltersTimeout);
     }
 
-    // Встановлюємо діапазон в залежності від типу фільтрації
-    const maxRange = this.advancedFilters.durationType === 'average' ? 60 : 180;
+    // Встановлюємо діапазон в залежності від типу фільтрації на основі реальних даних
+    const minRange = this.advancedFilters.durationType === 'average' 
+      ? this.durationRange.minAverage 
+      : this.durationRange.minTotal;
+    const maxRange = this.advancedFilters.durationType === 'average' 
+      ? this.durationRange.maxAverage 
+      : this.durationRange.maxTotal;
 
     this.advancedFilters = {
       categories: [],
-      durationRange: { min: 0, max: maxRange },
+      durationRange: { min: minRange, max: maxRange },
       dateRange: { start: null, end: null },
       customPeriod: false,
       durationType: this.advancedFilters.durationType // Зберігаємо поточний тип
@@ -769,10 +808,86 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  // Обчислення діапазонів тривалості на основі реальних даних
+  private calculateDurationRanges(domains: any[]): void {
+    if (!domains || domains.length === 0) {
+      this.durationRange = {
+        minTotal: 0,
+        maxTotal: 180,
+        minAverage: 0,
+        maxAverage: 180
+      };
+      return;
+    }
+
+    const totalDurations: number[] = [];
+    const averageDurations: number[] = [];
+
+    domains.forEach(domain => {
+      const totalDuration = domain.totalDuration || 0;
+      const visits = domain.visits || 0;
+      
+      // Загальна тривалість (в хвилинах)
+      const totalMinutes = totalDuration / 60;
+      totalDurations.push(totalMinutes);
+      
+      // Середня тривалість (в хвилинах)
+      if (visits > 0) {
+        const avgMinutes = (totalDuration / visits) / 60;
+        averageDurations.push(avgMinutes);
+      } else {
+        averageDurations.push(0);
+      }
+    });
+
+    // Обчислюємо мін/макс для загальної тривалості
+    const minTotal = Math.min(...totalDurations);
+    const maxTotal = Math.max(...totalDurations);
+    
+    // Обчислюємо мін/макс для середньої тривалості
+    const minAverage = Math.min(...averageDurations);
+    const maxAverage = Math.max(...averageDurations);
+
+    // Округлюємо значення, встановлюємо мінімум 0 та обмежуємо максимум до 3 годин (180 хвилин)
+    const MAX_DURATION_MINUTES = 180; // 3 години
+    
+    this.durationRange = {
+      minTotal: Math.max(0, Math.floor(minTotal)),
+      maxTotal: Math.min(Math.ceil(maxTotal), MAX_DURATION_MINUTES),
+      minAverage: Math.max(0, Math.floor(minAverage)),
+      maxAverage: Math.min(Math.ceil(maxAverage), MAX_DURATION_MINUTES)
+    };
+    
+    // Оновлюємо фільтри, якщо вони виходять за межі нового діапазону
+    if (this.advancedFilters.durationType === 'total') {
+      if (this.advancedFilters.durationRange.min < this.durationRange.minTotal) {
+        this.advancedFilters.durationRange.min = this.durationRange.minTotal;
+      }
+      if (this.advancedFilters.durationRange.max > this.durationRange.maxTotal) {
+        this.advancedFilters.durationRange.max = this.durationRange.maxTotal;
+      }
+    } else {
+      if (this.advancedFilters.durationRange.min < this.durationRange.minAverage) {
+        this.advancedFilters.durationRange.min = this.durationRange.minAverage;
+      }
+      if (this.advancedFilters.durationRange.max > this.durationRange.maxAverage) {
+        this.advancedFilters.durationRange.max = this.durationRange.maxAverage;
+      }
+    }
+  }
+
   private async applyAdvancedFilters() {
     if (!this.userStats?.topDomains) {
       return;
     }
+
+    // Обчислюємо поточні діапазони тривалості
+    const durationMaxRange = this.advancedFilters.durationType === 'average' 
+      ? this.durationRange.maxAverage 
+      : this.durationRange.maxTotal;
+    const durationMinRange = this.advancedFilters.durationType === 'average' 
+      ? this.durationRange.minAverage 
+      : this.durationRange.minTotal;
 
     // Фільтруємо дані на основі вибраних фільтрів
     let filteredDomains = [...this.userStats.topDomains];
@@ -781,27 +896,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.advancedFilters.categories.length > 0) {
       filteredDomains = filteredDomains.filter(domain => {
         const url = domain.decryptedData?.url || domain._id;
-        const category = categorizeWebsite(url);
+        const domainName = getDomainFromUrl(url);
+        const category = categorizeWebsite(domainName);
         const isIncluded = this.advancedFilters.categories.includes(category);
         return isIncluded;
       });
     }
 
     // Фільтр за часом проведеним на сайті (конвертуємо з хвилин в секунди)
-    if (this.advancedFilters.durationRange.min > 0 || this.advancedFilters.durationRange.max < (this.advancedFilters.durationType === 'average' ? 60 : 180)) {
-
+    // Перевіряємо чи діапазон не є повним (тобто є якийсь фільтр застосований)
+    const isFullRange = this.advancedFilters.durationRange.min === durationMinRange && 
+                        this.advancedFilters.durationRange.max === durationMaxRange;
+    
+    if (!isFullRange) {
       // Конвертуємо хвилини в секунди для порівняння з даними
       const minSeconds = this.advancedFilters.durationRange.min * 60;
       const maxSeconds = this.advancedFilters.durationRange.max * 60;
 
       filteredDomains = filteredDomains.filter(domain => {
         let durationValue: number;
-        let durationTypeLabel: string;
 
         if (this.advancedFilters.durationType === 'total') {
           // Фільтруємо по загальному часу
           durationValue = domain.totalDuration || 0;
-          durationTypeLabel = 'загального';
         } else {
           // Фільтруємо по середньому часу (загальний час / кількість відвідувань)
           const totalDuration = domain.totalDuration || 0;
@@ -813,13 +930,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           } else {
             durationValue = totalDuration / visits;
           }
-
-          durationTypeLabel = 'середнього';
         }
 
+        // Перевіряємо чи значення в межах діапазону (в секундах)
         const isInRange = durationValue >= minSeconds && durationValue <= maxSeconds;
-        const durationInMinutes = this.safeRound((durationValue || 0) / 60);
-
+        
         return isInRange;
       });
     }
@@ -900,8 +1015,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо загальну статистику відповідно до фільтрів
     if (this.advancedFilters.categories.length > 0 ||
-      this.advancedFilters.durationRange.min > 0 ||
-      this.advancedFilters.durationRange.max < (this.advancedFilters.durationType === 'average' ? 60 : 180) ||
+      this.advancedFilters.durationRange.min > durationMinRange ||
+      this.advancedFilters.durationRange.max < durationMaxRange ||
       this.advancedFilters.dateRange.start ||
       this.advancedFilters.dateRange.end) {
 
@@ -929,8 +1044,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Оновлюємо дані для всіх графіків
+    // Зберігаємо відфільтровані домени для передачі до графіків
+    this.filteredDomains = filteredDomains;
+    
+      // Оновлюємо дані для всіх графіків
     await this.updateAllChartData(filteredDomains);
+    
+    // Оновлюємо діапазони тривалості на основі відфільтрованих даних
+    this.calculateDurationRanges(filteredDomains);
     
     this.cdr.markForCheck();
   }
@@ -1087,7 +1208,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const categories = new Set<string>();
     this.userStats.topDomains.forEach(domain => {
       const url = domain.decryptedData?.url || domain._id;
-      const category = categorizeWebsite(url);
+      const domainName = getDomainFromUrl(url);
+      const category = categorizeWebsite(domainName);
       if (category) {
         categories.add(category);
       }

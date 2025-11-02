@@ -58,7 +58,8 @@
         "ENTERTAINMENT": "Розваги",
         "SHOPPING": "Покупки",
         "TECHNOLOGY": "Технології",
-        "SEARCH_ENGINE": "Пошукова система"
+        "SEARCH_ENGINE": "Пошукова система",
+        "OTHER": "Інше"
       },
       "DURATION": {
         "TITLE": "Тривалість відвідувань",

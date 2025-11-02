@@ -58,7 +58,8 @@
         "ENTERTAINMENT": "Entertainment",
         "SHOPPING": "Shopping",
         "TECHNOLOGY": "Technology",
-        "SEARCH_ENGINE": "Search Engine"
+        "SEARCH_ENGINE": "Search Engine",
+        "OTHER": "Other"
       },
       "DURATION": {
         "TITLE": "Visit Duration",

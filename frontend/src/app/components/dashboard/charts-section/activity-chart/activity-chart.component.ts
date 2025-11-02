@@ -28,9 +28,11 @@ export class ActivityChartComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
-    // Якщо є відфільтровані домени, підготовлюємо дані з них
+    // Якщо є відфільтровані домени, підготовлюємо дані з них (пріоритет)
     if (this.filteredDomains && this.filteredDomains.length > 0) {
       this.prepareDataFromFilteredDomains(this.filteredDomains);
+      // Не використовуємо activityChartData якщо є filteredDomains
+      return;
     } else if (this.activityChartData && this.activityChartData.length > 0) {
       // Валідуємо та очищаємо існуючі дані
       this.activityChartData = this.activityChartData
@@ -72,7 +74,10 @@ export class ActivityChartComponent implements OnChanges {
       const domainMap = new Map<string, number>();
 
       filteredDomains.forEach(domain => {
-        const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
+        const url = domain.decryptedData?.url || domain._id;
+        if (!url) return;
+        
+        const domainName = cleanDomainName(url);
         const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
 
         if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
@@ -91,14 +96,14 @@ export class ActivityChartComponent implements OnChanges {
         .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
         .slice(0, 10); // Беремо топ-10
 
-      // Фільтруємо та валідуємо дані
+      // Фільтруємо та валідуємо дані (прибираємо фільтр item.y > 0, щоб показувати всі домени)
       this.activityChartData = rawData
-        .filter(item => item && typeof item === 'object')
+        .filter(item => item && typeof item === 'object' && item.x)
         .map(item => ({
           x: this.sanitizeString(item.x),
           y: this.sanitizeNumber(item.y)
         }))
-        .filter(item => item.x && item.y > 0);
+        .filter(item => item.x && item.x.length > 0);
 
       // Додаткова валідація для ApexCharts
       this.activityChartData = this.activityChartData.filter(item => {

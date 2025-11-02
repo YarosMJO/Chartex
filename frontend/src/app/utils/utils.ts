@@ -161,16 +161,45 @@ export const categorizeWebsite = (domain: string): string => {
   const cleanDomain = cleanDomainName(domain);
   
   // Функція для перевірки відповідності очищеного домену
+  // cleanDomainName видаляє префікси (api., www., m., тощо) та TLD, тому достатньо точного співпадіння
   const matchesDomain = (targetDomain: string): boolean => {
     const cleanTarget = cleanDomainName(targetDomain);
-    return cleanDomain === cleanTarget || cleanDomain.includes(cleanTarget) || cleanTarget.includes(cleanDomain);
+    
+    // Точне співпадіння очищених доменів
+    // Наприклад: facebook.com -> facebook, api.facebook.com -> facebook (префікс api. видаляється)
+    if (cleanDomain === cleanTarget) {
+      return true;
+    }
+    
+    // Перевірка піддоменів: якщо один домен закінчується на крапку + інший домен
+    // Це дозволяє обробляти випадки типу facebook.com.ua -> facebook
+    if (cleanDomain.includes('.') && cleanTarget.includes('.')) {
+      const domainParts = cleanDomain.split('.');
+      const targetParts = cleanTarget.split('.');
+      
+      // Перевіряємо чи останні частини співпадають
+      // Наприклад: news.facebook vs facebook або facebook.com vs facebook
+      const domainLastPart = domainParts[domainParts.length - 1];
+      const targetLastPart = targetParts[targetParts.length - 1];
+      
+      if (domainLastPart === targetLastPart) {
+        // Перевіряємо чи один домен закінчується на інший повністю
+        if (cleanDomain.endsWith('.' + cleanTarget) || cleanTarget.endsWith('.' + cleanDomain)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   };
   
   // Пошукові системи - виключаємо з аналітики
   const searchEngines = [
     'google.com', 'google.co.uk', 'google.de', 'google.fr', 'google.it', 'google.es', 'google.ca', 'google.com.au',
-    'bing.com', 'yahoo.com', 'duckduckgo.com', 'baidu.com', 'yandex.com', 'searchencrypt.com',
-    'startpage.com', 'qwant.com', 'ecosia.org', 'brave.com', 'swisscows.com'
+    'google.com.ua', 'google.pl', 'google.ru', 'google.jp', 'google.co.in', 'google.com.br', 'google.com.mx',
+    'bing.com', 'yahoo.com', 'duckduckgo.com', 'baidu.com', 'yandex.com', 'yandex.ua', 'searchencrypt.com',
+    'startpage.com', 'qwant.com', 'ecosia.org', 'brave.com', 'swisscows.com', 'ask.com', 'excite.com',
+    'aol.com', 'lycos.com', 'webcrawler.com'
   ];
   
   // Якщо це пошукова система - не категорізуємо
@@ -183,7 +212,10 @@ export const categorizeWebsite = (domain: string): string => {
     'facebook.com', 'fb.com', 'instagram.com', 'twitter.com', 'x.com', 
     'linkedin.com', 'youtube.com', 'tiktok.com', 'snapchat.com', 'pinterest.com',
     'reddit.com', 'discord.com', 'telegram.org', 'whatsapp.com', 'vk.com',
-    'ok.ru', 't.me', 'twitch.tv', 'spotify.com', 'soundcloud.com'
+    'ok.ru', 't.me', 'twitch.tv', 'spotify.com', 'soundcloud.com',
+    'viber.com', 'wechat.com', 'line.me', 'qq.com', 'weibo.com',
+    'mixi.jp', 'orkut.com', 'myspace.com', 'flickr.com', 'tumblr.com',
+    'meetup.com', 'nextdoor.com', 'houseparty.com', 'clubhouse.com'
   ];
   
   // Новини
@@ -193,7 +225,20 @@ export const categorizeWebsite = (domain: string): string => {
     'bloomberg.com', 'wsj.com', 'ft.com', 'economist.com', 'time.com',
     'news.yahoo.com', 'msn.com', 'abcnews.go.com', 'nbcnews.com', 'cbsnews.com',
     'foxnews.com', 'huffpost.com', 'buzzfeed.com', 'vox.com', 'theverge.com',
-    'techcrunch.com', 'wired.com', 'ars-technica.com', 'engadget.com'
+    'techcrunch.com', 'wired.com', 'ars-technica.com', 'engadget.com',
+    // Українські новини
+    'ukraine.ua', 'unian.ua', 'liga.net', 'pravda.com.ua', 'pravda.ua',
+    'censor.net', 'novynarnia.com', 'tsn.ua', '24tv.ua', 'espreso.tv',
+    'hromadske.ua', 'ukrinform.ua', 'zn.ua', 'dzerkalo.tyzhnia.ua', 'texty.org.ua',
+    'lb.ua', 'gazeta.ua', 'unn.com.ua', 'korespondent.net', 'pravda.if.ua',
+    'vechirniy.kyiv.ua', 'radiosvoboda.org', 'suspilne.media', 'nv.ua',
+    'dw.com', 'eurointegration.com.ua',
+    // Регіональні українські ЗМІ
+    '032.ua', '048.ua', '056.ua', '061.ua', '062.ua',
+    // Міжнародні новини
+    'ap.org', 'afp.com', 'aljazeera.com', 'euronews.com', 'france24.com',
+    'deutschland.de', 'spiegel.de', 'lemonde.fr', 'corriere.it', 'elpais.com',
+    'rt.com', 'tass.ru', 'xinhuanet.com', 'scmp.com', 'asahi.com'
   ];
   
   // Робота
@@ -203,7 +248,16 @@ export const categorizeWebsite = (domain: string): string => {
     'slack.com', 'teams.microsoft.com', 'zoom.us', 'webex.com',
     'dropbox.com', 'onedrive.live.com', 'box.com', 'evernote.com',
     'figma.com', 'sketch.com', 'invisionapp.com', 'zeplin.io', 'abstract.com',
-    'linear.app', 'clickup.com', 'monday.com', 'basecamp.com', 'airtable.com'
+    'linear.app', 'clickup.com', 'monday.com', 'basecamp.com', 'airtable.com',
+    // Українські платформи для роботи
+    'work.ua', 'robota.ua', 'rabota.ua', 'jobs.ua', 'dou.ua',
+    'djinni.co', 'grc.ua', 'trud.ua',
+    // Додаткові міжнародні інструменти
+    'atlassian.com', 'miro.com', 'mural.co', 'whiteboard.microsoft.com',
+    'obsidian.md', 'roamresearch.com', 'logseq.com', 'remnote.com',
+    'todoist.com', 'any.do', 'rememberthemilk.com', 'habitica.com',
+    'clockify.me', 'toggl.com', 'harvest.com', 'rescuetime.com',
+    '1password.com', 'lastpass.com', 'dashlane.com', 'bitwarden.com'
   ];
   
   // Освіта
@@ -213,7 +267,19 @@ export const categorizeWebsite = (domain: string): string => {
     'codecademy.com', 'freecodecamp.org', 'w3schools.com', 'mdn-web-docs.com',
     'stackoverflow.com', 'github.com', 'gitlab.com', 'bitbucket.org',
     'medium.com', 'dev.to', 'hashnode.dev', 'css-tricks.com', 'smashingmagazine.com',
-    'sitepoint.com', 'tutsplus.com', 'envato.com', 'creativebloq.com'
+    'sitepoint.com', 'tutsplus.com', 'envato.com', 'creativebloq.com',
+    // Українські освітні платформи
+    'prometheus.org.ua', 'ed-era.com', 'kursova.ua', 'osvita.ua',
+    'vyshemu.com', 'mon.gov.ua', 'nau.ua', 'osvitaonline.com.ua',
+    // Українські університети
+    'knu.ua', 'nuwm.edu.ua', 'kpi.ua', 'univ.kiev.ua', 'lnu.edu.ua',
+    'kneu.edu.ua', 'nuos.pro', 'kmu.edu.ua', 'sumdu.edu.ua',
+    // Додаткові міжнародні освітні ресурси
+    'brilliant.org', 'datacamp.com', 'treehouse.com',
+    'teamtreehouse.com', 'sololearn.com', 'codewars.com', 'leetcode.com',
+    'hackerrank.com', 'exercism.io', 'codepen.io', 'jsfiddle.net',
+    'scrimba.com', 'egghead.io', 'frontendmasters.com', 'educative.io',
+    'alison.com', 'futurelearn.com', 'openlearning.com', 'iversity.org'
   ];
   
   // Розваги
@@ -223,7 +289,19 @@ export const categorizeWebsite = (domain: string): string => {
     'spotify.com', 'apple.com', 'music.apple.com', 'soundcloud.com', 'bandcamp.com',
     'deezer.com', 'tidal.com', 'pandora.com', 'last.fm', 'rateyourmusic.com',
     'imdb.com', 'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
-    'goodreads.com', 'amazon.com', 'barnesandnoble.com', 'bookdepository.com'
+    'goodreads.com', 'barnesandnoble.com', 'bookdepository.com',
+    // Українські стрімінгові сервіси
+    'megogo.net', 'sweet.tv', 'oll.tv', 'tv.ua', '1plus1.ua',
+    // Українські медіа-ресурси
+    'music.ua', 'ua.radio', 'radio.com.ua',
+    // Додаткові міжнародні розважальні сайти
+    'hbo.com', 'hbomax.com', 'paramountplus.com', 'peacocktv.com',
+    'crunchyroll.com', 'funimation.com', 'anime-planet.com',
+    'myanimelist.net', 'trakt.tv', 'tvtime.com', 'justwatch.com',
+    'commonsensemedia.org',
+    'audible.com', 'scribd.com', 'libbyapp.com', 'overdrive.com',
+    'archive.org', 'gutenberg.org', 'projectgutenberg.org',
+    'chess.com', 'lichess.org', 'pokerstars.com', 'pokercode.com'
   ];
   
   // Покупки
@@ -233,7 +311,22 @@ export const categorizeWebsite = (domain: string): string => {
     'costco.com', 'samsclub.com', 'kroger.com', 'safeway.com', 'publix.com',
     'alibaba.com', 'aliexpress.com', 'wish.com', 'temu.com', 'shein.com',
     'zara.com', 'h&m.com', 'uniqlo.com', 'gap.com', 'oldnavy.com',
-    'nike.com', 'adidas.com', 'underarmour.com', 'puma.com', 'reebok.com'
+    'nike.com', 'adidas.com', 'underarmour.com', 'puma.com', 'reebok.com',
+    // Українські інтернет-магазини
+    'rozetka.com.ua', 'foxtrot.com.ua', 'comfy.ua', 'allo.ua', 'epicentr.ua',
+    'silpo.ua', 'novus.ua', 'atbmarket.com', 'varus.ua', 'auchan.ua',
+    'prom.ua', 'bigl.ua', 'olx.ua', 'zakupka.com', 'hotline.ua',
+    'modnakasta.ua', 'intertop.ua', 'wildberries.ua', 'makeup.ua',
+    'makeup.com.ua', 'notino.ua', 'shafa.ua', 'kasta.ua',
+    // Додаткові міжнародні інтернет-магазини
+    'mercari.com', 'vinted.com', 'depop.com', 'poshmark.com',
+    'grailed.com', 'stockx.com', 'goat.com', 'flightclub.com',
+    'asos.com', 'boohoo.com', 'missguided.com', 'prettylittlething.com',
+    'zalando.com', 'yoox.com', 'net-a-porter.com', 'farfetch.com',
+    'mytheresa.com', 'ssense.com', 'matchesfashion.com', 'luisaviaroma.com',
+    'wayfair.com', 'overstock.com', 'houzz.com', 'bedbathandbeyond.com',
+    'macys.com', 'nordstrom.com', 'kohls.com', 'jcpenney.com',
+    'sephora.com', 'ulta.com', 'glossier.com', 'fenty.com'
   ];
   
   // Технології
@@ -244,7 +337,23 @@ export const categorizeWebsite = (domain: string): string => {
     'techcrunch.com', 'wired.com', 'theverge.com', 'ars-technica.com',
     'engadget.com', 'gizmodo.com', 'mashable.com', 'readwrite.com',
     'venturebeat.com', 'recode.net', 'techdirt.com', 'slashdot.org',
-    'digg.com', 'stumbleupon.com', 'delicious.com', 'pinterest.com'
+    'digg.com', 'stumbleupon.com', 'delicious.com', 'pinterest.com',
+    // Українські IT-ресурси
+    'dou.ua', 'dev.ua', 'itc.ua', 'ain.ua',
+    'habr.com', 'm.dou.ua',
+    // Додаткові міжнародні технологічні ресурси
+    'android.com', 'android-developers.googleblog.com', 'developer.android.com',
+    'developer.apple.com', 'developer.mozilla.org', 'web.dev',
+    'css-tricks.com', 'javascript.info', 'javascript30.com',
+    'egghead.io', 'frontendmasters.com', 'freecodecamp.org',
+    'udacity.com', 'udemy.com', 'pluralsight.com',
+    'git-scm.com', 'gitlab.com', 'bitbucket.org',
+    'docker.com', 'kubernetes.io', 'terraform.io',
+    'aws.amazon.com', 'azure.microsoft.com', 'cloud.google.com',
+    'digitalocean.com', 'heroku.com', 'vercel.com',
+    'netlify.com', 'github.io', 'pages.github.com',
+    'codepen.io', 'jsfiddle.net', 'codesandbox.io',
+    'replit.com', 'glitch.com', 'stackblitz.com'
   ];
   
   if (socialDomains.some(d => matchesDomain(d))) return 'social';

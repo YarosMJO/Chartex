@@ -48,26 +48,6 @@
             </button>
           </div>
 
-          <!-- Кастомний діапазон -->
-          <div class="custom-duration">
-            <label>{{ 'DASHBOARD.FILTERS.DURATION.CUSTOM_RANGE' | translate }}</label>
-
-            <div class="slider-container">
-              <div class="slider-item">
-                <label>{{ 'DASHBOARD.FILTERS.DURATION.MIN' | translate }}</label>
-                <input type="range" [min]="0" [max]="filters.durationType === 'average' ? 60 : 180" [step]="1"
-                  [value]="filters.durationRange.min" (input)="onMinDurationChange($event.target.value)">
-                <span class="slider-value">{{ filters.durationRange.min | number:'1.0-0' }}хв</span>
-              </div>
-
-              <div class="slider-item">
-                <label>{{ 'DASHBOARD.FILTERS.DURATION.MAX' | translate }}</label>
-                <input type="range" [min]="0" [max]="filters.durationType === 'average' ? 60 : 180" [step]="1"
-                  [value]="filters.durationRange.max" (input)="onMaxDurationChange($event.target.value)">
-                <span class="slider-value">{{ filters.durationRange.max | number:'1.0-0' }}хв</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Діапазон дат -->

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -41,7 +41,7 @@ export interface FilterOptions {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdvancedFiltersComponent implements OnDestroy {
+export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
   @Input() filters: FilterOptions = {
     categories: [],
     durationRange: { min: 0, max: 180 }, // Максимальний час в хвилинах (3 години)
@@ -52,6 +52,21 @@ export class AdvancedFiltersComponent implements OnDestroy {
 
   @Input() availableCategories: string[] = [];
   @Input() isExpanded: boolean = false;
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Синхронізуємо selectedDurationOption при зміні filters від батьківського компонента
+    if (changes['filters'] && changes['filters'].currentValue) {
+      const newFilters = changes['filters'].currentValue;
+      
+      // Оновлюємо локальний filters
+      if (newFilters !== this.filters) {
+        this.filters = { ...newFilters };
+        
+        // Оновлюємо selectedDurationOption на основі нових значень
+        this.updateSelectedDurationOption();
+      }
+    }
+  }
 
   @Output() filtersChange = new EventEmitter<FilterOptions>();
   @Output() clearFilters = new EventEmitter<void>();
@@ -72,7 +87,8 @@ export class AdvancedFiltersComponent implements OnDestroy {
     { value: 'entertainment', label: 'DASHBOARD.FILTERS.CATEGORIES.ENTERTAINMENT' },
     { value: 'shopping', label: 'DASHBOARD.FILTERS.CATEGORIES.SHOPPING' },
     { value: 'technology', label: 'DASHBOARD.FILTERS.CATEGORIES.TECHNOLOGY' },
-    { value: 'search_engine', label: 'DASHBOARD.FILTERS.CATEGORIES.SEARCH_ENGINE' }
+    { value: 'search_engine', label: 'DASHBOARD.FILTERS.CATEGORIES.SEARCH_ENGINE' },
+    { value: 'other', label: 'DASHBOARD.FILTERS.CATEGORIES.OTHER' }
   ];
 
   // Опції часу проведеного на сайті (в хвилинах)
@@ -93,7 +109,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
         { value: 'short', label: 'DASHBOARD.FILTERS.DURATION.SHORT', range: { min: 0, max: 2 } }, // До 2 хвилин
         { value: 'medium', label: 'DASHBOARD.FILTERS.DURATION.MEDIUM', range: { min: 2, max: 10 } }, // 2-10 хвилин
         { value: 'long', label: 'DASHBOARD.FILTERS.DURATION.LONG', range: { min: 10, max: 60 } }, // Більше 10 хвилин
-        { value: 'custom', label: 'DASHBOARD.FILTERS.DURATION.CUSTOM', range: { min: 0, max: 60 } }
       ];
     } else {
       // Для загального часу використовуємо оригінальні діапазони
@@ -154,45 +169,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
     }
   }
 
-  onMinDurationChange(value: string | number) {
-    if (this.isUpdatingDurationType) {
-      return; // Пропускаємо оновлення під час зміни типу
-    }
-    
-    const maxRange = this.filters.durationType === 'average' ? 60 : 180;
-    const newMin = Math.max(0, Math.min(Number(value), this.filters.durationRange.max));
-    
-    if (newMin !== this.filters.durationRange.min) {
-      // Якщо мінімальне значення перевищує максимальне, збільшуємо максимальне
-      if (newMin > this.filters.durationRange.max) {
-        this.filters.durationRange.max = newMin;
-      }
-      
-      this.filters.durationRange.min = newMin;
-      this.updateSelectedDurationOption();
-      this.updateFilters({ ...this.filters });
-    }
-  }
-
-  onMaxDurationChange(value: string | number) {
-    if (this.isUpdatingDurationType) {
-      return; // Пропускаємо оновлення під час зміни типу
-    }
-    
-    const maxRange = this.filters.durationType === 'average' ? 60 : 180;
-    const newMax = Math.max(this.filters.durationRange.min, Math.min(Number(value), maxRange));
-    
-    if (newMax !== this.filters.durationRange.max) {
-      // Якщо максимальне значення менше мінімального, зменшуємо мінімальне
-      if (newMax < this.filters.durationRange.min) {
-        this.filters.durationRange.min = newMax;
-      }
-      
-      this.filters.durationRange.max = newMax;
-      this.updateSelectedDurationOption();
-      this.updateFilters({ ...this.filters });
-    }
-  }
 
   onDateRangeChange(type: 'start' | 'end', date: Date | null) {
     // Очищаємо попередній таймаут
@@ -327,16 +303,6 @@ export class AdvancedFiltersComponent implements OnDestroy {
       durationRange: { min: 0, max: maxRange }
     };
     
-    // Скидаємо вибрану опцію на "all"
-    this.selectedDurationOption = 'all';
-      }
-    } else {
-      // Інакше перевіряємо чи відповідає якійсь з попередньо визначених опцій
-      // Але тільки якщо не вибрано кастомний тип
-      if (this.selectedDurationOption !== 'custom') {
-        this.updateSelectedDurationOption();
-      }
-    }
     
     this.updateFilters(newFilters);
     
