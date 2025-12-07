@@ -285,16 +285,6 @@ export class ApiService {
         requestParams._t = params._t || Date.now();
       }
       
-      // Перевіряємо налаштування приватності для фільтрації інших пристроїв
-      const privacySettings = this.getPrivacySettingsFromStorage();
-      if (!privacySettings.showOtherDevices && (!params.deviceId || params.deviceId === 'all')) {
-        // Якщо налаштування вимкнено, фільтруємо тільки поточний пристрій
-        const currentDeviceId = this.getCurrentDeviceIdFromStorage();
-        if (currentDeviceId) {
-          requestParams.deviceId = currentDeviceId;
-        }
-      }
-      
       let historyResponse = await this.getHistoryWithDecryptedData(requestParams);
       
       if (!historyResponse.items || historyResponse.items.length === 0) {
@@ -557,17 +547,6 @@ export class ApiService {
       `${this.API_BASE_URL}/devices`,
       { headers }
     ).toPromise() as Device[];
-    
-    // Перевіряємо налаштування приватності для фільтрації інших пристроїв
-    const privacySettings = this.getPrivacySettingsFromStorage();
-    if (!privacySettings.showOtherDevices) {
-      // Якщо налаштування вимкнено, показуємо тільки поточний пристрій
-      const currentDeviceId = this.getCurrentDeviceIdFromStorage();
-      if (currentDeviceId) {
-        return devices.filter((device: Device) => device.deviceId === currentDeviceId);
-      }
-    }
-    
     return devices;
   }
 
@@ -715,22 +694,6 @@ export class ApiService {
       `${this.API_BASE_URL}/users/data`,
       { headers }
     ).toPromise() as Promise<{ success: boolean; deletedCount: number }>;
-  }
-
-  // Отримання налаштувань приватності з localStorage
-  private getPrivacySettingsFromStorage(): { showOtherDevices: boolean } {
-    try {
-      const settings = localStorage.getItem('chartex_privacy');
-      if (settings) {
-        const parsed = JSON.parse(settings);
-        return {
-          showOtherDevices: parsed.showOtherDevices !== false // за замовчуванням true
-        };
-      }
-    } catch (error) {
-      console.error('Помилка отримання налаштувань приватності:', error);
-    }
-    return { showOtherDevices: true };
   }
 
   // Отримання поточного deviceId з localStorage

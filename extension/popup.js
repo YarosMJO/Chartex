@@ -68,7 +68,7 @@ class PopupManager {
   
   async applyLanguage(language) {
     // Load translation file based on language
-    const translationFile = language === 'en' ? 'en.json' : 'uk.json';
+    const translationFile = language === 'en' ? 'en.json' : 'ua.json';
     const translationUrl = chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`);
     
     try {
@@ -83,12 +83,12 @@ class PopupManager {
     } catch (error) {
       console.error('Помилка завантаження перекладів:', error);
       // Try to load Ukrainian as fallback if current language is not Ukrainian
-      if (language !== 'uk') {
+      if (language !== 'ua') {
         try {
-          const ukTranslationUrl = chrome.runtime.getURL('dashboard/assets/i18n/uk.json');
-          const ukResponse = await fetch(ukTranslationUrl);
-          const ukTranslations = await ukResponse.json();
-          this.translatePopup(ukTranslations);
+          const uaTranslationUrl = chrome.runtime.getURL('dashboard/assets/i18n/ua.json');
+          const uaResponse = await fetch(uaTranslationUrl);
+          const uaTranslations = await uaResponse.json();
+          this.translatePopup(uaTranslations);
           this.updateUI();
         } catch (fallbackError) {
           // Set empty translations object to prevent errors

@@ -12,27 +12,27 @@ export class AppTranslateService {
 
   private initializeTranslations() {
     // Встановлюємо CustomTranslateLoader
-    this.translate.setDefaultLang('uk');
+    this.translate.setDefaultLang('ua');
     
     // Спочатку перевіряємо збережену мову
     const savedLanguage = localStorage.getItem('chartex_language');
-    if (savedLanguage && ['uk', 'en'].includes(savedLanguage)) {
+    if (savedLanguage && ['ua', 'en'].includes(savedLanguage)) {
       this.translate.use(savedLanguage);
       return;
     }
     
     // Якщо збереженої мови немає, визначаємо мову браузера
     const browserLang = this.translate.getBrowserLang();
-    if (browserLang && ['uk', 'en'].includes(browserLang)) {
+    if (browserLang && ['ua', 'en'].includes(browserLang)) {
       this.translate.use(browserLang);
     } else {
-      this.translate.use('uk');
+      this.translate.use('ua');
     }
   }
 
   // Метод для зміни мови
   setLanguage(lang: string) {
-    if (['uk', 'en'].includes(lang)) {
+    if (['ua', 'en'].includes(lang)) {
       this.translate.use(lang);
       localStorage.setItem('chartex_language', lang);
     }
@@ -40,11 +40,11 @@ export class AppTranslateService {
 
   // Метод для отримання поточної мови
   getCurrentLang(): string {
-    return this.translate.currentLang || 'uk';
+    return this.translate.currentLang || 'ua';
   }
 
   // Метод для отримання доступних мов
   getAvailableLanguages(): string[] {
-    return ['uk', 'en'];
+    return ['ua', 'en'];
   }
 } 

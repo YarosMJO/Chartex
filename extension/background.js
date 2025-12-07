@@ -12,16 +12,16 @@ let popupManager = null;
 class TranslationManager {
   constructor() {
     this.translations = {};
-    this.currentLanguage = 'uk';
+    this.currentLanguage = 'ua';
     this.loadTranslations();
   }
   
   async loadTranslations() {
     try {
       const result = await chrome.storage.local.get(['chartex_language']);
-      this.currentLanguage = result.chartex_language || 'uk';
+      this.currentLanguage = result.chartex_language || 'ua';
       
-      const translationFile = this.currentLanguage === 'en' ? 'en.json' : 'uk.json';
+      const translationFile = this.currentLanguage === 'en' ? 'en.json' : 'ua.json';
       const response = await fetch(chrome.runtime.getURL(`dashboard/assets/i18n/${translationFile}`));
       this.translations = await response.json();
     } catch (error) {

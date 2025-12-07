@@ -49,7 +49,7 @@ export class SettingsComponent implements OnInit {
   currentUser: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null = null;
   loading = false;
   // Відстеження попередніх значень для уникнення зайвих оновлень
-  private previousLanguage: string = 'uk';
+  private previousLanguage: string = 'ua';
   private previousTheme: string = 'default';
   
   // Налаштування збору даних
@@ -67,25 +67,16 @@ export class SettingsComponent implements OnInit {
     collectVisitDuration: true
   };
 
-  // Налаштування приватності
-  privacySettings: {
-    encryptData: boolean;
-    showOtherDevices: boolean;
-  } = {
-    encryptData: true,
-    showOtherDevices: true
-  };
-
   // Налаштування відображення
   displaySettings: {
-    language: 'uk' | 'en';
+    language: 'ua' | 'en';
     theme: 'default' | 'light' | 'dark';
     showDuration: boolean;
     showDevices: boolean;
     showCharts: boolean;
     showDetails: boolean;
   } = {
-    language: 'uk',
+    language: 'ua',
     theme: 'default',
     showDuration: true,
     showDevices: true,
@@ -105,8 +96,8 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit() {
     // Ініціалізуємо мову з localStorage
-    const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
-    this.applyLanguage(savedLanguage as 'uk' | 'en');
+    const savedLanguage = localStorage.getItem('chartex_language') || 'ua';
+    this.applyLanguage(savedLanguage as 'ua' | 'en');
     
     this.authService.getUser().subscribe(user => {
       this.currentUser = user;
@@ -123,7 +114,6 @@ export class SettingsComponent implements OnInit {
     this.settingsService.getSettings().subscribe({
       next: (settings) => {
         this.dataCollectionSettings = { ...this.dataCollectionSettings, ...settings.dataCollection };
-        this.privacySettings = { ...this.privacySettings, ...settings.privacy };
         this.displaySettings = { ...this.displaySettings, ...settings.display };
         
         // Ініціалізуємо попередні значення
@@ -152,7 +142,6 @@ export class SettingsComponent implements OnInit {
       this.previousTheme = this.displaySettings.theme;
       const settings: AppSettings = {
         dataCollection: this.dataCollectionSettings,
-        privacy: this.privacySettings,
         display: this.displaySettings
       };
       this.settingsService.saveSettings(settings);
@@ -162,7 +151,6 @@ export class SettingsComponent implements OnInit {
       // Зберігаємо налаштування для інших змін
       const settings: AppSettings = {
         dataCollection: this.dataCollectionSettings,
-        privacy: this.privacySettings,
         display: this.displaySettings
       };
       this.settingsService.saveSettings(settings);
@@ -177,7 +165,6 @@ export class SettingsComponent implements OnInit {
       this.previousLanguage = this.displaySettings.language;
       const settings: AppSettings = {
         dataCollection: this.dataCollectionSettings,
-        privacy: this.privacySettings,
         display: this.displaySettings
       };
       this.settingsService.saveSettings(settings);
@@ -190,31 +177,12 @@ export class SettingsComponent implements OnInit {
   onDataCollectionChange() {
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
       display: this.displaySettings
     };
     this.settingsService.saveSettings(settings);
     // Відправити налаштування до extension для негайного застосування
     this.sendSettingsToExtension({
       dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
-      display: this.displaySettings
-    });
-    this.cdr.markForCheck();
-  }
-
-  // Зміна налаштувань приватності
-  onPrivacyChange() {
-    const settings: AppSettings = {
-      dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
-      display: this.displaySettings
-    };
-    this.settingsService.saveSettings(settings);
-    // Відправити налаштування до extension для негайного застосування
-    this.sendSettingsToExtension({
-      dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
       display: this.displaySettings
     });
     this.cdr.markForCheck();
@@ -224,7 +192,6 @@ export class SettingsComponent implements OnInit {
   onDisplayChange() {
     const settings: AppSettings = {
       dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
       display: this.displaySettings
     };
     this.settingsService.saveSettings(settings);
@@ -315,13 +282,21 @@ export class SettingsComponent implements OnInit {
 
   // Експорт налаштувань
   exportSettings() {
-    const settings: AppSettings = {
-      dataCollection: this.dataCollectionSettings,
-      privacy: this.privacySettings,
-      display: this.displaySettings
+    // Експортуємо тільки ті поля, які відображаються в UI
+    const exportData = {
+      dataCollection: {
+        enabled: this.dataCollectionSettings.enabled,
+        collectDeviceInfo: this.dataCollectionSettings.collectDeviceInfo,
+        collectPageTitles: this.dataCollectionSettings.collectPageTitles,
+        collectVisitDuration: this.dataCollectionSettings.collectVisitDuration
+      },
+      display: {
+        language: this.displaySettings.language,
+        theme: this.displaySettings.theme
+      }
     };
     
-    const dataStr = JSON.stringify(settings, null, 2);
+    const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     
@@ -342,14 +317,44 @@ export class SettingsComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = (e: any) => {
       try {
-        const settings: AppSettings = JSON.parse(e.target.result);
+        const importedData = JSON.parse(e.target.result);
         
         // Валідація налаштувань
-        if (this.validateSettings(settings)) {
-          this.dataCollectionSettings = settings.dataCollection;
-          this.privacySettings = settings.privacy;
-          this.displaySettings = settings.display;
-          this.snackBar.open('Налаштування імпортовано', 'Закрити', { duration: 2000 });
+        if (this.validateSettings(importedData)) {
+          // Оновлюємо тільки видимі поля, зберігаючи інші значення
+          if (importedData.dataCollection) {
+            if (importedData.dataCollection.enabled !== undefined) {
+              this.dataCollectionSettings.enabled = importedData.dataCollection.enabled;
+            }
+            if (importedData.dataCollection.collectDeviceInfo !== undefined) {
+              this.dataCollectionSettings.collectDeviceInfo = importedData.dataCollection.collectDeviceInfo;
+            }
+            if (importedData.dataCollection.collectPageTitles !== undefined) {
+              this.dataCollectionSettings.collectPageTitles = importedData.dataCollection.collectPageTitles;
+            }
+            if (importedData.dataCollection.collectVisitDuration !== undefined) {
+              this.dataCollectionSettings.collectVisitDuration = importedData.dataCollection.collectVisitDuration;
+            }
+          }
+          
+          if (importedData.display) {
+            if (importedData.display.language !== undefined) {
+              this.displaySettings.language = importedData.display.language;
+            }
+            if (importedData.display.theme !== undefined) {
+              this.displaySettings.theme = importedData.display.theme;
+            }
+          }
+          
+          // Зберегти та застосувати налаштування автоматично
+          const fullSettings: AppSettings = {
+            dataCollection: this.dataCollectionSettings,
+            display: this.displaySettings
+          };
+          this.settingsService.saveSettings(fullSettings);
+          this.applySettings(fullSettings);
+          
+          this.snackBar.open('Налаштування імпортовано та застосовано', 'Закрити', { duration: 2000 });
         } else {
           this.snackBar.open('Невірний формат файлу налаштувань', 'Закрити', { duration: 3000 });
         }
@@ -362,16 +367,28 @@ export class SettingsComponent implements OnInit {
   }
 
   // Валідація налаштувань
-  private validateSettings(settings: any): settings is AppSettings {
-    return (
-      settings &&
-      settings.dataCollection &&
-      settings.privacy &&
-      settings.display &&
-      typeof settings.dataCollection.enabled === 'boolean' &&
-      typeof settings.privacy.encryptData === 'boolean' &&
-      typeof settings.display.language === 'string'
-    );
+  private validateSettings(settings: any): boolean {
+    if (!settings || !settings.dataCollection || !settings.display) {
+      return false;
+    }
+    
+    // Перевіряємо обов'язкові поля для dataCollection
+    if (typeof settings.dataCollection.enabled !== 'boolean') {
+      return false;
+    }
+    
+    // Перевіряємо обов'язкові поля для display
+    if (typeof settings.display.language !== 'string' || 
+        !['ua', 'en'].includes(settings.display.language)) {
+      return false;
+    }
+    
+    if (settings.display.theme !== undefined && 
+        !['default', 'light', 'dark'].includes(settings.display.theme)) {
+      return false;
+    }
+    
+    return true;
   }
 
   // Видалити goBack з діалогом unsaved, залишити простий перехід

@@ -220,7 +220,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // Ініціалізуємо мову з localStorage
-    const savedLanguage = localStorage.getItem('chartex_language') || 'uk';
+    const savedLanguage = localStorage.getItem('chartex_language') || 'ua';
     this.translateService.use(savedLanguage);
     
     // Перевіряємо налаштування збору даних

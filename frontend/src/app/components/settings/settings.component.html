@@ -110,34 +110,6 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Налаштування приватності -->
-      <mat-card class="settings-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>security</mat-icon>
-            {{ 'SETTINGS.PRIVACY' | translate }}
-          </mat-card-title>
-          <mat-card-subtitle>
-            {{ 'SETTINGS.PRIVACY_DESC' | translate }}
-          </mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-label">{{ 'SETTINGS.SHOW_OTHER_DEVICES' | translate }}</div>
-              <div class="setting-description">
-                {{ 'SETTINGS.SHOW_OTHER_DEVICES_DESC' | translate }}
-              </div>
-            </div>
-            <mat-slide-toggle 
-              [(ngModel)]="privacySettings.showOtherDevices"
-              (change)="onPrivacyChange()">
-            </mat-slide-toggle>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
       <!-- Налаштування відображення -->
       <mat-card class="settings-card">
         <mat-card-header>
@@ -159,7 +131,7 @@
             </div>
             <mat-form-field appearance="outline">
               <mat-select [(ngModel)]="displaySettings.language" (ngModelChange)="onLanguageChange()">
-                <mat-option value="uk">Українська</mat-option>
+                <mat-option value="ua">Українська</mat-option>
                 <mat-option value="en">English</mat-option>
               </mat-select>
             </mat-form-field>

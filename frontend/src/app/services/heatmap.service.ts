@@ -257,8 +257,8 @@ export class HeatmapService {
     hourLabels.forEach(h => (valueByHourWeek[h] = {}));
 
     let maxWeekIndex = 1;
-    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
-    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+    const lang = (localStorage.getItem('chartex_language') || 'ua').toLowerCase();
+    const weekPrefix = lang.startsWith('ua') ? 'Тижд.' : 'W';
     const getItemDate = (it: any): Date | null => {
       const ts = (it?.timestamp ?? it?.time ?? it?.date ?? it?.startTime ?? it?.endTime ?? it?.visitedAt ?? it?.lastVisitTime ?? it?.visitTime ?? it?.createdAt ?? it?.updatedAt);
       if (!ts) return null;
@@ -533,8 +533,8 @@ export class HeatmapService {
     const hours: number[] = Array.from({ length: 24 }, (_, i) => i);
     const hourLabels: string[] = hours.map(h => `${h.toString().padStart(2, '0')}:00`);
 
-    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
-    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+    const lang = (localStorage.getItem('chartex_language') || 'ua').toLowerCase();
+    const weekPrefix = lang.startsWith('ua') ? 'Тижд.' : 'W';
 
     // Формуємо осі X — 12 тижнів (3 місяці × 4 тижні)
     const weeks: string[] = Array.from({ length: QUARTER_WEEKS }, (_, i) => `${weekPrefix}${i + 1}`);
@@ -594,8 +594,8 @@ export class HeatmapService {
   /** Опції для теплової карти добової активності за тижнями */
   getTimeOfDayWeekHeatmapOptions(isDarkTheme: boolean, globalMaxValue = 1): HeatmapOptions {
     // Генеруємо категорії для X-осі (тижні)
-    const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
-    const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+    const lang = (localStorage.getItem('chartex_language') || 'ua').toLowerCase();
+    const weekPrefix = lang.startsWith('ua') ? 'Тижд.' : 'W';
     const weekCategories = Array.from({ length: 12 }, (_, i) => `${weekPrefix}${i + 1}`);
     
     
@@ -627,8 +627,8 @@ export class HeatmapService {
           custom: function({ series, seriesIndex, dataPointIndex, w }: any) {
             try {
               // Отримуємо дані безпосередньо з конфігурації
-              const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
-              const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+              const lang = (localStorage.getItem('chartex_language') || 'ua').toLowerCase();
+              const weekPrefix = lang.startsWith('ua') ? 'Тижд.' : 'W';
               
               const hourName = w?.globals?.seriesNames?.[seriesIndex] || `${String(23 - seriesIndex).padStart(2, '0')}:00`;
               const weekName = w?.config?.xaxis?.categories?.[dataPointIndex] || `${weekPrefix}${dataPointIndex + 1}`;
@@ -705,8 +705,8 @@ export class HeatmapService {
         custom: function({ series, seriesIndex, dataPointIndex, w }: any) {
           try {
             // Отримуємо дані безпосередньо з конфігурації
-            const lang = (localStorage.getItem('chartex_language') || 'uk').toLowerCase();
-            const weekPrefix = lang.startsWith('uk') ? 'Тижд.' : 'W';
+            const lang = (localStorage.getItem('chartex_language') || 'ua').toLowerCase();
+            const weekPrefix = lang.startsWith('ua') ? 'Тижд.' : 'W';
             
             const hourName = w?.globals?.seriesNames?.[seriesIndex] || `${String(23 - seriesIndex).padStart(2, '0')}:00`;
             const weekName = w?.config?.xaxis?.categories?.[dataPointIndex] || `${weekPrefix}${dataPointIndex + 1}`;

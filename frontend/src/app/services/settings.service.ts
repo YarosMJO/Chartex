@@ -10,13 +10,8 @@ export interface DataCollectionSettings {
   collectVisitDuration: boolean;
 }
 
-export interface PrivacySettings {
-  encryptData: boolean;
-  showOtherDevices: boolean;
-}
-
 export interface DisplaySettings {
-  language: 'uk' | 'en';
+  language: 'ua' | 'en';
   theme: 'default' | 'light' | 'dark';
   showDuration: boolean;
   showDevices: boolean;
@@ -26,7 +21,6 @@ export interface DisplaySettings {
 
 export interface AppSettings {
   dataCollection: DataCollectionSettings;
-  privacy: PrivacySettings;
   display: DisplaySettings;
 }
 
@@ -36,7 +30,6 @@ export interface AppSettings {
 export class SettingsService {
   private readonly STORAGE_KEYS = {
     DATA_COLLECTION: 'chartex_data_collection',
-    PRIVACY: 'chartex_privacy',
     DISPLAY: 'chartex_display'
   };
 
@@ -57,12 +50,8 @@ export class SettingsService {
         collectPageTitles: true,
         collectVisitDuration: true
       },
-      privacy: {
-        encryptData: true,
-        showOtherDevices: true
-      },
       display: {
-        language: 'uk',
+        language: 'ua',
         theme: 'default',
         showDuration: true,
         showDevices: true,
@@ -76,12 +65,10 @@ export class SettingsService {
   private loadSettings(): void {
     try {
       const dataCollection = this.loadFromStorage<DataCollectionSettings>(this.STORAGE_KEYS.DATA_COLLECTION);
-      const privacy = this.loadFromStorage<PrivacySettings>(this.STORAGE_KEYS.PRIVACY);
       const display = this.loadFromStorage<DisplaySettings>(this.STORAGE_KEYS.DISPLAY);
 
       const settings: AppSettings = {
         dataCollection: { ...this.getDefaultSettings().dataCollection, ...dataCollection },
-        privacy: { ...this.getDefaultSettings().privacy, ...privacy },
         display: { ...this.getDefaultSettings().display, ...display }
       };
 
@@ -121,7 +108,6 @@ export class SettingsService {
   saveSettings(settings: AppSettings): void {
     try {
       localStorage.setItem(this.STORAGE_KEYS.DATA_COLLECTION, JSON.stringify(settings.dataCollection));
-      localStorage.setItem(this.STORAGE_KEYS.PRIVACY, JSON.stringify(settings.privacy));
       localStorage.setItem(this.STORAGE_KEYS.DISPLAY, JSON.stringify(settings.display));
 
       this.settingsSubject.next(settings);
@@ -150,13 +136,6 @@ export class SettingsService {
     const currentSettings = this.settingsSubject.value;
     const newDataCollection = { ...currentSettings.dataCollection, ...settings };
     this.updateSettings({ dataCollection: newDataCollection });
-  }
-
-  // Оновити налаштування приватності
-  updatePrivacySettings(settings: Partial<PrivacySettings>): void {
-    const currentSettings = this.settingsSubject.value;
-    const newPrivacy = { ...currentSettings.privacy, ...settings };
-    this.updateSettings({ privacy: newPrivacy });
   }
 
   // Оновити налаштування відображення
@@ -199,11 +178,6 @@ export class SettingsService {
   // Перевірити, чи збір даних увімкнено
   isDataCollectionEnabled(): boolean {
     return this.settingsSubject.value.dataCollection.enabled;
-  }
-
-  // Перевірити, чи шифрування увімкнено
-  isEncryptionEnabled(): boolean {
-    return this.settingsSubject.value.privacy.encryptData;
   }
 
   // Отримати поточну мову
