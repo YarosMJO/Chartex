@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
 import { TranslateModule } from '@ngx-translate/core';
 import { formatDuration } from '../../../utils/utils';
 
@@ -24,20 +25,42 @@ import { formatDuration } from '../../../utils/utils';
     MatIconModule,
     MatButtonModule,
     MatChipsModule,
+    MatSelectModule,
     TranslateModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SearchSectionComponent {
+export class SearchSectionComponent implements OnInit, OnChanges {
   @Input() searchQuery: string = '';
   @Input() searchResults: any[] = [];
   @Input() isSearching: boolean = false;
   @Input() hasResults: boolean = false;
+  @Input() selectedPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
 
   @Output() searchChange = new EventEmitter<string>();
   @Output() clearSearch = new EventEmitter<void>();
+  @Output() periodChange = new EventEmitter<'7d' | '30d' | '90d' | '1y' | 'all'>();
 
   formatDuration = formatDuration;
+  
+  private previousPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
+
+  ngOnInit() {
+    this.previousPeriod = this.selectedPeriod;
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['selectedPeriod']) {
+      this.previousPeriod = this.selectedPeriod;
+    }
+  }
+
+  onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
+    if (newPeriod !== this.previousPeriod) {
+      this.previousPeriod = newPeriod;
+      this.periodChange.emit(newPeriod);
+    }
+  }
 
   onSearchInput(event: any) {
     const query = event.target.value;

@@ -2,6 +2,16 @@
   <mat-card-content>
     <div class="search-container">
       <div class="search-input-container">
+        <mat-form-field appearance="outline" class="period-field">
+          <mat-label>{{ 'DASHBOARD.PERIOD' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodChange($event)">
+            <mat-option value="7d">{{ 'DASHBOARD.PERIODS.7D' | translate }}</mat-option>
+            <mat-option value="30d">{{ 'DASHBOARD.PERIODS.30D' | translate }}</mat-option>
+            <mat-option value="90d">{{ 'DASHBOARD.PERIODS.90D' | translate }}</mat-option>
+            <mat-option value="1y">{{ 'DASHBOARD.PERIODS.1Y' | translate }}</mat-option>
+            <mat-option value="all">{{ 'DASHBOARD.PERIODS.ALL' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
         <mat-form-field appearance="outline" class="search-field">
           <mat-label>{{ 'DASHBOARD.SEARCH.PLACEHOLDER' | translate }}</mat-label>
           <input 

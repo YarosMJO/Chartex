@@ -24,7 +24,6 @@ import { categorizeWebsite, cleanDomainName, getDeviceTypeLabel, getDomainFromUr
 import { AdvancedFiltersComponent, FilterOptions } from './advanced-filters/advanced-filters.component';
 import { ChartsSectionComponent } from './charts-section/charts-section.component';
 import { DevicesSectionComponent } from './devices-section/devices-section.component';
-import { FiltersSectionComponent } from './filters-section/filters-section.component';
 import { SearchSectionComponent } from './search-section/search-section.component';
 import { StatsCardsComponent } from './stats-cards/stats-cards.component';
 
@@ -52,7 +51,6 @@ import { StatsCardsComponent } from './stats-cards/stats-cards.component';
     MatTooltipModule,
     StatsCardsComponent,
     ChartsSectionComponent,
-    FiltersSectionComponent,
     DevicesSectionComponent,
     SearchSectionComponent,
     AdvancedFiltersComponent

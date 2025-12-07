@@ -31,24 +31,16 @@
     </div>
   </mat-toolbar>
 
-  <!-- Фільтри -->
-  <app-filters-section
-    [selectedPeriod]="selectedPeriod"
-    [selectedDevice]="selectedDevice"
-    [devices]="activeDevices"
-    [showDeviceFilter]="showDeviceSection"
-    (periodChange)="onPeriodChange($event)"
-    (deviceChange)="onDeviceChange($event)">
-  </app-filters-section>
-
   <!-- Пошук -->
   <app-search-section
     [searchQuery]="searchQuery"
     [searchResults]="searchResults"
     [isSearching]="isSearching"
     [hasResults]="hasResults"
+    [selectedPeriod]="selectedPeriod"
     (searchChange)="onSearchChange($event)"
-    (clearSearch)="onClearSearch()">
+    (clearSearch)="onClearSearch()"
+    (periodChange)="onPeriodChange($event)">
   </app-search-section>
 
   <!-- Розширені фільтри -->
