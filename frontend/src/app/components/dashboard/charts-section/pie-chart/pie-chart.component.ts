@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { MatCardModule } from '@angular/material/card';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { formatDuration, categorizeWebsite, getDomainFromUrl } from '../../../../utils/utils';
+import { categorizeWebsite, formatDuration, getDomainFromUrl } from '../../../../utils/utils';
 
 @Component({
   selector: 'app-pie-chart',
@@ -15,134 +15,64 @@ import { formatDuration, categorizeWebsite, getDomainFromUrl } from '../../../..
 })
 export class PieChartComponent implements OnChanges {
   @Input() categoryDistributionData: number[] = [];
+  @Input() categoryLabels: string[] = [];
   @Input() isDarkTheme: boolean = false;
   @Input() filteredDomains: any[] = [];
   @Input() userStats: any = null;
 
-  // Дані категорій: зберігаємо назви категорій разом з даними
-  categoryLabels: string[] = [];
-  categoryValues: number[] = [];
-
   // Кеш для опцій графіка
   private _chartOptions: any = null;
-  private _lastThemeState: boolean | null = null;
-  private _lastCategories: string = '';
 
   constructor(private cdr: ChangeDetectorRef, private translateService: TranslateService) { }
 
   ngOnChanges() {
-    // Якщо є відфільтровані домени, підготовлюємо дані з них
-    if (this.filteredDomains && this.filteredDomains.length > 0) {
-      this.prepareDataFromFilteredDomains(this.filteredDomains);
-    } else if (this.userStats && this.userStats.topDomains) {
-      // Підготовлюємо дані з userStats
-      this.prepareDataFromUserStats();
+    // Use categoryLabels directly from input (passed from dashboard)
+    // Only fall back to extraction if labels not provided
+    if (!this.categoryLabels || this.categoryLabels.length === 0) {
+      if (this.filteredDomains && this.filteredDomains.length > 0) {
+        this.extractCategoryLabels(this.filteredDomains);
+      } else if (this.userStats?.topDomains) {
+        this.extractCategoryLabels(this.userStats.topDomains);
+      }
     }
-    this._chartOptions = null; // Скидаємо кеш при зміні даних
+
+    this._chartOptions = null;
     this.cdr.markForCheck();
   }
 
-  // Метод для підготовки даних з userStats
-  private prepareDataFromUserStats(): void {
+  // Extract category labels from filtered domains in same order as categoryDistributionData
+  private extractCategoryLabels(domains: any[]): void {
     try {
-      if (!this.userStats || !this.userStats.topDomains || this.userStats.topDomains.length === 0) {
-        this.categoryDistributionData = [];
+      if (!domains || domains.length === 0) {
         this.categoryLabels = [];
-        this.categoryValues = [];
-        this.cdr.markForCheck();
         return;
       }
 
+      // Build category map from domains (same logic as dashboard's aggregateByCategory)
       const categoryStats = new Map<string, number>();
-
-      this.userStats.topDomains.forEach((domain: any) => {
-        if (domain.decryptedData) {
-          const domainName = getDomainFromUrl(domain.decryptedData.url);
-          const category = categorizeWebsite(domainName);
-          const duration = domain.totalDuration || 0;
-
-          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
+      domains.forEach(domain => {
+        const url = domain.decryptedData?.url || domain._id;
+        const category = categorizeWebsite(getDomainFromUrl(url));
+        if (category !== 'search_engine') {
+          categoryStats.set(category, (categoryStats.get(category) || 0) + (domain.totalDuration || 0));
         }
       });
 
-      // Сортуємо категорії за часом та беремо топ-6
-      const sortedCategories = Array.from(categoryStats.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
-
-      // Зберігаємо категорії та значення окремо
-      this.categoryLabels = sortedCategories.map(([category]) => category);
-      this.categoryValues = sortedCategories.map(([category, duration]) => duration);
-      this.categoryDistributionData = this.categoryValues;
-
+      // Sort by duration (descending) - MUST match dashboard's aggregateByCategory logic exactly
+      const sortedCategories = Array.from(categoryStats.entries()).sort((a, b) => b[1] - a[1]);
+      this.categoryLabels = sortedCategories.map(([cat]) => cat);
     } catch (error) {
-      this.categoryDistributionData = [];
       this.categoryLabels = [];
-      this.categoryValues = [];
     }
-    
-    this.cdr.markForCheck();
-  }
-
-  // Метод для підготовки даних з відфільтрованих доменів
-  private prepareDataFromFilteredDomains(filteredDomains: any[]): void {
-    try {
-      if (!filteredDomains || filteredDomains.length === 0) {
-        this.categoryDistributionData = [];
-        this.categoryLabels = [];
-        this.categoryValues = [];
-        this.cdr.markForCheck();
-        return;
-      }
-
-      const categoryStats = new Map<string, number>();
-
-      filteredDomains.forEach(domain => {
-        if (domain.decryptedData) {
-          const domainName = getDomainFromUrl(domain.decryptedData.url);
-          const category = categorizeWebsite(domainName);
-          const duration = domain.totalDuration || 0;
-
-          categoryStats.set(category, (categoryStats.get(category) || 0) + duration);
-        }
-      });
-
-      // Сортуємо категорії за часом та беремо топ-6
-      const sortedCategories = Array.from(categoryStats.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
-
-      // Зберігаємо категорії та значення окремо
-      this.categoryLabels = sortedCategories.map(([category]) => category);
-      this.categoryValues = sortedCategories.map(([category, duration]) => duration);
-      this.categoryDistributionData = this.categoryValues;
-
-    } catch (error) {
-      this.categoryDistributionData = [];
-      this.categoryLabels = [];
-      this.categoryValues = [];
-    }
-    
-    this.cdr.markForCheck();
   }
 
 
   get pieChartOptions() {
-    // Визначаємо, чи потрібно показувати легенду на основі розміру екрану
     const shouldShowLegend = window.innerWidth > 1200;
-    
-    // Генеруємо локалізовані labels на основі реальних категорій
     const currentCategories = this.categoryLabels.join(',');
-    
-    // Перевіряємо чи потрібно оновити кеш
-    const currentTheme = this.isDarkTheme;
-    const cacheKey = `pieChart_${currentTheme}_${shouldShowLegend}_${currentCategories}`;
-    if (this._chartOptions === null || 
-        this._lastThemeState !== currentTheme ||
-        this._lastCategories !== currentCategories ||
-        this._chartOptions._cacheKey !== cacheKey) {
-      this._lastThemeState = currentTheme;
-      this._lastCategories = currentCategories;
+    const cacheKey = `pieChart_${this.isDarkTheme}_${shouldShowLegend}_${currentCategories}`;
+
+    if (this._chartOptions === null || this._chartOptions._cacheKey !== cacheKey) {
       this._chartOptions = {
         ...this.buildPieChartOptions(shouldShowLegend),
         _cacheKey: cacheKey
@@ -152,18 +82,15 @@ export class PieChartComponent implements OnChanges {
   }
 
   private buildPieChartOptions(shouldShowLegend: boolean) {
-    // Генеруємо локалізовані labels на основі реальних категорій
-    const labels = this.categoryLabels.map(category => {
-      const categoryKey = category.toUpperCase().replace(/-/g, '_');
-      const translationKey = `DASHBOARD.FILTERS.CATEGORIES.${categoryKey}`;
-      const translated = this.translateService.instant(translationKey);
-      // Якщо переклад не знайдено, повертаємо оригінальну категорію
-      return translated !== translationKey ? translated : category;
+    // Use categoryLabels (extracted from domains) for chart labels
+    const labels = this.categoryLabels.map(cat => {
+      const key = `DASHBOARD.FILTERS.CATEGORIES.${cat.toUpperCase().replace(/-/g, '_')}`;
+      const translated = this.translateService.instant(key);
+      return translated !== key ? translated : cat;
     });
 
-    // Кольори для категорій (використовуємо циклічно, якщо категорій більше)
     const colorPalette = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
-    const colors = labels.map((_, index) => colorPalette[index % colorPalette.length]);
+    const colors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
 
     return {
       chart: {
@@ -172,34 +99,17 @@ export class PieChartComponent implements OnChanges {
         foreColor: this.isDarkTheme ? '#f3eaff' : '#23272f',
         background: this.isDarkTheme ? '#232136' : '#fff'
       },
-      labels: labels,
-      colors: colors,
+      labels,
+      colors,
       dataLabels: {
         enabled: true,
-        formatter: (val: number, opts: any) => {
-          return opts.w.globals.seriesTotals[opts.seriesIndex] > 0
-            ? this.safeRound(val || 0) + '%'
-            : '';
-        },
-        style: {
-          colors: this.isDarkTheme ? ['#f3eaff'] : ['#23272f']
-        }
+        formatter: (val: number, opts: any) => opts.w.globals.seriesTotals[opts.seriesIndex] > 0 ? `${this.safeRound(val)}%` : '',
+        style: { colors: this.isDarkTheme ? ['#f3eaff'] : ['#23272f'] }
       },
-      plotOptions: {
-        pie: {
-          offsetY: 0,
-          dataLabels: {
-            offset: 0
-          }
-        }
-      },
+      plotOptions: { pie: { offsetY: 0, dataLabels: { offset: 0 } } },
       tooltip: {
         theme: this.isDarkTheme ? 'dark' : 'light',
-        y: {
-          formatter: function (value: number) {
-            return formatDuration(value);
-          }
-        }
+        y: { formatter: (v: number) => formatDuration(v) }
       },
       legend: {
         show: shouldShowLegend,
@@ -209,27 +119,11 @@ export class PieChartComponent implements OnChanges {
         fontSize: '14px',
         fontFamily: 'inherit',
         width: '100%',
-        itemMargin: {
-          horizontal: 8,
-          vertical: 6
-        },
-        onItemClick: {
-          toggleDataSeries: true
-        },
-        formatter: (seriesName: string, opts: any) => seriesName,
-        markers: {
-          width: 10,
-          height: 10,
-          radius: 5
-        },
-        labels: {
-          colors: undefined
-        }
+        itemMargin: { horizontal: 8, vertical: 6 },
+        onItemClick: { toggleDataSeries: true },
+        markers: { width: 10, height: 10, radius: 5 }
       },
-      stroke: {
-        width: 2,
-        colors: ['#ffffff']
-      },
+      stroke: { width: 2, colors: ['#ffffff'] }
     };
   }
 

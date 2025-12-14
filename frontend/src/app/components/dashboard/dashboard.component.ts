@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -18,7 +18,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { ApiService, Device, HistoryStats } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { HeatmapSeries, HeatmapService } from '../../services/heatmap.service';
+import { HeatmapSeries } from '../../services/heatmap.service';
 import { SettingsService } from '../../services/settings.service';
 import { categorizeWebsite, cleanDomainName, getDeviceTypeLabel, getDomainFromUrl, getPeriodLabel } from '../../utils/utils';
 import { AdvancedFiltersComponent, FilterOptions } from './advanced-filters/advanced-filters.component';
@@ -67,36 +67,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return Math.floor(value + 0.5);
   };
 
-  // Методи санітизації даних
-  private sanitizeString(value: any): string {
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return value.trim();
-    }
-    return '';
-  }
-
-  private sanitizeNumber(value: any): number {
-    if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
-      return Math.max(0, value);
-    }
-    if (typeof value === 'string') {
-      const parsed = parseFloat(value);
-      if (!isNaN(parsed) && isFinite(parsed)) {
-        return Math.max(0, parsed);
-      }
-    }
-    return 0;
-  }
-
   // Перевірка налаштувань збору даних
   private checkDataCollectionSettings() {
     this.settingsService.getSettings().subscribe(settings => {
       // Графіки що залежать від збору тривалості відвідувань
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
-      
+
       // Секція пристроїв та дропдаун фільтра завжди видима
       this.showDeviceSection = true;
-      
+
       this.cdr.markForCheck();
     });
   }
@@ -118,7 +97,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private periodChangeTimeout: any = null;
   private deviceChangeTimeout: any = null;
   private advancedFiltersTimeout: any = null;
-  
+
   // Event handlers for chart cleanup
   private chartCleanup?: () => void;
 
@@ -129,19 +108,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activityHeatmapData: HeatmapSeries[] = [];
   timeOfDayWeekHeatmapData: HeatmapSeries[] = [];
   categoryDistributionData: number[] = [];
-  bubbleChartData: { 
-    x: number; 
-    y: number; 
-    z: number; 
+  categoryLabels: string[] = [];
+  bubbleChartData: {
+    x: number;
+    y: number;
+    z: number;
     name: string;
     rawTotalMinutes?: number;
     rawVisits?: number;
     rawAvgMinutes?: number;
   }[] = [];
-  
+
   // Відфільтровані домени для передачі до графіків
   filteredDomains: any[] = [];
-  
+
   // Динамічні діапазони тривалості на основі реальних даних
   // Максимальний час обмежено до 3 годин (180 хвилин) для обох типів
   durationRange: { minTotal: number; maxTotal: number; minAverage: number; maxAverage: number } = {
@@ -150,7 +130,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     minAverage: 0,
     maxAverage: 180
   };
-  
+
   // Налаштування масштабу для bubble chart
   bubbleChartScaleMode: 'normal' | 'zoomed' = 'normal';
 
@@ -200,9 +180,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   };
   isAdvancedFiltersExpanded: boolean = false;
 
-  // Флаг для запобігання зайвим оновленням графіка
-  private lastChartDataHash = '';
-
   // Кеш для методів форматування
   private formatCache = new Map<string, string>();
   private readonly MAX_CACHE_SIZE = 100;
@@ -210,9 +187,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
-    private heatmapService: HeatmapService,
     private settingsService: SettingsService,
-    private ngZone: NgZone,
     private router: Router,
     private translateService: TranslateService,
     private cdr: ChangeDetectorRef
@@ -222,7 +197,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Ініціалізуємо мову з localStorage
     const savedLanguage = localStorage.getItem('chartex_language') || 'ua';
     this.translateService.use(savedLanguage);
-    
+
     // Перевіряємо налаштування збору даних
     this.checkDataCollectionSettings();
 
@@ -231,7 +206,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
       // Секція пристроїв завжди видима
       this.showDeviceSection = true;
-      
+
       this.cdr.markForCheck();
     });
 
@@ -299,12 +274,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.advancedFiltersTimeout) {
       clearTimeout(this.advancedFiltersTimeout);
     }
-    
+
     // Cleanup chart event listeners
     if (this.chartCleanup) {
       this.chartCleanup();
     }
-    
+
     // Очищаємо слухачі подій
     window.removeEventListener('resize', this.resizeHandler);
     document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
@@ -346,7 +321,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       // Очищаємо кеш форматування
       this.formatCache.clear();
-      
+
       // НЕ очищаємо дані графіків, щоб уникнути миготіння
       // Просто перезавантажуємо дані
       await Promise.all([
@@ -381,11 +356,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         _t: Date.now(),
         forceRefresh: true // Примусове оновлення
       };
-      
+
       const stats = await this.apiService.getUserStatsWithDecryptedData(paramsWithTimestamp);
 
       if (stats?.topDomains && stats.topDomains.length > 0) {
-        
+
       }
 
       this.userStats = stats;
@@ -426,6 +401,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.activityHeatmapData = [];
       this.timeOfDayWeekHeatmapData = [];
       this.categoryDistributionData = [];
+      this.categoryLabels = [];
       this.bubbleChartData = [];
       return;
     }
@@ -439,6 +415,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.activityHeatmapData = [];
         this.timeOfDayWeekHeatmapData = [];
         this.categoryDistributionData = [];
+        this.categoryLabels = [];
         this.bubbleChartData = [];
         return;
       }
@@ -448,82 +425,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const domain = cleanDomainName(d.decryptedData?.url || d._id);
         return domain !== 'google.com';
       });
-      
-      // Встановлюємо відфільтровані домени за замовчуванням
-      this.filteredDomains = filteredTopDomains;
-      
+
       // Обчислюємо мінімальну та максимальну тривалість з даних
       this.calculateDurationRanges(filteredTopDomains);
-      
+
       // Ініціалізуємо фільтри з динамічними діапазонами, якщо вони ще не встановлені
       if (this.advancedFilters.durationRange.min === 0 && this.advancedFilters.durationRange.max === 180) {
-        const currentMinRange = this.advancedFilters.durationType === 'average' 
-          ? this.durationRange.minAverage 
+        const currentMinRange = this.advancedFilters.durationType === 'average'
+          ? this.durationRange.minAverage
           : this.durationRange.minTotal;
-        const currentMaxRange = this.advancedFilters.durationType === 'average' 
-          ? this.durationRange.maxAverage 
+        const currentMaxRange = this.advancedFilters.durationType === 'average'
+          ? this.durationRange.maxAverage
           : this.durationRange.maxTotal;
-        
+
         this.advancedFilters = {
           ...this.advancedFilters,
           durationRange: { min: currentMinRange, max: currentMaxRange }
         };
       }
 
-      // Спочатку групуємо домени та сумуємо їх відвідування
-      const domainMap = new Map<string, number>();
-      
-      filteredTopDomains.forEach(domain => {
-        const domainName = cleanDomainName(domain.decryptedData?.url || domain._id);
-        const visits = Math.max(0, parseInt(String(domain.visits)) || 0);
-        
-        if (domainName && typeof domainName === 'string' && domainName.trim().length > 0) {
-          const cleanName = domainName.trim();
-          const currentVisits = domainMap.get(cleanName) || 0;
-          domainMap.set(cleanName, currentVisits + visits);
-        }
-      });
-
-      // Конвертуємо Map в масив, сортуємо за кількістю відвідувань та беремо топ-10
-      const rawData = Array.from(domainMap.entries())
-        .map(([domainName, visits]) => ({
-          x: domainName,
-          y: visits
-        }))
-        .sort((a, b) => b.y - a.y) // Сортуємо за спаданням відвідувань
-        .slice(0, 10); // Беремо топ-10
-
-      // Фільтруємо тільки домени з відвідуваннями > 0
-      this.activityChartData = rawData.filter(item => item.y > 0);
-      
-      // Валідація фінальних даних
-      const isValidData = this.activityChartData.every(item => 
-        item && 
-        typeof item.x === 'string' && 
-        item.x.length > 0 &&
-        typeof item.y === 'number' && 
-        item.y >= 0
-      );
-      
-      // Якщо немає даних з відвідуваннями або дані невалідні, створимо мінімальні тестові дані
-      if (this.activityChartData.length === 0 || !isValidData) {
-        this.activityChartData = [
-          { x: 'youtube.com', y: 25 },
-          { x: 'github.com', y: 18 },
-          { x: 'stackoverflow.com', y: 12 },
-          { x: 'google.com', y: 8 },
-          { x: 'medium.com', y: 5 }
-        ];
-      }
-      
-      this.topDomainsData = filteredTopDomains
-        .slice(0, 10)
-        .map(domain => ({
-          name: cleanDomainName(domain.decryptedData?.url || domain._id),
-          title: domain.decryptedData?.title || cleanDomainName(domain.decryptedData?.url || domain._id),
-          visits: domain.visits,
-          duration: domain.totalDuration
-        }));
+      // Initialize chart data - will be populated by updateChartDataWithFilteredDomains when filters apply
+      this.activityChartData = [];
+      this.topDomainsData = [];
 
       // Підготовка даних для статистики пристроїв
       this.deviceStatsData = this.devices
@@ -534,32 +457,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
           duration: device.stats?.totalDuration || 0
         }));
 
-      // Підготовка даних для теплової карти
-
-      // Підготовка даних для теплової карти добової активності за тижнями
-      
-      if (this.timeOfDayWeekHeatmapData?.length > 0) {
-      }
-
-      // Підготовка даних для кругової діаграми
-
-      // Підготовка даних для бульбашкової діаграми
-
-      // Оновлюємо ширину графіка після підготовки даних
+      // Встановлюємо відфільтровані домени та запускаємо їх обробку
+      this.filteredDomains = filteredTopDomains;
+      this.updateChartDataWithFilteredDomains(filteredTopDomains);
 
       this.cdr.markForCheck();
     } catch (error) {
       // Silent fail
     }
   }
-
-
-  // Підготовка даних для графіка активності з відфільтрованих даних
-
-
-  // Підготовка даних для теплової карти активності з відфільтрованих даних
-
-
 
   // Зміна періоду
   async onPeriodChange(newPeriod: '7d' | '30d' | '90d' | '1y' | 'all') {
@@ -570,7 +476,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо selectedPeriod
     this.selectedPeriod = newPeriod;
-    
+
     // Очищаємо попередній таймаут
     if (this.periodChangeTimeout) {
       clearTimeout(this.periodChangeTimeout);
@@ -592,7 +498,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Оновлюємо selectedDevice
     this.selectedDevice = newDevice;
-    
+
     // Очищаємо попередній таймаут
     if (this.deviceChangeTimeout) {
       clearTimeout(this.deviceChangeTimeout);
@@ -779,6 +685,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  // Простий порівняльник масивів рядків (без врахування порядку)
+  private arraysEqual(arr1: string[], arr2: string[]): boolean {
+    const a = Array.isArray(arr1) ? [...new Set(arr1 || [])] : [];
+    const b = Array.isArray(arr2) ? [...new Set(arr2 || [])] : [];
+    if (a.length !== b.length) return false;
+    const setB = new Set(b);
+    return a.every(item => setB.has(item));
+  }
+
   async onClearAdvancedFilters() {
     // Очищаємо таймаут
     if (this.advancedFiltersTimeout) {
@@ -786,11 +701,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     // Встановлюємо діапазон в залежності від типу фільтрації на основі реальних даних
-    const minRange = this.advancedFilters.durationType === 'average' 
-      ? this.durationRange.minAverage 
+    const minRange = this.advancedFilters.durationType === 'average'
+      ? this.durationRange.minAverage
       : this.durationRange.minTotal;
-    const maxRange = this.advancedFilters.durationType === 'average' 
-      ? this.durationRange.maxAverage 
+    const maxRange = this.advancedFilters.durationType === 'average'
+      ? this.durationRange.maxAverage
       : this.durationRange.maxTotal;
 
     this.advancedFilters = {
@@ -824,11 +739,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     domains.forEach(domain => {
       const totalDuration = domain.totalDuration || 0;
       const visits = domain.visits || 0;
-      
+
       // Загальна тривалість (в хвилинах)
       const totalMinutes = totalDuration / 60;
       totalDurations.push(totalMinutes);
-      
+
       // Середня тривалість (в хвилинах)
       if (visits > 0) {
         const avgMinutes = (totalDuration / visits) / 60;
@@ -841,21 +756,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Обчислюємо мін/макс для загальної тривалості
     const minTotal = Math.min(...totalDurations);
     const maxTotal = Math.max(...totalDurations);
-    
+
     // Обчислюємо мін/макс для середньої тривалості
     const minAverage = Math.min(...averageDurations);
     const maxAverage = Math.max(...averageDurations);
 
     // Округлюємо значення, встановлюємо мінімум 0 та обмежуємо максимум до 3 годин (180 хвилин)
     const MAX_DURATION_MINUTES = 180; // 3 години
-    
+
     this.durationRange = {
       minTotal: Math.max(0, Math.floor(minTotal)),
       maxTotal: Math.min(Math.ceil(maxTotal), MAX_DURATION_MINUTES),
       minAverage: Math.max(0, Math.floor(minAverage)),
       maxAverage: Math.min(Math.ceil(maxAverage), MAX_DURATION_MINUTES)
     };
-    
+
     // Оновлюємо фільтри, якщо вони виходять за межі нового діапазону
     if (this.advancedFilters.durationType === 'total') {
       if (this.advancedFilters.durationRange.min < this.durationRange.minTotal) {
@@ -875,272 +790,199 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private async applyAdvancedFilters() {
-    if (!this.userStats?.topDomains) {
-      return;
-    }
+    if (!this.userStats?.topDomains) return;
 
-    // Обчислюємо поточні діапазони тривалості
-    const durationMaxRange = this.advancedFilters.durationType === 'average' 
-      ? this.durationRange.maxAverage 
+    const durationMaxRange = this.advancedFilters.durationType === 'average'
+      ? this.durationRange.maxAverage
       : this.durationRange.maxTotal;
-    const durationMinRange = this.advancedFilters.durationType === 'average' 
-      ? this.durationRange.minAverage 
+    const durationMinRange = this.advancedFilters.durationType === 'average'
+      ? this.durationRange.minAverage
       : this.durationRange.minTotal;
 
-    // Фільтруємо дані на основі вибраних фільтрів
-    let filteredDomains = [...this.userStats.topDomains];
+    let filteredDomains = this.excludeSearchEngines(this.userStats.topDomains);
+    filteredDomains = this.applyDateFilters(filteredDomains);
+    filteredDomains = this.applyCategoryFilters(filteredDomains);
+    filteredDomains = this.applyDurationFilters(filteredDomains, durationMinRange, durationMaxRange);
 
-    // Фільтр за категоріями
-    if (this.advancedFilters.categories.length > 0) {
-      filteredDomains = filteredDomains.filter(domain => {
-        const url = domain.decryptedData?.url || domain._id;
-        const domainName = getDomainFromUrl(url);
-        const category = categorizeWebsite(domainName);
-        const isIncluded = this.advancedFilters.categories.includes(category);
-        return isIncluded;
-      });
-    }
+    this.updateStatsForFilters(filteredDomains, durationMinRange, durationMaxRange);
 
-    // Фільтр за часом проведеним на сайті (конвертуємо з хвилин в секунди)
-    // Перевіряємо чи діапазон не є повним (тобто є якийсь фільтр застосований)
-    const isFullRange = this.advancedFilters.durationRange.min === durationMinRange && 
-                        this.advancedFilters.durationRange.max === durationMaxRange;
-    
-    if (!isFullRange) {
-      // Конвертуємо хвилини в секунди для порівняння з даними
-      const minSeconds = this.advancedFilters.durationRange.min * 60;
-      const maxSeconds = this.advancedFilters.durationRange.max * 60;
-
-      filteredDomains = filteredDomains.filter(domain => {
-        let durationValue: number;
-
-        if (this.advancedFilters.durationType === 'total') {
-          // Фільтруємо по загальному часу
-          durationValue = domain.totalDuration || 0;
-        } else {
-          // Фільтруємо по середньому часу (загальний час / кількість відвідувань)
-          const totalDuration = domain.totalDuration || 0;
-          const visits = domain.visits || 0;
-
-          if (visits <= 0) {
-            // Якщо немає відвідувань, середній час = 0
-            durationValue = 0;
-          } else {
-            durationValue = totalDuration / visits;
-          }
-        }
-
-        // Перевіряємо чи значення в межах діапазону (в секундах)
-        const isInRange = durationValue >= minSeconds && durationValue <= maxSeconds;
-        
-        return isInRange;
-      });
-    }
-
-    // Фільтр за датою
-    if (this.advancedFilters.dateRange.start || this.advancedFilters.dateRange.end) {
-      // Симулюємо фільтрацію за датами
-      // Оскільки у нас немає дат для кожного домену, ми будемо фільтрувати пропорційно
-      const startDate = this.advancedFilters.dateRange.start;
-      const endDate = this.advancedFilters.dateRange.end;
-
-      if (startDate && endDate) {
-        // Розраховуємо скільки днів охоплює діапазон
-        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1; // +1 для включення кінцевої дати
-        const totalDays = 30; // Припускаємо що загальний період 30 днів
-
-        // Перевіряємо чи діапазон має сенс
-        const now = new Date();
-        if (startDate > now) {
-          filteredDomains = [];
-        } else if (daysDiff <= 0) {
-          filteredDomains = [];
-        } else {
-          // Коефіцієнт для зменшення даних пропорційно до вибраного діапазону
-          const dateFilterRatio = Math.min(daysDiff / totalDays, 1);
-
-          if (dateFilterRatio < 1) {
-            filteredDomains = filteredDomains.map(domain => ({
-              ...domain,
-              visits: this.safeRound((domain.visits || 0) * (dateFilterRatio || 1)),
-              totalDuration: this.safeRound((domain.totalDuration || 0) * (dateFilterRatio || 1))
-            })).filter(domain => domain.visits > 0); // Прибираємо домени з 0 відвідувань
-          }
-          // Якщо dateFilterRatio >= 1, то показуємо всі дані без змін
-        }
-      } else if (startDate) {
-        // Якщо вибрана тільки початкова дата, фільтруємо від цієї дати
-        const now = new Date();
-
-        // Якщо початкова дата в майбутньому, показуємо 0 даних
-        if (startDate > now) {
-          filteredDomains = [];
-        } else {
-          const daysFromStart = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-          const totalDays = 30;
-          const dateFilterRatio = Math.min(Math.max(daysFromStart / totalDays, 0), 1);
-
-          if (dateFilterRatio > 0) {
-            filteredDomains = filteredDomains.map(domain => ({
-              ...domain,
-              visits: this.safeRound((domain.visits || 0) * (dateFilterRatio || 1)),
-              totalDuration: this.safeRound((domain.totalDuration || 0) * (dateFilterRatio || 1))
-            })).filter(domain => domain.visits > 0);
-          }
-        }
-      } else if (endDate) {
-        // Якщо вибрана тільки кінцева дата, фільтруємо до цієї дати
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-        // Якщо кінцева дата раніше за 30 днів тому, показуємо 0 даних
-        if (endDate < thirtyDaysAgo) {
-          filteredDomains = [];
-        } else {
-          const daysToEnd = Math.ceil((endDate.getTime() - thirtyDaysAgo.getTime()) / (1000 * 60 * 60 * 24));
-          const totalDays = 30;
-          const dateFilterRatio = Math.min(Math.max(daysToEnd / totalDays, 0), 1);
-
-          if (dateFilterRatio > 0) {
-            filteredDomains = filteredDomains.map(domain => ({
-              ...domain,
-              visits: this.safeRound((domain.visits || 0) * (dateFilterRatio || 1)),
-              totalDuration: this.safeRound((domain.totalDuration || 0) * (dateFilterRatio || 1))
-            })).filter(domain => domain.visits > 0);
-          }
-        }
-      }
-    }
-
-    // Оновлюємо загальну статистику відповідно до фільтрів
-    if (this.advancedFilters.categories.length > 0 ||
-      this.advancedFilters.durationRange.min > durationMinRange ||
-      this.advancedFilters.durationRange.max < durationMaxRange ||
-      this.advancedFilters.dateRange.start ||
-      this.advancedFilters.dateRange.end) {
-
-      // Розраховуємо нову статистику на основі відфільтрованих даних
-      const totalVisits = filteredDomains.reduce((sum, domain) => sum + (domain.visits || 0), 0);
-      const totalDuration = filteredDomains.reduce((sum, domain) => sum + (domain.totalDuration || 0), 0);
-      const uniqueDomains = filteredDomains.length;
-      const avgDuration = uniqueDomains > 0 ? totalDuration / uniqueDomains : 0;
-
-      // Оновлюємо статистику
-      if (this.userStats) {
-        this.userStats.stats = {
-          ...this.userStats.stats,
-          totalVisits,
-          uniqueDomains,
-          totalDuration,
-          avgDuration: this.safeRound((avgDuration || 0) * 100) / 100
-        };
-      }
-
-    } else {
-      // Якщо фільтри не застосовані, повертаємо оригінальні дані
-      if (this.userStats && this.userStats.topDomains) {
-        filteredDomains = [...this.userStats.topDomains];
-      }
-    }
-
-    // Зберігаємо відфільтровані домени для передачі до графіків
     this.filteredDomains = filteredDomains;
+    this.updateChartDataWithFilteredDomains(filteredDomains);
     
-      // Оновлюємо дані для всіх графіків
-    await this.updateAllChartData(filteredDomains);
-    
-    // Оновлюємо діапазони тривалості на основі відфільтрованих даних
-    this.calculateDurationRanges(filteredDomains);
-    
+    // Don't call calculateDurationRanges here as it may cause cascading updates
+    // Only update if user explicitly changed filters
     this.cdr.markForCheck();
   }
 
-  private async updateAllChartData(filteredDomains: any[]) {
-    // Оновлюємо дані для всіх графіків
-    this.updateChartDataWithFilteredDomains(filteredDomains);
+  private excludeSearchEngines(domains: any[]): any[] {
+    return domains.filter(d => {
+      const clean = cleanDomainName(d.decryptedData?.url || d._id);
+      if (clean === 'google.com' || clean === 'google') return false;
+      const category = categorizeWebsite(getDomainFromUrl(d.decryptedData?.url || d._id));
+      return category !== 'search_engine';
+    });
+  }
+
+  private applyDateFilters(domains: any[]): any[] {
+    const { start, end } = this.advancedFilters.dateRange;
+    if (!start && !end) return domains;
+
+    const ratio = this.calculateDateFilterRatio(start, end);
+    if (ratio >= 1) return domains;
+
+    return domains.map(d => ({
+      ...d,
+      visits: this.safeRound((d.visits || 0) * ratio),
+      totalDuration: this.safeRound((d.totalDuration || 0) * ratio)
+    })).filter(d => d.visits > 0);
+  }
+
+  private calculateDateFilterRatio(start: Date | null, end: Date | null): number {
+    const now = new Date();
+    const totalDays = 30;
+
+    if (start && end) {
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      return start > now ? 0 : Math.min(Math.max(daysDiff / totalDays, 0), 1);
+    } else if (start) {
+      const daysFromStart = Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      return start > now ? 0 : Math.min(Math.max(daysFromStart / totalDays, 0), 1);
+    } else if (end) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const daysToEnd = Math.ceil((end.getTime() - thirtyDaysAgo.getTime()) / (1000 * 60 * 60 * 24));
+      return end < thirtyDaysAgo ? 0 : Math.min(Math.max(daysToEnd / totalDays, 0), 1);
+    }
+    return 1;
+  }
+
+  private applyCategoryFilters(domains: any[]): any[] {
+    if (!this.advancedFilters.categories.length) return domains;
+
+    const selected = [...new Set(this.advancedFilters.categories)];
     
-    // Оновлюємо дані для кругової діаграми на основі відфільтрованих даних
+    // Filter domains to only those in selected categories
+    return domains.filter(d => {
+      const category = categorizeWebsite(getDomainFromUrl(d.decryptedData?.url || d._id));
+      return selected.includes(category);
+    });
+  }
+
+  private applyDurationFilters(domains: any[], minRange: number, maxRange: number): any[] {
+    const { min, max } = this.advancedFilters.durationRange;
     
-    // Оновлюємо дані для теплової карти на основі відфільтрованих даних
-    
-    // Оновлюємо дані для теплової карти добової активності за тижнями
-    
-    // Оновлюємо дані для графіка активності (activity chart)
+    // Check if user actually changed the duration range or if it's still at default
+    const userChangedDuration = min > minRange || max < maxRange;
+    if (!userChangedDuration) return domains;
+
+    const minSecs = min * 60;
+    const maxSecs = max * 60;
+
+    return domains.filter(d => {
+      const val = this.advancedFilters.durationType === 'total'
+        ? d.totalDuration || 0
+        : (d.visits || 0) > 0 ? (d.totalDuration || 0) / (d.visits || 1) : 0;
+      return val >= minSecs && val <= maxSecs;
+    });
+  }
+
+  private updateStatsForFilters(domains: any[], minRange: number, maxRange: number): void {
+    const hasFilters = this.advancedFilters.categories.length > 0 ||
+      this.advancedFilters.durationRange.min > minRange ||
+      this.advancedFilters.durationRange.max < maxRange ||
+      this.advancedFilters.dateRange.start ||
+      this.advancedFilters.dateRange.end;
+
+    if (!hasFilters || !this.userStats) return;
+
+    const totalVisits = domains.reduce((s, d) => s + (d.visits || 0), 0);
+    const totalDuration = domains.reduce((s, d) => s + (d.totalDuration || 0), 0);
+    const avgDuration = domains.length > 0 ? totalDuration / domains.length : 0;
+
+    this.userStats.stats = {
+      ...this.userStats.stats,
+      totalVisits,
+      uniqueDomains: domains.length,
+      totalDuration,
+      avgDuration: this.safeRound(avgDuration * 100) / 100
+    };
   }
 
   private updateChartDataWithFilteredDomains(filteredDomains: any[]) {
-    // Агрегуємо домени за очищеними назвами
-    const aggregatedDomains = new Map<string, {
-      cleanName: string,
-      originalNames: string[],
-      titles: string[],
-      totalVisits: number,
-      totalDuration: number
-    }>();
+    const aggregated = this.aggregateByDomainName(filteredDomains);
+    const sorted = Array.from(aggregated.values()).sort((a, b) => b.totalVisits - a.totalVisits);
 
-    filteredDomains
-      .filter(domain => {
-        const cleanName = cleanDomainName(domain.decryptedData?.url || domain._id);
-        return cleanName !== 'google' && cleanName !== '';
+    this.activityChartData = sorted.map(d => ({ x: d.cleanName, y: d.totalVisits }));
+    this.topDomainsData = sorted.slice(0, 10).map(d => ({
+      name: d.cleanName || '',
+      title: d.titles[0] || d.cleanName,
+      visits: d.totalVisits,
+      duration: d.totalDuration,
+      averageDuration: d.totalVisits > 0 ? this.safeRound(d.totalDuration / d.totalVisits) : 0,
+      originalCount: d.originalNames.length
+    }));
+
+    const categoryResult = this.aggregateByCategory(filteredDomains);
+    this.categoryDistributionData = categoryResult.values;
+    this.categoryLabels = categoryResult.categories;
+    
+    this.deviceStatsData = this.devices
+      .filter(d => (d.stats?.totalVisits || 0) > 0)
+      .map(d => ({
+        name: getDeviceTypeLabel(d.deviceType),
+        visits: d.stats?.totalVisits || 0,
+        duration: d.stats?.totalDuration || 0
+      }));
+  }
+
+  private aggregateByDomainName(domains: any[]): Map<string, any> {
+    const result = new Map<string, any>();
+    domains
+      .filter(d => {
+        const clean = cleanDomainName(d.decryptedData?.url || d._id);
+        return clean !== 'google' && clean !== '';
       })
-      .forEach(domain => {
-        const originalName = domain.decryptedData?.url || domain._id;
-        const cleanName = cleanDomainName(originalName);
-        const title = domain.decryptedData?.title || cleanName;
+      .forEach(d => {
+        const url = d.decryptedData?.url || d._id;
+        const cleanName = cleanDomainName(url);
+        const title = d.decryptedData?.title || cleanName;
 
-        if (aggregatedDomains.has(cleanName)) {
-          const existing = aggregatedDomains.get(cleanName)!;
-          existing.totalVisits += domain.visits || 0;
-          existing.totalDuration += domain.totalDuration || 0;
-          existing.originalNames.push(originalName);
+        if (result.has(cleanName)) {
+          const existing = result.get(cleanName)!;
+          existing.totalVisits += d.visits || 0;
+          existing.totalDuration += d.totalDuration || 0;
+          existing.originalNames.push(url);
           if (title && title !== cleanName && !existing.titles.includes(title)) {
             existing.titles.push(title);
           }
         } else {
-          aggregatedDomains.set(cleanName, {
+          result.set(cleanName, {
             cleanName,
-            originalNames: [originalName],
+            originalNames: [url],
             titles: title && title !== cleanName ? [title] : [],
-            totalVisits: domain.visits || 0,
-            totalDuration: domain.totalDuration || 0
+            totalVisits: d.visits || 0,
+            totalDuration: d.totalDuration || 0
           });
         }
       });
+    return result;
+  }
 
-    // Сортуємо за кількістю візитів
-    const sortedDomains = Array.from(aggregatedDomains.values())
-      .sort((a, b) => b.totalVisits - a.totalVisits);
-
-    // Підготовка даних для графіка активності
-    this.activityChartData = sortedDomains.map(domain => ({
-      x: domain.cleanName,
-      y: domain.totalVisits
-    }));
-
-    // Підготовка даних для топ доменів
-    this.topDomainsData = sortedDomains.slice(0, 10).map(domain => {
-      // Вибираємо найкращий title
-      const title = domain.titles.length > 0 ? domain.titles[0] : domain.cleanName;
-      
-      return {
-        name: domain.cleanName || '',
-        title: title || '',
-        visits: domain.totalVisits || 0,
-        duration: domain.totalDuration || 0,
-        averageDuration: (domain.totalVisits || 0) > 0 ? this.safeRound((domain.totalDuration || 0) / (domain.totalVisits || 1)) : 0,
-        originalCount: (domain.originalNames || []).length
-      };
-    });
-
-    // Підготовка даних для бульбашкової діаграми з відфільтрованих даних
-    
-    // Оновлюємо дані для статистики пристроїв
-    this.deviceStatsData = this.devices
-      .filter(device => (device.stats?.totalVisits || 0) > 0)
-      .map(device => ({
-        name: getDeviceTypeLabel(device.deviceType),
-        visits: device.stats?.totalVisits || 0,
-        duration: device.stats?.totalDuration || 0
-      }));
+  private aggregateByCategory(domains: any[]): { categories: string[]; values: number[] } {
+    try {
+      const categoryMap = new Map<string, number>();
+      domains.forEach(d => {
+        const category = categorizeWebsite(getDomainFromUrl(d.decryptedData?.url || d._id));
+        if (category !== 'search_engine') {
+          categoryMap.set(category, (categoryMap.get(category) || 0) + (d.totalDuration || 0));
+        }
+      });
+      const sorted = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1]);
+      const categories = sorted.map(([cat]) => cat);
+      const values = sorted.map(([, dur]) => dur);
+      return { categories, values };
+    } catch (e) {
+      return { categories: [], values: [] };
+    }
   }
 
   // Метод для формування заголовка графіка на основі вибраного діапазону дат

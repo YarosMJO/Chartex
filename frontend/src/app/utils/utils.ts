@@ -159,37 +159,20 @@ export const cleanDomainName = (domain: string): string => {
 // Категорізація сайтів
 export const categorizeWebsite = (domain: string): string => {
   const cleanDomain = cleanDomainName(domain);
-  
-  // Функція для перевірки відповідності очищеного домену
-  // cleanDomainName видаляє префікси (api., www., m., тощо) та TLD, тому достатньо точного співпадіння
-  const matchesDomain = (targetDomain: string): boolean => {
-    const cleanTarget = cleanDomainName(targetDomain);
-    
-    // Точне співпадіння очищених доменів
-    // Наприклад: facebook.com -> facebook, api.facebook.com -> facebook (префікс api. видаляється)
-    if (cleanDomain === cleanTarget) {
-      return true;
+
+  // Normalize helper: prepare a cleaned set from a list of domains
+  const buildCleanSet = (arr: string[]) => new Set(arr.map(d => cleanDomainName(d)));
+
+  const domainInList = (cleaned: string, list: string[]) => {
+    const set = buildCleanSet(list);
+    if (set.has(cleaned)) return true;
+    // Check if cleaned domain ends with any of the targets (handles subdomains and variants)
+    for (const t of set) {
+      if (!t) continue;
+      if (cleaned === t) return true;
+      if (cleaned.endsWith('.' + t)) return true;
+      if (t.endsWith('.' + cleaned)) return true;
     }
-    
-    // Перевірка піддоменів: якщо один домен закінчується на крапку + інший домен
-    // Це дозволяє обробляти випадки типу facebook.com.ua -> facebook
-    if (cleanDomain.includes('.') && cleanTarget.includes('.')) {
-      const domainParts = cleanDomain.split('.');
-      const targetParts = cleanTarget.split('.');
-      
-      // Перевіряємо чи останні частини співпадають
-      // Наприклад: news.facebook vs facebook або facebook.com vs facebook
-      const domainLastPart = domainParts[domainParts.length - 1];
-      const targetLastPart = targetParts[targetParts.length - 1];
-      
-      if (domainLastPart === targetLastPart) {
-        // Перевіряємо чи один домен закінчується на інший повністю
-        if (cleanDomain.endsWith('.' + cleanTarget) || cleanTarget.endsWith('.' + cleanDomain)) {
-          return true;
-        }
-      }
-    }
-    
     return false;
   };
   
@@ -203,7 +186,7 @@ export const categorizeWebsite = (domain: string): string => {
   ];
   
   // Якщо це пошукова система - не категорізуємо
-  if (searchEngines.some(d => matchesDomain(d))) {
+  if (domainInList(cleanDomain, searchEngines)) {
     return 'search_engine';
   }
   
@@ -246,7 +229,10 @@ export const categorizeWebsite = (domain: string): string => {
     'github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com', 'stackexchange.com',
     'jira.com', 'confluence.com', 'trello.com', 'asana.com', 'notion.so',
     'slack.com', 'teams.microsoft.com', 'zoom.us', 'webex.com',
-    'dropbox.com', 'onedrive.live.com', 'box.com', 'evernote.com',
+    'dropbox.com', 'onedrive.live.com', 'outlook.live.com', 'mail.live.com',
+    'outlook.office.com', 'office.com', 'office365.com', 'microsoft.com',
+    'box.com', 'evernote.com', 'onenote.com',
+    'login.microsoftonline.com', 'gmail.google', 'people.zoho.me',
     'figma.com', 'sketch.com', 'invisionapp.com', 'zeplin.io', 'abstract.com',
     'linear.app', 'clickup.com', 'monday.com', 'basecamp.com', 'airtable.com',
     // Українські платформи для роботи
@@ -312,6 +298,7 @@ export const categorizeWebsite = (domain: string): string => {
     'alibaba.com', 'aliexpress.com', 'wish.com', 'temu.com', 'shein.com',
     'zara.com', 'h&m.com', 'uniqlo.com', 'gap.com', 'oldnavy.com',
     'nike.com', 'adidas.com', 'underarmour.com', 'puma.com', 'reebok.com',
+    'choicegr.com', 'avocado-lviv.choicegr.com',
     // Українські інтернет-магазини
     'rozetka.com.ua', 'foxtrot.com.ua', 'comfy.ua', 'allo.ua', 'epicentr.ua',
     'silpo.ua', 'novus.ua', 'atbmarket.com', 'varus.ua', 'auchan.ua',
@@ -356,14 +343,19 @@ export const categorizeWebsite = (domain: string): string => {
     'replit.com', 'glitch.com', 'stackblitz.com'
   ];
   
-  if (socialDomains.some(d => matchesDomain(d))) return 'social';
-  if (newsDomains.some(d => matchesDomain(d))) return 'news';
-  if (workDomains.some(d => matchesDomain(d))) return 'work';
-  if (educationDomains.some(d => matchesDomain(d))) return 'education';
-  if (entertainmentDomains.some(d => matchesDomain(d))) return 'entertainment';
-  if (shoppingDomains.some(d => matchesDomain(d))) return 'shopping';
-  if (technologyDomains.some(d => matchesDomain(d))) return 'technology';
+  // Перевіряємо категорії послідовно - кожен домен належить тільки до однієї категорії
+  // Порядок перевірки важливий: якщо домен є в кількох списках, повертається перша знайдена категорія
+  // Це гарантує, що домени не можуть належати до кількох категорій одночасно
+  if (domainInList(cleanDomain, socialDomains)) return 'social';
+  if (domainInList(cleanDomain, newsDomains)) return 'news';
+  if (domainInList(cleanDomain, workDomains)) return 'work';
+  if (domainInList(cleanDomain, educationDomains)) return 'education';
+  if (domainInList(cleanDomain, entertainmentDomains)) return 'entertainment';
+  if (domainInList(cleanDomain, shoppingDomains)) return 'shopping';
+  if (domainInList(cleanDomain, technologyDomains)) return 'technology';
   
+  // Якщо домен не підпадає під жодну з визначених категорій, повертаємо 'other'
+  // Категорія 'other' містить тільки те, що не підпадає під інші категорії
   return 'other';
 };
 

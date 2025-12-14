@@ -87,7 +87,6 @@ export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
     { value: 'entertainment', label: 'DASHBOARD.FILTERS.CATEGORIES.ENTERTAINMENT' },
     { value: 'shopping', label: 'DASHBOARD.FILTERS.CATEGORIES.SHOPPING' },
     { value: 'technology', label: 'DASHBOARD.FILTERS.CATEGORIES.TECHNOLOGY' },
-    { value: 'search_engine', label: 'DASHBOARD.FILTERS.CATEGORIES.SEARCH_ENGINE' },
     { value: 'other', label: 'DASHBOARD.FILTERS.CATEGORIES.OTHER' }
   ];
 
