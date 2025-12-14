@@ -14,6 +14,7 @@ import { cleanDomainName, formatDuration } from '../../../../utils/utils';
 })
 export class TopSitesComponent implements OnChanges {
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
+  @Input() showDurationCharts: boolean = true;
 
   constructor(private cdr: ChangeDetectorRef) { }
 

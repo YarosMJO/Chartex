@@ -402,16 +402,39 @@ export class SettingsComponent implements OnInit {
     this.cdr.markForCheck();
     this.authService.logout().subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        this.loading = false;
+        this.cdr.markForCheck();
         this.snackBar.open('Ви успішно вийшли з системи', 'Закрити', { duration: 2000 });
+        // Закрити сторінку після logout
+        this.closePage();
       },
       error: (error) => {
         console.error('Помилка виходу:', error);
-        this.snackBar.open('Помилка виходу з системи', 'Закрити', { duration: 3000 });
         this.loading = false;
         this.cdr.markForCheck();
+        this.snackBar.open('Помилка виходу з системи', 'Закрити', { duration: 3000 });
       }
     });
+  }
+
+  // Закрити поточну сторінку (для extension)
+  private closePage() {
+    // Затримка для показу повідомлення про успішний вихід
+    setTimeout(() => {
+      // Для extension options pages window.close() має працювати
+      if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime) {
+        // Спочатку спробуємо window.close()
+        window.close();
+        // Якщо window.close() не спрацює, надсилаємо повідомлення до background script як fallback
+        try {
+          (window as any).chrome.runtime.sendMessage({ action: 'closeTab' });
+        } catch (error) {
+          // Якщо помилка, ігноруємо
+        }
+      } else {
+        window.close();
+      }
+    }, 500); // Затримка для показу повідомлення
   }
 
 

@@ -13,7 +13,7 @@
           <div class="domain-url" *ngIf="domain.name !== domain.title">
             {{ cleanDomainName(domain.name) }}
           </div>
-          <div class="domain-stats">
+          <div class="domain-stats" *ngIf="showDurationCharts">
             {{ domain.visits || 0 }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }}
             <span *ngIf="(domain.duration || 0) > 0"> • {{ formatDuration(domain.duration || 0) }}</span>
             <span *ngIf="(domain.averageDuration || 0) > 0"> • сер: {{ formatDuration(safeRound(domain.averageDuration || 0)) }}</span>

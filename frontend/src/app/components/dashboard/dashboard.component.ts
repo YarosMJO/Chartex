@@ -73,8 +73,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Графіки що залежать від збору тривалості відвідувань
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
 
-      // Секція пристроїв та дропдаун фільтра завжди видима
-      this.showDeviceSection = true;
+      // Секція пристроїв видима тільки якщо увімкнено збір інформації про пристрої
+      this.showDeviceSection = settings.dataCollection.enabled && settings.dataCollection.collectDeviceInfo;
+
+      // Заголовки сторінок видимі якщо увімкнено збір заголовків
+      this.showPageTitles = settings.dataCollection.collectPageTitles;
+
+      // Історія збирається якщо увімкнено
+      this.collectHistory = settings.dataCollection.collectHistory;
 
       this.cdr.markForCheck();
     });
@@ -169,6 +175,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Налаштування видимості графіків
   showDurationCharts: boolean = true;
   showDeviceSection: boolean = true;
+  showPageTitles: boolean = true; // Для контролю видимості заголовків сторінок у топ-сайтах
+  collectHistory: boolean = true; // Для контролю збору історії
 
   // Розширені фільтри
   advancedFilters: FilterOptions = {
@@ -204,8 +212,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Слухаємо зміни налаштувань
     this.settingsService.settings$.subscribe(settings => {
       this.showDurationCharts = settings.dataCollection.collectVisitDuration;
-      // Секція пристроїв завжди видима
-      this.showDeviceSection = true;
+      // Секція пристроїв видима тільки якщо увімкнено збір інформації про пристрої
+      this.showDeviceSection = settings.dataCollection.enabled && settings.dataCollection.collectDeviceInfo;
+      // Заголовки сторінок видимі якщо увімкнено збір заголовків
+      this.showPageTitles = settings.dataCollection.collectPageTitles;
+      // Історія збирається якщо увімкнено
+      this.collectHistory = settings.dataCollection.collectHistory;
 
       this.cdr.markForCheck();
     });
@@ -294,6 +306,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       this.loading = true;
       this.error = null;
+      // Гарантуємо, що налаштування завантажені перед рендерингом
+      this.checkDataCollectionSettings();
       this.cdr.markForCheck();
 
       if (!this.currentUser) {
@@ -378,14 +392,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async loadDevices() {
     try {
       const devices = await this.apiService.getDevices();
-      this.devices = devices;
-      if (!this.devices) {
-        this.error = 'Дані пристроїв не отримано.';
-        this.cdr.markForCheck();
-        return;
+      console.log('Loaded devices:', devices); // Debug
+      this.devices = devices || [];
+      if (!this.devices || this.devices.length === 0) {
+        console.log('No devices found or empty array');
       }
+      // Оновлюємо налаштування видимості при завантаженні пристроїв
+      this.checkDataCollectionSettings();
       this.cdr.markForCheck();
     } catch (error) {
+      console.error('Error loading devices:', error); // Debug
       this.error = 'Помилка завантаження пристроїв: ' + (error instanceof Error ? error.message : String(error));
       this.cdr.markForCheck();
     }
@@ -565,7 +581,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.devices = [];
       this.error = 'Користувач не авторизований';
       this.cdr.markForCheck();
+      // Закрити сторінку після logout
+      this.closePage();
     });
+  }
+
+  // Закрити поточну сторінку (для extension)
+  private closePage() {
+    // Затримка для показу повідомлення про успішний вихід
+    setTimeout(() => {
+      // Для extension options pages window.close() має працювати
+      if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime) {
+        // Спочатку спробуємо window.close()
+        window.close();
+        // Якщо window.close() не спрацює, надсилаємо повідомлення до background script як fallback
+        try {
+          (window as any).chrome.runtime.sendMessage({ action: 'closeTab' });
+        } catch (error) {
+          // Якщо помилка, ігноруємо
+        }
+      } else {
+        window.close();
+      }
+    }, 500); // Затримка для показу повідомлення
   }
 
   // Вхід через Google

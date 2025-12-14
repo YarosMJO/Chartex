@@ -230,7 +230,7 @@ class PopupManager {
           // Login
           this.showLoadingOverlay(this.translations ? this.getTranslation('POPUP_MESSAGES.AUTHORIZING') : 'Авторизація...');
           try {
-                    const response = await this.sendMessage({ action: 'authenticate' });
+            const response = await this.sendMessage({ action: 'authenticate' });
             
             // After successful login, check if data collection is enabled
             if (response.success && response.user) {

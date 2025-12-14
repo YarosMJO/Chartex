@@ -99,6 +99,30 @@
   color: #333;
 }
 
+.no-devices-message {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #999;
+  text-align: center;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: #ccc;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
 /* === ТЕМИ ДЛЯ DEVICES SECTION === */
 ::ng-deep body.theme-light .devices-card {
   background: #fff !important;

@@ -937,6 +937,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true });
       break;
       
+    case 'closeTab':
+      if (sender.tab && sender.tab.id) {
+        chrome.tabs.remove(sender.tab.id);
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: 'Tab ID not found' });
+      }
+      break;
+      
     case 'testSendData':
       (async () => {
         try {

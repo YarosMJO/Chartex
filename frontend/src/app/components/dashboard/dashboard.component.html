@@ -93,6 +93,7 @@
       [bubbleChartData]="bubbleChartData"
       [bubbleChartScaleMode]="bubbleChartScaleMode"
       [showDurationCharts]="showDurationCharts"
+      [showPageTitles]="showPageTitles"
       [isDarkTheme]="isDarkTheme"
       [filteredDomains]="filteredDomains"
       (bubbleChartScaleToggle)="toggleBubbleChartScale()">
@@ -100,8 +101,8 @@
 
     <!-- Статистика пристроїв -->
     <app-devices-section
-      *ngIf="showDeviceSection"
+      *ngIf="showDeviceSection && devices.length > 0"
       [devices]="devices">
     </app-devices-section>
   </div>
-</div> 
+</div>

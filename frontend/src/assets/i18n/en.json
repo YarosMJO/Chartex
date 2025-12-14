@@ -214,8 +214,8 @@
     "GET_STATS_ERROR": "Error getting statistics:",
     "AUTHENTICATE_ACTION_RECEIVED": "BG: AUTHENTICATE ACTION RECEIVED",
     "OPENING_OPTIONS_PAGE": "BG: Opening options page",
-          "TEST_DATA_SENDING": "Test data sending:",
-      "TEST_SEND_ERROR": "Test send error:",
+    "TEST_DATA_SENDING": "Test data sending:",
+    "TEST_SEND_ERROR": "Test send error:",
     "CLEARING_DATA_BEFORE_TOGGLE": "Clearing data before collection toggle...",
     "EXTENSION_INSTALLED": "Chartex extension installed:",
     "EXTENSION_INITIALIZED": "Extension initialized with deviceId:",
@@ -269,10 +269,10 @@
     "DARK": "Dark",
     "AUTO": "Auto",
     "DEFAULT": "Default",
-    "ENABLE_COLLECTION": "Enable data collection",
+    "ENABLE_COLLECTION": "Enable automatic data collection when the extension starts",
+    "ENABLE_DATA_COLLECTION_DESC": "The extension automatically retrieves up-to-date website visit data after authorization",
     "ENABLE_COLLECTION_DESC": "Allow extension to collect browsing data",
     "ENABLE_DATA_COLLECTION": "Enable data collection",
-    "ENABLE_DATA_COLLECTION_DESC": "Allow extension to collect browsing data",
     "COLLECT_DEVICE_INFO": "Collect device information",
     "COLLECT_DEVICE_INFO_DESC": "Store device type, browser and OS",
     "COLLECT_PAGE_TITLES": "Collect page titles",
@@ -377,4 +377,4 @@
     "TABLET": "Tablet",
     "UNKNOWN": "Unknown device"
   }
-} 
+}

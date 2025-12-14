@@ -9,7 +9,7 @@
   
   <!-- Добова активність по тижнях -->
   <app-time-heatmap
-    *ngIf="showDurationCharts"
+    *ngIf="showDurationCharts && showPageTitles"
     [timeOfDayWeekHeatmapData]="timeOfDayWeekHeatmapData"
     [isDarkTheme]="isDarkTheme"
     [filteredDomains]="filteredDomains"
@@ -20,7 +20,7 @@
 
   <!-- Теплова карта активності за часом доби -->
   <app-activity-heatmap
-    *ngIf="showDurationCharts"
+    *ngIf="showDurationCharts && showPageTitles"
     [activityHeatmapData]="activityHeatmapData"
     [isDarkTheme]="isDarkTheme"
     [filteredDomains]="filteredDomains"
@@ -41,6 +41,7 @@
   
   <!-- Бульбашкова діаграма -->
   <app-bubble-chart
+   *ngIf="showDurationCharts"
     [bubbleChartData]="bubbleChartData"
     [scaleMode]="bubbleChartScaleMode"
     [isDarkTheme]="isDarkTheme"
@@ -52,6 +53,8 @@
   
   <!-- Топ сайтів -->
   <app-top-sites
+    *ngIf="showPageTitles"
+    [showDurationCharts]="showDurationCharts"
     [topDomainsData]="topDomainsData">
   </app-top-sites>
 </div> 

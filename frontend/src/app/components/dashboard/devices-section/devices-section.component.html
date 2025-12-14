@@ -24,9 +24,17 @@
               <span class="stat-label">{{ 'DASHBOARD.STATS.TOTAL_TIME' | translate }}:</span>
               <span class="stat-value">{{ formatDuration(device.stats?.totalDuration || 0) }}</span>
             </div>
+            <div class="device-stat" *ngIf="(device.stats?.totalDuration || 0) > 0 && (device.stats?.totalVisits || 0) > 0">
+              <span class="stat-label">Avg time:</span>
+              <span class="stat-value">{{ formatDuration((device.stats?.totalDuration || 0) / (device.stats?.totalVisits || 1)) }}</span>
+            </div>
           </div>
         </div>
       </ng-container>
+      <div *ngIf="devices.length === 0" class="no-devices-message">
+        <mat-icon>devices</mat-icon>
+        <p>{{ 'DASHBOARD.CHARTS.DEVICE_STATS' | translate }} - немає даних</p>
+      </div>
     </div>
   </mat-card-content>
 </mat-card> 
