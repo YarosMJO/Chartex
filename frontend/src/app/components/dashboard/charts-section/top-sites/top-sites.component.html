@@ -16,7 +16,7 @@
           <div class="domain-stats" *ngIf="showDurationCharts">
             {{ domain.visits || 0 }} {{ 'DASHBOARD.CHARTS.VISITS_COUNT' | translate }}
             <span *ngIf="(domain.duration || 0) > 0"> • {{ formatDuration(domain.duration || 0) }}</span>
-            <span *ngIf="(domain.averageDuration || 0) > 0"> • сер: {{ formatDuration(safeRound(domain.averageDuration || 0)) }}</span>
+            <span *ngIf="(domain.averageDuration || 0) > 0"> • {{ 'UTILS.AVERAGE_DURATION_LABEL' | translate }}: {{ formatDuration(safeRound(domain.averageDuration || 0)) }}</span>
             <span *ngIf="(domain.originalCount || 0) > 1" class="aggregated-count" [title]="'Агреговано з ' + (domain.originalCount || 0) + ' доменів'">
               ({{ domain.originalCount || 0 }})
             </span>

@@ -30,8 +30,8 @@ export const formatNumber = (num: number, translateService?: TranslateService): 
     }
     // Fallback translations
     const fallbacks: Record<string, string> = {
-      'UTILS.THOUSANDS': 'тис.',
-      'UTILS.MILLIONS': 'млн'
+      'UTILS.THOUSANDS': 'K',
+      'UTILS.MILLIONS': 'M'
     };
     return fallbacks[key] || key;
   };

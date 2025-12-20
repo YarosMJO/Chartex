@@ -24,5 +24,7 @@ export class StatsCardsComponent {
     return formatDurationUtil(seconds, this.translateService);
   }
 
-  formatNumber = formatNumber;
+  formatNumber(num: number): string {
+    return formatNumber(num, this.translateService);
+  }
 }

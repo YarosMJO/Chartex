@@ -365,6 +365,7 @@
     "HOURS": "h",
     "THOUSANDS": "K",
     "MILLIONS": "M",
+    "AVERAGE_DURATION_LABEL": "avg",
     "PERIODS": {
       "7D": "7 days",
       "30D": "30 days",

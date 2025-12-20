@@ -362,6 +362,7 @@
     "HOURS": "год",
     "THOUSANDS": "тис.",
     "MILLIONS": "млн",
+    "AVERAGE_DURATION_LABEL": "сер",
     "PERIODS": {
       "7D": "7 днів",
       "30D": "30 днів",
