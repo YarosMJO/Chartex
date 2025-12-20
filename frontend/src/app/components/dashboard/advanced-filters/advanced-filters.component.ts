@@ -62,8 +62,11 @@ export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
       if (newFilters !== this.filters) {
         this.filters = { ...newFilters };
         
-        // Оновлюємо selectedDurationOption на основі нових значень
-        this.updateSelectedDurationOption();
+        // Оновлюємо selectedDurationOption на основі нових значень тільки якщо ми не в процесі оновлення типу
+        // (бо в onDurationTypeChange ми вже правильно встановили selectedDurationOption)
+        if (!this.isUpdatingDurationType) {
+          this.updateSelectedDurationOption();
+        }
       }
     }
   }
@@ -96,7 +99,6 @@ export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
     { value: 'short', label: 'DASHBOARD.FILTERS.DURATION.SHORT', range: { min: 0, max: 5 } }, // До 5 хвилин
     { value: 'medium', label: 'DASHBOARD.FILTERS.DURATION.MEDIUM', range: { min: 5, max: 30 } }, // 5-30 хвилин
     { value: 'long', label: 'DASHBOARD.FILTERS.DURATION.LONG', range: { min: 30, max: 180 } }, // Більше 30 хвилин
-    { value: 'custom', label: 'DASHBOARD.FILTERS.DURATION.CUSTOM', range: { min: 0, max: 180 } }
   ];
 
   // Оновлюємо діапазони в залежності від типу фільтрації
@@ -294,14 +296,52 @@ export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
     // Встановлюємо флаг для запобігання циклічним оновленням
     this.isUpdatingDurationType = true;
     
-    // Оновлюємо діапазон в залежності від типу
-    const maxRange = type === 'average' ? 60 : 180;
+    // Зберігаємо поточну вибрану опцію
+    const currentOption = this.selectedDurationOption;
+    
+    // Отримуємо опції для нового типу
+    const newTypeOptions = type === 'average' 
+      ? [
+          { value: 'all', label: 'DASHBOARD.FILTERS.DURATION.ALL', range: { min: 0, max: 60 } },
+          { value: 'short', label: 'DASHBOARD.FILTERS.DURATION.SHORT', range: { min: 0, max: 2 } },
+          { value: 'medium', label: 'DASHBOARD.FILTERS.DURATION.MEDIUM', range: { min: 2, max: 10 } },
+          { value: 'long', label: 'DASHBOARD.FILTERS.DURATION.LONG', range: { min: 10, max: 60 } },
+        ]
+      : this.durationOptions;
+    
+    // Знаходимо відповідну опцію для нового типу
+    const matchingOption = newTypeOptions.find(opt => opt.value === currentOption);
+    
+    // Визначаємо новий діапазон
+    let newRange: { min: number; max: number };
+    if (matchingOption) {
+      // Якщо знайдено відповідну опцію (наприклад, 'medium' для обох типів), використовуємо її діапазон
+      newRange = matchingOption.range;
+      // selectedDurationOption залишається незмінним (currentOption)
+    } else if (currentOption === 'custom') {
+      // Якщо був кастомний діапазон, конвертуємо його пропорційно
+      const oldMaxRange = this.filters.durationType === 'average' ? 60 : 180;
+      const newMaxRange = type === 'average' ? 60 : 180;
+      const ratio = newMaxRange / oldMaxRange;
+      
+      newRange = {
+        min: Math.round(this.filters.durationRange.min * ratio),
+        max: Math.round(this.filters.durationRange.max * ratio)
+      };
+      // selectedDurationOption залишається як 'custom'
+    } else {
+      // Якщо не знайдено відповідності (наприклад, опція існує тільки для одного типу),
+      // використовуємо 'all'
+      const allOption = newTypeOptions.find(opt => opt.value === 'all');
+      newRange = allOption ? allOption.range : { min: 0, max: type === 'average' ? 60 : 180 };
+      this.selectedDurationOption = 'all';
+    }
+    
     const newFilters = { 
       ...this.filters, 
       durationType: type,
-      durationRange: { min: 0, max: maxRange }
+      durationRange: newRange
     };
-    
     
     this.updateFilters(newFilters);
     
