@@ -23,6 +23,10 @@
     },
     "CHARTS": {
       "ACTIVITY_TITLE": "Activity for {{period}}",
+      "ACTIVITY_FOR_DATE": "Activity for {{date}}",
+      "ACTIVITY_FOR_PERIOD": "Activity for period {{start}} - {{end}}",
+      "ACTIVITY_FROM": "Activity from {{date}}",
+      "ACTIVITY_TO": "Activity to {{date}}",
       "TOP_SITES": "Top sites",
       "VISITS_COUNT": "visits",
       "DEVICE_STATS": "Device statistics",

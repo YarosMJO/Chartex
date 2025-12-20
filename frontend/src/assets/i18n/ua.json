@@ -23,6 +23,10 @@
     },
     "CHARTS": {
       "ACTIVITY_TITLE": "Активність за {{period}}",
+      "ACTIVITY_FOR_DATE": "Активність за {{date}}",
+      "ACTIVITY_FOR_PERIOD": "Активність за період {{start}} - {{end}}",
+      "ACTIVITY_FROM": "Активність з {{date}}",
+      "ACTIVITY_TO": "Активність до {{date}}",
       "TOP_SITES": "Топ сайтів",
       "VISITS_COUNT": "відвідувань",
       "DEVICE_STATS": "Статистика пристроїв",

@@ -1043,13 +1043,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     let title: string;
 
+    // Визначаємо локаль на основі поточної мови
+    const locale = this.translateService.currentLang === 'en' ? 'en-US' : 'uk-UA';
+
     if (this.advancedFilters.dateRange.start && this.advancedFilters.dateRange.end) {
       const startDate = this.advancedFilters.dateRange.start;
       const endDate = this.advancedFilters.dateRange.end;
 
       // Форматуємо дати
       const formatDate = (date: Date) => {
-        return date.toLocaleDateString('uk-UA', {
+        return date.toLocaleDateString(locale, {
           day: 'numeric',
           month: 'long',
           year: 'numeric'
@@ -1061,29 +1064,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // Якщо дати однакові, показуємо одну дату
       if (startDate.getTime() === endDate.getTime()) {
-        title = `Активність за ${startFormatted}`;
+        title = this.translateService.instant('DASHBOARD.CHARTS.ACTIVITY_FOR_DATE', { date: startFormatted });
       } else {
-        title = `Активність за період ${startFormatted} - ${endFormatted}`;
+        title = this.translateService.instant('DASHBOARD.CHARTS.ACTIVITY_FOR_PERIOD', { start: startFormatted, end: endFormatted });
       }
     } else if (this.advancedFilters.dateRange.start) {
       const startDate = this.advancedFilters.dateRange.start;
-      const startFormatted = startDate.toLocaleDateString('uk-UA', {
+      const startFormatted = startDate.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
       });
-      title = `Активність з ${startFormatted}`;
+      title = this.translateService.instant('DASHBOARD.CHARTS.ACTIVITY_FROM', { date: startFormatted });
     } else if (this.advancedFilters.dateRange.end) {
       const endDate = this.advancedFilters.dateRange.end;
-      const endFormatted = endDate.toLocaleDateString('uk-UA', {
+      const endFormatted = endDate.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
       });
-      title = `Активність до ${endFormatted}`;
+      title = this.translateService.instant('DASHBOARD.CHARTS.ACTIVITY_TO', { date: endFormatted });
     } else {
       // Якщо діапазон дат не вибрано, використовуємо стандартний період
-      title = `Активність за ${this.getPeriodLabel(this.selectedPeriod)}`;
+      title = this.translateService.instant('DASHBOARD.CHARTS.ACTIVITY_TITLE', { period: this.getPeriodLabel(this.selectedPeriod) });
     }
 
     this.addToCache(cacheKey, title);
