@@ -247,6 +247,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Слухаємо зміни розміру вікна для адаптивності графіків
     window.addEventListener('resize', this.resizeHandler);
 
+    // Слухаємо повідомлення від extension background script
+    if (typeof (window as any).chrome !== 'undefined' && (window as any).chrome.runtime) {
+      (window as any).chrome.runtime.onMessage.addListener((message: any) => {
+        if (message.action === 'dataSyncComplete' && this.currentUser) {
+          // Оновлюємо дані після завершення синхронізації
+          this.refreshData();
+        }
+      });
+    }
+
     // Ініціалізуємо ширину графіка
     setTimeout(() => {
     }, 100);
