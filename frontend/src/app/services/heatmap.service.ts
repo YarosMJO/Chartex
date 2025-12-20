@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
+import { SettingsService } from './settings.service';
 import { formatDuration } from '../utils/utils';
 
 export interface HeatmapSeries {
@@ -23,9 +24,14 @@ export interface HeatmapOptions {
   providedIn: 'root'
 })
 export class HeatmapService {
-  private dayNames = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота'];
+  constructor(private apiService: ApiService, private settingsService: SettingsService) {}
 
-  constructor(private apiService: ApiService) {}
+  private get dayNames(): string[] {
+    const language = this.settingsService.getCurrentLanguage();
+    return language === 'en'
+      ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      : ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота'];
+  }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     const match = hex.replace('#', '').match(/.{1,2}/g);

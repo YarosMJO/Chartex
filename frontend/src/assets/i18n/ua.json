@@ -1,6 +1,6 @@
 {
   "DASHBOARD": {
-    "TITLE": "📊 Chartex Dashboard",
+    "TITLE": "📊 Панель управління Chartex",
     "WELCOME": "Вітаємо, {{name}}!",
     "LOGIN_GOOGLE": "Увійти через Google",
     "SETTINGS": "Налаштування",
