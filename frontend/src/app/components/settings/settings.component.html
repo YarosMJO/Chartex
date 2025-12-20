@@ -62,7 +62,7 @@
 
           <mat-divider></mat-divider>
 
-          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+          <div class="setting-item">
             <div class="setting-info">
               <div class="setting-label">{{ 'SETTINGS.COLLECT_DEVICE_INFO' | translate }}</div>
               <div class="setting-description">
@@ -71,14 +71,13 @@
             </div>
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectDeviceInfo"
-              [disabled]="!dataCollectionSettings.enabled"
               (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>
 
           <mat-divider></mat-divider>
 
-          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+          <div class="setting-item">
             <div class="setting-info">
               <div class="setting-label">{{ 'SETTINGS.COLLECT_PAGE_TITLES' | translate }}</div>
               <div class="setting-description">
@@ -87,14 +86,13 @@
             </div>
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectPageTitles"
-              [disabled]="!dataCollectionSettings.enabled"
               (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>
 
           <mat-divider></mat-divider>
 
-          <div class="setting-item" [class.disabled]="!dataCollectionSettings.enabled">
+          <div class="setting-item">
             <div class="setting-info">
               <div class="setting-label">{{ 'SETTINGS.COLLECT_VISIT_DURATION' | translate }}</div>
               <div class="setting-description">
@@ -103,7 +101,6 @@
             </div>
             <mat-slide-toggle 
               [(ngModel)]="dataCollectionSettings.collectVisitDuration"
-              [disabled]="!dataCollectionSettings.enabled"
               (change)="onDataCollectionChange()">
             </mat-slide-toggle>
           </div>

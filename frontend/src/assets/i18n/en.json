@@ -270,7 +270,7 @@
     "ENABLE_COLLECTION": "Enable automatic data collection when the extension starts",
     "ENABLE_DATA_COLLECTION_DESC": "The extension automatically retrieves up-to-date website visit data after authorization",
     "ENABLE_COLLECTION_DESC": "Allow extension to collect browsing data",
-    "ENABLE_DATA_COLLECTION": "Enable data collection",
+    "ENABLE_DATA_COLLECTION": "Enable data collection automatically",
     "COLLECT_DEVICE_INFO": "Collect device information",
     "COLLECT_DEVICE_INFO_DESC": "Store device type, browser and OS",
     "COLLECT_PAGE_TITLES": "Collect page titles",

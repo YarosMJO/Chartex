@@ -274,7 +274,7 @@ class PopupManager {
               this.showError(errorMsg);
             }
           } finally {
-            this.hideLoadingOverlay();
+              this.hideLoadingOverlay();
           }
         }
       });
