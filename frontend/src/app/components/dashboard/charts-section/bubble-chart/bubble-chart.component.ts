@@ -401,7 +401,7 @@ export class BubbleChartComponent implements OnChanges {
       },
       yaxis: {
         title: {
-          text: 'Загальний час (хв)'
+          text: this.translateService.instant('DASHBOARD.CHARTS.TOTAL_TIME') + ' (' + this.translateService.instant('UTILS.MINUTES') + ')'
         },
         min: 0,
         max: this.getYAxisMax(), // Динамічне максимальне значення для загального часу
@@ -416,9 +416,9 @@ export class BubbleChartComponent implements OnChanges {
             if ((val || 0) >= 60) {
               const h = Math.floor((val || 0) / 60);
               const m: number = this.safeRound((val || 0) % 60);
-              return `${h}г ${m}хв`;
+              return `${h}${this.translateService.instant('UTILS.HOURS')} ${m}${this.translateService.instant('UTILS.MINUTES')}`;
             }
-            return `${this.safeRound(val || 0)}хв`;
+            return `${this.safeRound(val || 0)}${this.translateService.instant('UTILS.MINUTES')}`;
           }
         },
         axisBorder: {
@@ -440,17 +440,17 @@ export class BubbleChartComponent implements OnChanges {
         formatter: (val: any, opts: any): string => {
           try {
             const point = opts?.w?.config?.series?.[opts.seriesIndex]?.data?.[opts.dataPointIndex];
-            
+
             // Y-ось показує середній час, тому використовуємо rawAvgMinutes
             const avgMinutes = point?.rawAvgMinutes ?? 0;
-            
+
             if (avgMinutes === 0 || !Number.isFinite(avgMinutes)) return '';
             if ((avgMinutes || 0) >= 60) {
               const h = Math.floor((avgMinutes || 0) / 60);
               const m: number = this.safeRound((avgMinutes || 0) % 60);
-              return `${h}г ${m}хв`;
+              return `${h}${this.translateService.instant('UTILS.HOURS')} ${m}${this.translateService.instant('UTILS.MINUTES')}`;
             }
-            return `${this.safeRound(avgMinutes || 0)}хв`;
+            return `${this.safeRound(avgMinutes || 0)}${this.translateService.instant('UTILS.MINUTES')}`;
           } catch (error) {
             return '';
           }

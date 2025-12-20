@@ -657,7 +657,7 @@ class PopupManager {
     }
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000);
-      const minutesText = this.translations ? this.getTranslation('POPUP_MESSAGES.MINUTES') : 'хв';
+      const minutesText = this.translations ? this.getTranslation('POPUP_MESSAGES.MINUTES') : 'min';
       const result = `${minutes} ${minutesText} тому`;
       return result;
     }

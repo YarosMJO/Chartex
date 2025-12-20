@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { cleanDomainName, formatDuration } from '../../../../utils/utils';
 
 @Component({
@@ -16,7 +16,7 @@ export class TopSitesComponent implements OnChanges {
   @Input() topDomainsData: { name: string; title: string; visits: number; duration: number }[] = [];
   @Input() showDurationCharts: boolean = true;
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  constructor(private cdr: ChangeDetectorRef, private translateService: TranslateService) { }
 
   ngOnChanges() {
     this.cdr.markForCheck();
@@ -26,7 +26,10 @@ export class TopSitesComponent implements OnChanges {
     return domain.name || index.toString();
   }
 
-  formatDuration = formatDuration;
+  formatDuration(seconds: number): string {
+    return formatDuration(seconds, this.translateService);
+  }
+
   cleanDomainName = cleanDomainName;
 
   // Безпечна функція для округлення

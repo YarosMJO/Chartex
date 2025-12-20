@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatInputModule } from '@angular/material/input';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 export interface FilterOptions {
   categories: string[];
@@ -42,6 +42,8 @@ export interface FilterOptions {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
+  constructor(private translateService: TranslateService) {}
+
   @Input() filters: FilterOptions = {
     categories: [],
     durationRange: { min: 0, max: 180 }, // Максимальний час в хвилинах (3 години)
@@ -285,10 +287,12 @@ export class AdvancedFiltersComponent implements OnChanges, OnDestroy {
   }
 
   formatDuration(minutes: number): string {
-    if (minutes < 60) return `${minutes} хв`;
+    const minutesUnit = this.translateService.instant('UTILS.MINUTES');
+    const hoursUnit = this.translateService.instant('UTILS.HOURS');
+    if (minutes < 60) return `${minutes} ${minutesUnit}`;
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return mins > 0 ? `${hours}г ${mins}хв` : `${hours}г`;
+    return mins > 0 ? `${hours}${hoursUnit} ${mins}${minutesUnit}` : `${hours}${hoursUnit}`;
   }
 
   // Додаємо метод для зміни типу фільтрації часу

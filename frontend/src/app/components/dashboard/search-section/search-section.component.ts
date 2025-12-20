@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatDuration } from '../../../utils/utils';
 
 @Component({
@@ -41,7 +41,11 @@ export class SearchSectionComponent implements OnInit, OnChanges {
   @Output() clearSearch = new EventEmitter<void>();
   @Output() periodChange = new EventEmitter<'7d' | '30d' | '90d' | '1y' | 'all'>();
 
-  formatDuration = formatDuration;
+  constructor(private translateService: TranslateService) {}
+
+  formatDuration(seconds: number): string {
+    return formatDuration(seconds, this.translateService);
+  }
   
   private previousPeriod: '7d' | '30d' | '90d' | '1y' | 'all' = '30d';
 

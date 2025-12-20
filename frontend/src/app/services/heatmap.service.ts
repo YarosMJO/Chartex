@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from './api.service';
 import { SettingsService } from './settings.service';
 import { formatDuration } from '../utils/utils';
@@ -24,7 +25,7 @@ export interface HeatmapOptions {
   providedIn: 'root'
 })
 export class HeatmapService {
-  constructor(private apiService: ApiService, private settingsService: SettingsService) {}
+  constructor(private apiService: ApiService, private settingsService: SettingsService, private translateService: TranslateService) {}
 
   private get dayNames(): string[] {
     const language = this.settingsService.getCurrentLanguage();
@@ -607,12 +608,16 @@ export class HeatmapService {
     
     // Функція для форматування часу
     const formatTime = (seconds: number): string => {
-      if (seconds === 0) return '0с';
-      if (seconds < 60) return `${seconds}с`;
-      if (seconds < 3600) return `${Math.floor(seconds / 60)}хв`;
+      if (seconds === 0) return `0${this.translateService.instant('UTILS.SECONDS')}`;
+      if (seconds < 60) return `${seconds}${this.translateService.instant('UTILS.SECONDS')}`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}${this.translateService.instant('UTILS.MINUTES')}`;
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
-      return minutes > 0 ? `${hours}год ${minutes}хв` : `${hours}год`;
+      if (minutes > 0) {
+        return `${hours}${this.translateService.instant('UTILS.HOURS')} ${minutes}${this.translateService.instant('UTILS.MINUTES')}`;
+      } else {
+        return `${hours}${this.translateService.instant('UTILS.HOURS')}`;
+      }
     };
     
     if (isDarkTheme) {
@@ -848,18 +853,18 @@ export class HeatmapService {
             colors: ['#f3eaff'], 
             fontSize: isNarrowChart ? '8px' : '10px' 
           },
-          formatter: (val: any) => formatDuration(val),
+          formatter: (val: any) => formatDuration(val, this.translateService),
           rotate: isNarrowChart ? -90 : 0,
           rotateAlways: isNarrowChart,
           offsetX: isNarrowChart ? 8 : 0,
           offsetY: isNarrowChart ? 0 : 0,
           position: 'center'
         },
-        grid: { 
+        grid: {
           borderColor: '#3a2e5c',
           padding: { top: 0, right: 0, bottom: 0, left: 0 }
         },
-        tooltip: { 
+        tooltip: {
           enabled: false
         },
         plotOptions: {
@@ -885,26 +890,26 @@ export class HeatmapService {
       };
     } else {
       return {
-        chart: { 
-          type: 'heatmap', 
+        chart: {
+          type: 'heatmap',
           height: 300,
           toolbar: { show: true }
         },
-        xaxis: { 
+        xaxis: {
           type: 'category'
         },
-        yaxis: { 
+        yaxis: {
           labels: { show: false }, // Приховуємо підписи Y-осі для однорядкової теплової карти
           title: { text: '' } // Прибираємо заголовок Y-осі
         },
         colors: ['#f8f9fa', '#e3f2fd', '#2196f3', '#1976d2'],
-        dataLabels: { 
+        dataLabels: {
           enabled: true,
-          style: { 
-            colors: ['#333'], 
-            fontSize: isNarrowChart ? '8px' : '10px' 
+          style: {
+            colors: ['#333'],
+            fontSize: isNarrowChart ? '8px' : '10px'
           },
-          formatter: (val: any) => formatDuration(val),
+          formatter: (val: any) => formatDuration(val, this.translateService),
           rotate: isNarrowChart ? -90 : 0,
           rotateAlways: isNarrowChart,
           offsetX: isNarrowChart ? 8 : 0,

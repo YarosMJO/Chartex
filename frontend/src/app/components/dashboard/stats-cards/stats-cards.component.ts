@@ -2,9 +2,9 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HistoryStats } from '../../../services/api.service';
-import { formatDuration, formatNumber } from '../../../utils/utils';
+import { formatDuration as formatDurationUtil, formatNumber } from '../../../utils/utils';
 
 @Component({
   selector: 'app-stats-cards',
@@ -18,6 +18,11 @@ export class StatsCardsComponent {
   @Input() userStats: HistoryStats | null = null;
   @Input() devicesCount: number = 0;
 
-  formatDuration = formatDuration;
+  constructor(private translateService: TranslateService) {}
+
+  formatDuration(seconds: number): string {
+    return formatDurationUtil(seconds, this.translateService);
+  }
+
   formatNumber = formatNumber;
-} 
+}

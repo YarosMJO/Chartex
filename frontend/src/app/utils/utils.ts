@@ -8,9 +8,9 @@ export const formatDuration = (seconds: number, translateService?: TranslateServ
     }
     // Fallback translations
     const fallbacks: Record<string, string> = {
-      'UTILS.SECONDS': 'с',
-      'UTILS.MINUTES': 'хв',
-      'UTILS.HOURS': 'год'
+      'UTILS.SECONDS': 's',
+      'UTILS.MINUTES': 'min',
+      'UTILS.HOURS': 'h'
     };
     return fallbacks[key] || key;
   };
