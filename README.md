@@ -45,21 +45,21 @@ Chartex/
 
 Below are all screenshots placed in `docs/screenshots/`.
 
-Popup / Extension overview
+Extension login
 ![screenshot_1](docs/screenshots/screenshot_1.png)
-Dashboard (light)
+Search & Filter
 ![screenshot_2](docs/screenshots/screenshot_2.png)
-Dashboard (dark)
+Main charts (part 1)
 ![screenshot_3](docs/screenshots/screenshot_3.png)
-Charts & Top sites
+Main charts (part 2)
 ![screenshot_4](docs/screenshots/screenshot_4.png)
-Heatmap / Time of day
+General settings
 ![screenshot_5](docs/screenshots/screenshot_5.png)
-Devices card
+Dashboard (dark)
 ![screenshot_6](docs/screenshots/screenshot_6.png)
-Settings export/import
+Dashboard (light)
 ![screenshot_7](docs/screenshots/screenshot_7.png)
-Extension install dialog
+Settings export/import
 ![screenshot_8](docs/screenshots/screenshot_8.png)
 
 ---
@@ -379,15 +379,6 @@ npm run build:extension
 
 Цей проект ліцензований під MIT License - дивіться [LICENSE](LICENSE) файл для деталей.
 
-## 🙏 Подяки
-
-- [Angular](https://angular.io/) - SPA framework
-- [Angular Material](https://material.angular.io/) - UI компоненти
-- [ApexCharts](https://apexcharts.com/) - Графіки та діаграми
-- [Firebase](https://firebase.google.com/) - Авторизація та аутентифікація
-- [MongoDB](https://www.mongodb.com/) - База даних
-- [Crypto-JS](https://cryptojs.gitbook.io/) - Шифрування даних
-- [Chrome Extensions API](https://developer.chrome.com/docs/extensions/) - Extension функціональність
 
 ## 🔒 Безпека та приватність
 
@@ -396,11 +387,3 @@ npm run build:extension
 - **Firebase Auth** - безпечна авторизація через Google OAuth
 - **GDPR сумісність** - користувач має повний контроль над своїми даними
 - **Локальне зберігання ключів** - ключі шифрування ніколи не передаються на сервер
-
-## 📞 Підтримка
-
-Якщо у вас є питання або проблеми:
-
-- 🐛 Issues: [GitHub Issues](https://github.com/your-username/chartex/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/your-username/chartex/discussions)
-
