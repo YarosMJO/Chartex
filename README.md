@@ -41,25 +41,31 @@ Chartex/
 └── docs/        # Documentation
 ```
 
-## Screenshots gallery (from docs/screenshots)
+## Screenshots
 
-Below are all screenshots placed in `docs/screenshots/`.
+**Extension login**
 
-Extension login
 ![screenshot_1](docs/screenshots/screenshot_1.png)
-Search & Filter
+
+**Search & Filter**
 ![screenshot_2](docs/screenshots/screenshot_2.png)
-Main charts (part 1)
+
+**Main charts (part 1)**
 ![screenshot_3](docs/screenshots/screenshot_3.png)
-Main charts (part 2)
+
+**Main charts (part 2)**
 ![screenshot_4](docs/screenshots/screenshot_4.png)
-General settings
+
+**General settings**
 ![screenshot_5](docs/screenshots/screenshot_5.png)
-Dashboard (dark)
+
+**Dashboard (dark)**
 ![screenshot_6](docs/screenshots/screenshot_6.png)
-Dashboard (light)
+
+**Dashboard (light)**
 ![screenshot_7](docs/screenshots/screenshot_7.png)
-Settings export/import
+
+**Settings export/import**
 ![screenshot_8](docs/screenshots/screenshot_8.png)
 
 ---
