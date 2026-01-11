@@ -7,6 +7,60 @@
 - **🔍 Збір історії браузера** - автоматичний збір даних про відвідування сайтів
 - **🔐 Zero Knowledge** - повне шифрування даних на клієнті (AES), сервер зберігає лише зашифровані дані
 - **📊 Аналітика** - детальні графіки та статистика активності з ApexCharts
+# Chartex — Browser Analytics Extension
+
+Chartex is a browser extension + dashboard for collecting and visualizing browsing activity. Data is encrypted on the client (Zero Knowledge).
+
+## Quick start
+
+Requirements: Node.js 18+, MongoDB, Chrome (for the extension).
+
+```bash
+git clone https://github.com/your-username/chartex.git
+cd chartex
+npm run install:all
+```
+
+Run backend and frontend for development:
+
+```bash
+cd backend
+npm run dev
+
+cd ../frontend
+npm start
+```
+
+## Project structure
+
+```
+Chartex/
+├── backend/     # Node.js + Express + MongoDB
+├── frontend/    # Angular SPA
+├── extension/   # Chrome extension (built from frontend)
+└── docs/        # Documentation
+```
+
+## Screenshots gallery (from docs/screenshots)
+
+Below are all screenshots placed in `docs/screenshots/`.
+
+![screenshot_1](docs/screenshots/screenshot_1.png)
+![screenshot_2](docs/screenshots/screenshot_2.png)
+![screenshot_3](docs/screenshots/screenshot_3.png)
+![screenshot_4](docs/screenshots/screenshot_4.png)
+![screenshot_5](docs/screenshots/screenshot_5.png)
+![screenshot_6](docs/screenshots/screenshot_6.png)
+![screenshot_7](docs/screenshots/screenshot_7.png)
+![screenshot_8](docs/screenshots/screenshot_8.png)
+
+---
+
+For full documentation see `PRODUCTION_SETUP.md` and `docs/requirements.md`.
+
+- **🔍 Збір історії браузера** - автоматичний збір даних про відвідування сайтів
+- **🔐 Zero Knowledge** - повне шифрування даних на клієнті (AES), сервер зберігає лише зашифровані дані
+- **📊 Аналітика** - детальні графіки та статистика активності з ApexCharts
 - **🎨 Сучасний UI** - Material Design інтерфейс з Angular 19
 - **⚡ Швидкість** - оптимізований збір та обробка даних
 - **🔧 Налаштування** - гнучкі опції збору та відображення
@@ -107,7 +161,7 @@ npm run build:extension
 - **Топ сайтів** - найпопулярніші сайти з кількістю відвідувань
 - **Статистика пристроїв** - розподіл активності по пристроях
 - **Теплова карта** - активність по днях тижня
-- **Розподіл за категоріями** - автоматична категорізація сайтів
+- **Розподіл за категоріями** - автоматична категоризація сайтів
 - **Bubble Chart** - візуалізація активності сайтів (час vs кількість відвідувань)
 - **Добова активність** - активність по годинах по тижнях
 
@@ -258,7 +312,7 @@ const config = {
 
 ### MongoDB налаштування
 
-Створіть базу даних `chartex` в MongoDB. Моделі автоматично створють необхідні колекції:
+Створіть базу даних `chartex` в MongoDB. Моделі автоматично створять необхідні колекції:
 - `users` - користувачі
 - `devices` - пристрої
 - `historyitems` - записи історії
@@ -310,7 +364,7 @@ npm run build:extension
 1. Fork репозиторію
 2. Створіть feature branch: `git checkout -b feature/amazing-feature`
 3. Commit зміни: `git commit -m 'Add amazing feature'`
-4. Push до branch: `git push origin feature/amazing-feature`
+4. Push до branch: `git push origin feature-amazing-feature`
 5. Відкрийте Pull Request
 
 ## 📄 Ліцензія
@@ -344,25 +398,41 @@ npm run build:extension
 
 ## 🖼️ Screenshots
 
-Нижче наведені приклади інтерфейсу Chartex. Щоб показати реальні зображення в README, помістіть файли скриншотів у папку `docs/screenshots/` з такими іменами (приклади):
+Нижче наведені приклади інтерфейсу Chartex. У репозиторії вже є скриншоти в папці `docs/screenshots/` — README тепер посилається на ці файли.
 
-- `screenshot-1.png` — Extension login
-- `screenshot-2.png` — Search & Filter
-- `screenshot-3.png` — Main charts (part 1)
-- `screenshot-4.png` — Main charts (part 2)
-- `screenshot-5.png` — General settings
-- `screenshot-6.png` — Dashboard (dark)
-- `screenshot-7.png` — Dashboard (light)
-- `screenshot-8.png` — Settings export/import
+Існуючі файли (див. `docs/screenshots/`):
+
+- `screenshot_1.png` — Popup / Extension overview
+- `screenshot_2.png` — Dashboard (light)
+- `screenshot_3.png` — Dashboard (dark)
+- `screenshot_4.png` — Charts & Top sites
+- `screenshot_5.png` — Heatmap / Time of day
+- `screenshot_6.png` — Devices card
+- `screenshot_7.png` — Settings export/import
+- `screenshot_8.png` — Extension install dialog
 
 Приклад вбудованих зображень (будуть показані тільки якщо файли існують):
 
-![Popup view](docs/screenshots/screenshot-1.png)
-![Dashboard dark](docs/screenshots/screenshot-3.png)
-![Site activity chart](docs/screenshots/screenshot-4.png)
+![Popup view](docs/screenshots/screenshot_1.png)
+![Dashboard dark](docs/screenshots/screenshot_3.png)
+![Site activity chart](docs/screenshots/screenshot_4.png)
 
-Якщо ви додаєте скриншоти із вкладених додатків або з розмови, просто покладіть їх у `docs/screenshots/` і запуште зміни в репозиторій.
+Щоб замінити або додати інші скриншоти, помістіть нові файли до `docs/screenshots/` і запуште зміни в репозиторій.
 
 ---
 
 ⭐ Якщо проект вам сподобався, поставте зірочку на GitHub! 
+```
+ 
+## 🖼️ Screenshots Gallery (Full)
+
+The images below are embedded from the `docs/screenshots/` folder so they appear at the very end of this README.
+
+![screenshot_1](docs/screenshots/screenshot_1.png)
+![screenshot_2](docs/screenshots/screenshot_2.png)
+![screenshot_3](docs/screenshots/screenshot_3.png)
+![screenshot_4](docs/screenshots/screenshot_4.png)
+![screenshot_5](docs/screenshots/screenshot_5.png)
+![screenshot_6](docs/screenshots/screenshot_6.png)
+![screenshot_7](docs/screenshots/screenshot_7.png)
+![screenshot_8](docs/screenshots/screenshot_8.png)
