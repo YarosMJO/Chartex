@@ -41,11 +41,10 @@ Chartex/
 └── docs/        # Documentation
 ```
 
-## Screenshots gallery (from docs/screenshots)
-
-Below are all screenshots placed in `docs/screenshots/`.
+## Screenshots
 
 **Extension login**
+
 ![screenshot_1](docs/screenshots/screenshot_1.png)
 
 **Search & Filter**
