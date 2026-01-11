@@ -342,6 +342,27 @@ npm run build:extension
 - 🐛 Issues: [GitHub Issues](https://github.com/your-username/chartex/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/your-username/chartex/discussions)
 
+## 🖼️ Screenshots
+
+Нижче наведені приклади інтерфейсу Chartex. Щоб показати реальні зображення в README, помістіть файли скриншотів у папку `docs/screenshots/` з такими іменами (приклади):
+
+- `screenshot-1.png` — Extension login
+- `screenshot-2.png` — Search & Filter
+- `screenshot-3.png` — Main charts (part 1)
+- `screenshot-4.png` — Main charts (part 2)
+- `screenshot-5.png` — General settings
+- `screenshot-6.png` — Dashboard (dark)
+- `screenshot-7.png` — Dashboard (light)
+- `screenshot-8.png` — Settings export/import
+
+Приклад вбудованих зображень (будуть показані тільки якщо файли існують):
+
+![Popup view](docs/screenshots/screenshot-1.png)
+![Dashboard dark](docs/screenshots/screenshot-3.png)
+![Site activity chart](docs/screenshots/screenshot-4.png)
+
+Якщо ви додаєте скриншоти із вкладених додатків або з розмови, просто покладіть їх у `docs/screenshots/` і запуште зміни в репозиторій.
+
 ---
 
 ⭐ Якщо проект вам сподобався, поставте зірочку на GitHub! 
