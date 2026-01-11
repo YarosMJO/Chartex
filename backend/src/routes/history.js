@@ -303,10 +303,9 @@ router.get('/', authenticateToken, async (req, res) => {
       if (to) query.visitTime.$lte = new Date(to);
     }
     
-    // Пошук (по зашифрованих даних - обмежена функціональність)
-    if (search) {
-      query.encryptedData = { $regex: search, $options: 'i' };
-    }
+    // Note: Frontend should handle search filtering after decryption
+    // Backend cannot search encrypted data directly
+    // Search is performed across all history (no time limit)
     
     // Сортування
     const sort = {};

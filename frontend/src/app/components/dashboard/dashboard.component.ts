@@ -651,38 +651,52 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private async performSearch(query: string) {
-    if (!this.userStats?.topDomains) return;
-
     this.isSearching = true;
     this.hasResults = false;
     this.cdr.markForCheck();
 
     try {
-      // Симулюємо затримку пошуку
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Call API to get history items for searching across all sites with decrypted data
+      const response = await this.apiService.getHistoryWithDecryptedData({
+        search: query,
+        limit: 1000,
+        offset: 0,
+        sortBy: 'visitTime',
+        sortOrder: 'desc'
+      });
 
-      const results = this.userStats.topDomains
-        .filter(domain => {
-          const searchTerm = query.toLowerCase();
-          const url = domain.decryptedData?.url || domain._id;
-          const title = domain.decryptedData?.title || '';
-          const cleanUrl = cleanDomainName(url);
+      if (response?.items && Array.isArray(response.items)) {
+        const searchTerm = query.toLowerCase();
 
-          return cleanUrl.toLowerCase().includes(searchTerm) ||
-            title.toLowerCase().includes(searchTerm);
-        })
-        .map(domain => ({
-          url: domain.decryptedData?.url || domain._id,
-          title: domain.decryptedData?.title || cleanDomainName(domain._id),
-          visits: domain.visits,
-          duration: domain.totalDuration
-        }))
-        .slice(0, 10); // Обмежуємо до 10 результатів
+        const results = response.items
+          .filter(item => {
+            try {
+              const url = item.decryptedData?.url || item._id || '';
+              const title = item.decryptedData?.title || '';
+              const cleanUrl = cleanDomainName(url);
 
-      this.searchResults = results;
-      this.hasResults = true;
+              return cleanUrl.toLowerCase().includes(searchTerm) ||
+                title.toLowerCase().includes(searchTerm);
+            } catch (error) {
+              return false;
+            }
+          })
+          .map(item => ({
+            url: item.decryptedData?.url || item._id || '',
+            title: item.decryptedData?.title || cleanDomainName(item._id || ''),
+            visits: item.visitCount || 1,
+            duration: item.duration || 0,
+            visitTime: item.visitTime
+          }))
+          .slice(0, 10);
+
+        this.searchResults = results;
+        this.hasResults = results.length > 0;
+      }
     } catch (error) {
       console.error('Помилка пошуку:', error);
+      this.hasResults = false;
+      this.searchResults = [];
     } finally {
       this.isSearching = false;
       this.cdr.markForCheck();
@@ -856,7 +870,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.filteredDomains = filteredDomains;
     this.updateChartDataWithFilteredDomains(filteredDomains);
-    
+
     // Don't call calculateDurationRanges here as it may cause cascading updates
     // Only update if user explicitly changed filters
     this.cdr.markForCheck();
@@ -907,7 +921,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!this.advancedFilters.categories.length) return domains;
 
     const selected = [...new Set(this.advancedFilters.categories)];
-    
+
     // Filter domains to only those in selected categories
     return domains.filter(d => {
       const category = categorizeWebsite(getDomainFromUrl(d.decryptedData?.url || d._id));
@@ -917,7 +931,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private applyDurationFilters(domains: any[], minRange: number, maxRange: number): any[] {
     const { min, max } = this.advancedFilters.durationRange;
-    
+
     // Check if user actually changed the duration range or if it's still at default
     const userChangedDuration = min > minRange || max < maxRange;
     if (!userChangedDuration) return domains;
@@ -972,7 +986,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const categoryResult = this.aggregateByCategory(filteredDomains);
     this.categoryDistributionData = categoryResult.values;
     this.categoryLabels = categoryResult.categories;
-    
+
     this.deviceStatsData = this.devices
       .filter(d => (d.stats?.totalVisits || 0) > 0)
       .map(d => ({
