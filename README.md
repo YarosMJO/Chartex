@@ -45,13 +45,21 @@ Chartex/
 
 Below are all screenshots placed in `docs/screenshots/`.
 
+Popup / Extension overview
 ![screenshot_1](docs/screenshots/screenshot_1.png)
+Dashboard (light)
 ![screenshot_2](docs/screenshots/screenshot_2.png)
+Dashboard (dark)
 ![screenshot_3](docs/screenshots/screenshot_3.png)
+Charts & Top sites
 ![screenshot_4](docs/screenshots/screenshot_4.png)
+Heatmap / Time of day
 ![screenshot_5](docs/screenshots/screenshot_5.png)
+Devices card
 ![screenshot_6](docs/screenshots/screenshot_6.png)
+Settings export/import
 ![screenshot_7](docs/screenshots/screenshot_7.png)
+Extension install dialog
 ![screenshot_8](docs/screenshots/screenshot_8.png)
 
 ---
@@ -396,43 +404,3 @@ npm run build:extension
 - 🐛 Issues: [GitHub Issues](https://github.com/your-username/chartex/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/your-username/chartex/discussions)
 
-## 🖼️ Screenshots
-
-Нижче наведені приклади інтерфейсу Chartex. У репозиторії вже є скриншоти в папці `docs/screenshots/` — README тепер посилається на ці файли.
-
-Існуючі файли (див. `docs/screenshots/`):
-
-- `screenshot_1.png` — Popup / Extension overview
-- `screenshot_2.png` — Dashboard (light)
-- `screenshot_3.png` — Dashboard (dark)
-- `screenshot_4.png` — Charts & Top sites
-- `screenshot_5.png` — Heatmap / Time of day
-- `screenshot_6.png` — Devices card
-- `screenshot_7.png` — Settings export/import
-- `screenshot_8.png` — Extension install dialog
-
-Приклад вбудованих зображень (будуть показані тільки якщо файли існують):
-
-![Popup view](docs/screenshots/screenshot_1.png)
-![Dashboard dark](docs/screenshots/screenshot_3.png)
-![Site activity chart](docs/screenshots/screenshot_4.png)
-
-Щоб замінити або додати інші скриншоти, помістіть нові файли до `docs/screenshots/` і запуште зміни в репозиторій.
-
----
-
-⭐ Якщо проект вам сподобався, поставте зірочку на GitHub! 
-```
- 
-## 🖼️ Screenshots Gallery (Full)
-
-The images below are embedded from the `docs/screenshots/` folder so they appear at the very end of this README.
-
-![screenshot_1](docs/screenshots/screenshot_1.png)
-![screenshot_2](docs/screenshots/screenshot_2.png)
-![screenshot_3](docs/screenshots/screenshot_3.png)
-![screenshot_4](docs/screenshots/screenshot_4.png)
-![screenshot_5](docs/screenshots/screenshot_5.png)
-![screenshot_6](docs/screenshots/screenshot_6.png)
-![screenshot_7](docs/screenshots/screenshot_7.png)
-![screenshot_8](docs/screenshots/screenshot_8.png)
